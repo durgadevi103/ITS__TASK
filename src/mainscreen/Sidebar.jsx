@@ -69,14 +69,14 @@ console.log("loaded")
       </ul>
 
       {/* Logout */}
-      <div className="absolute bottom-6 w-full px-6">
+      {/* <div className="absolute bottom-6 w-full px-6">
         <Link to="/Login">
         <button className="w-full bg-red-600 hover:bg-red-700 py-2 rounded-lg flex items-center justify-center gap-2">
           <LogOut size={18} />
           Logout
         </button>
         </Link>
-      </div>
+      </div> */}
 
     </div>
   );
