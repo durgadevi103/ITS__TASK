@@ -12,7 +12,9 @@ import Navbar from './mainscreen/Navbar'
 import Sidebar from './mainscreen/Sidebar'
 import Layout from './layoutscreen/Layout'
 import Home from './components/Home/home'
-import Grid from './components/grid/Grid'
+import { ProductList } from './components/productList/ProductList'
+import Customer from './components/customer/Customer'
+import Vendor from './components/vendor/Vendor'
 
 
 function App() {
@@ -25,7 +27,10 @@ function App() {
 
       <Route index element={<Home />} />
       <Route path="home" element={<Home />} />
-      <Route path="Grid" element={<Grid/>}/>
+      <Route path="customer" element={<Customer />} />
+      <Route path="vendor" element={<Vendor />} />
+      <Route path="products" element={<ProductList />} />
+  
       {/* <Route path="profile" element={<Profile />} />
       <Route path="messages" element={<Messages />} />
       <Route path="settings" element={<Settings />} /> */}
