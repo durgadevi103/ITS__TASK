@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import {
   Package,
   Plus,
-  Search,
-  Filter,
   Grid,
   List,
   Edit2,
@@ -22,6 +20,8 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Buttoncomponent from '../resusedComponent/Buttoncomponent';
+import Cards from '../cards/Cards';
+import Searchbar from '../resusedComponent/Searchbar';
 
 export const ProductList = () => {
   // Initial Mock Product Data
@@ -254,136 +254,94 @@ export const ProductList = () => {
 
       {/* Dashboard Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <motion.div
-          whileHover={{ y: -3 }}
-          className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between"
-        >
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Total Items</p>
-            <h3 className="text-2xl font-bold text-gray-900 mt-1">{totalProducts}</h3>
-            <span className="text-xs text-emerald-600 font-medium inline-flex items-center gap-1 mt-1">
-              <TrendingUp className="w-3.5 h-3.5" /> Live Catalog
-            </span>
-          </div>
-          <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-            <Layers className="w-6 h-6" />
-          </div>
-        </motion.div>
+        <Cards
+          title="Total Items"
+          value={totalProducts}
+          trendText="Live Catalog"
+          trendIcon={TrendingUp}
+          icon={Layers}
+          iconBg="bg-blue-50"
+          iconColor="text-blue-600"
+        />
 
-        <motion.div
-          whileHover={{ y: -3 }}
-          className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between"
-        >
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">In Stock</p>
-            <h3 className="text-2xl font-bold text-gray-900 mt-1">{inStockCount}</h3>
-            <span className="text-xs text-emerald-600 font-medium inline-flex items-center gap-1 mt-1">
-              <CheckCircle className="w-3.5 h-3.5" /> Ready for dispatch
-            </span>
-          </div>
-          <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-            <CheckCircle className="w-6 h-6" />
-          </div>
-        </motion.div>
+        <Cards
+          title="In Stock"
+          value={inStockCount}
+          trendText="Ready for dispatch"
+          trendIcon={CheckCircle}
+          icon={CheckCircle}
+          iconBg="bg-emerald-50"
+          iconColor="text-emerald-600"
+        />
 
-        <motion.div
-          whileHover={{ y: -3 }}
-          className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between"
-        >
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Low / Out of Stock</p>
-            <h3 className="text-2xl font-bold text-amber-600 mt-1">{lowStockCount + outOfStockCount}</h3>
-            <span className="text-xs text-amber-600 font-medium inline-flex items-center gap-1 mt-1">
-              <AlertTriangle className="w-3.5 h-3.5" /> Reorder required
-            </span>
-          </div>
-          <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-            <AlertTriangle className="w-6 h-6" />
-          </div>
-        </motion.div>
+        <Cards
+          title="Low / Out of Stock"
+          value={lowStockCount + outOfStockCount}
+          trendText="Reorder required"
+          trendIcon={AlertTriangle}
+          icon={AlertTriangle}
+          iconBg="bg-amber-50"
+          iconColor="text-amber-600"
+          valueColor="text-amber-600"
+          trendColor="text-amber-600"
+        />
 
-        <motion.div
-          whileHover={{ y: -3 }}
-          className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between"
-        >
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Stock Valuation</p>
-            <h3 className="text-2xl font-bold text-gray-900 mt-1">${totalValuation.toLocaleString(undefined, { minimumFractionDigits: 2 })}</h3>
-            <span className="text-xs text-cyan-600 font-medium inline-flex items-center gap-1 mt-1">
-              <DollarSign className="w-3.5 h-3.5" /> Total Asset Value
-            </span>
-          </div>
-          <div className="w-12 h-12 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center">
-            <ShoppingBag className="w-6 h-6" />
-          </div>
-        </motion.div>
+        <Cards
+          title="Stock Valuation"
+          value={`$${totalValuation.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
+          trendText="Total Asset Value"
+          trendIcon={DollarSign}
+          icon={ShoppingBag}
+          iconBg="bg-cyan-50"
+          iconColor="text-cyan-600"
+          trendColor="text-cyan-600"
+        />
       </div>
 
-      {/* Control Bar: Filters & View Switcher */}
-      <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        {/* Search */}
-        <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search by product name or SKU..."
-            className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-cyan-500 focus:bg-white transition"
-          />
-        </div>
-
-        {/* Category & Status Filter */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-gray-400" />
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs font-medium text-gray-700 outline-none focus:ring-2 focus:ring-cyan-500 transition"
-            >
-              <option value="All">All Categories</option>
-              <option value="Electronics">Electronics</option>
-              <option value="Accessories">Accessories</option>
-              <option value="Furniture">Furniture</option>
-              <option value="Home & Office">Home & Office</option>
-            </select>
-          </div>
-
-          <select
-            value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value)}
-            className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs font-medium text-gray-700 outline-none focus:ring-2 focus:ring-cyan-500 transition"
+      <Searchbar
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Search by product name or SKU..."
+        statusValue={selectedCategory}
+        onStatusChange={setSelectedCategory}
+        statusOptions={[
+          { value: "All", label: "All Categories" },
+          { value: "Electronics", label: "Electronics" },
+          { value: "Accessories", label: "Accessories" },
+          { value: "Furniture", label: "Furniture" },
+          { value: "Home & Office", label: "Home & Office" }
+        ]}
+        filterValue={selectedStatus}
+        onFilterChange={setSelectedStatus}
+        filterOptions={[
+          { value: "All", label: "All Status" },
+          { value: "In Stock", label: "In Stock" },
+          { value: "Low Stock", label: "Low Stock" },
+          { value: "Out of Stock", label: "Out of Stock" }
+        ]}
+      >
+        {/* View Mode Toggle Button */}
+        <div className="flex bg-gray-100 p-1 rounded-xl border border-gray-200">
+          <button
+            onClick={() => setViewMode("table")}
+            className={`p-1.5 rounded-lg text-xs font-medium transition ${
+              viewMode === "table" ? "bg-white text-cyan-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
+            }`}
+            title="Table View"
           >
-            <option value="All">All Status</option>
-            <option value="In Stock">In Stock</option>
-            <option value="Low Stock">Low Stock</option>
-            <option value="Out of Stock">Out of Stock</option>
-          </select>
-
-          {/* View Mode Toggle Button */}
-          <div className="flex bg-gray-100 p-1 rounded-xl border border-gray-200">
-            <button
-              onClick={() => setViewMode("table")}
-              className={`p-1.5 rounded-lg text-xs font-medium transition ${
-                viewMode === "table" ? "bg-white text-cyan-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
-              }`}
-              title="Table View"
-            >
-              <List className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setViewMode("grid")}
-              className={`p-1.5 rounded-lg text-xs font-medium transition ${
-                viewMode === "grid" ? "bg-white text-cyan-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
-              }`}
-              title="Grid View"
-            >
-              <Grid className="w-4 h-4" />
-            </button>
-          </div>
+            <List className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => setViewMode("grid")}
+            className={`p-1.5 rounded-lg text-xs font-medium transition ${
+              viewMode === "grid" ? "bg-white text-cyan-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
+            }`}
+            title="Grid View"
+          >
+            <Grid className="w-4 h-4" />
+          </button>
         </div>
-      </div>
+      </Searchbar>
 
       {/* Main Content Area: Table View or Grid View */}
       {filteredProducts.length === 0 ? (

@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import {
   Building2,
   Plus,
-  Search,
-  Filter,
   Mail,
   Phone,
   DollarSign,
@@ -21,6 +19,8 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Buttoncomponent from '../resusedComponent/Buttoncomponent';
+import Cards from '../cards/Cards';
+import Searchbar from '../resusedComponent/Searchbar';
 
 const Vendor = () => {
   // Initial Mock Vendor Data
@@ -238,114 +238,74 @@ const Vendor = () => {
 
       {/* Summary Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <motion.div
-          whileHover={{ y: -3 }}
-          className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between"
-        >
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Total Suppliers</p>
-            <h3 className="text-2xl font-bold text-gray-900 mt-1">{totalCount}</h3>
-            <span className="text-xs text-emerald-600 font-medium inline-flex items-center gap-1 mt-1">
-              <ShieldCheck className="w-3.5 h-3.5" /> Verified Partners
-            </span>
-          </div>
-          <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-            <Building2 className="w-6 h-6" />
-          </div>
-        </motion.div>
+        <Cards
+          title="Total Suppliers"
+          value={totalCount}
+          trendText="Verified Partners"
+          trendIcon={ShieldCheck}
+          icon={Building2}
+          iconBg="bg-blue-50"
+          iconColor="text-blue-600"
+        />
 
-        <motion.div
-          whileHover={{ y: -3 }}
-          className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between"
-        >
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Active Contracts</p>
-            <h3 className="text-2xl font-bold text-gray-900 mt-1">{activeCount}</h3>
-            <span className="text-xs text-emerald-600 font-medium inline-flex items-center gap-1 mt-1">
-              <CheckCircle className="w-3.5 h-3.5" /> Operational
-            </span>
-          </div>
-          <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-            <CheckCircle className="w-6 h-6" />
-          </div>
-        </motion.div>
+        <Cards
+          title="Active Contracts"
+          value={activeCount}
+          trendText="Operational"
+          trendIcon={CheckCircle}
+          icon={CheckCircle}
+          iconBg="bg-emerald-50"
+          iconColor="text-emerald-600"
+        />
 
-        <motion.div
-          whileHover={{ y: -3 }}
-          className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between"
-        >
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Active POs</p>
-            <h3 className="text-2xl font-bold text-purple-600 mt-1">{activeOrdersCount}</h3>
-            <span className="text-xs text-purple-600 font-medium inline-flex items-center gap-1 mt-1">
-              <Truck className="w-3.5 h-3.5" /> In Transit / Processing
-            </span>
-          </div>
-          <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
-            <PackageCheck className="w-6 h-6" />
-          </div>
-        </motion.div>
+        <Cards
+          title="Active POs"
+          value={activeOrdersCount}
+          trendText="In Transit / Processing"
+          trendIcon={Truck}
+          icon={PackageCheck}
+          iconBg="bg-purple-50"
+          iconColor="text-purple-600"
+          valueColor="text-purple-600"
+          trendColor="text-purple-600"
+        />
 
-        <motion.div
-          whileHover={{ y: -3 }}
-          className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between"
-        >
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Total Procurement Spent</p>
-            <h3 className="text-2xl font-bold text-gray-900 mt-1">${totalPayoutSum.toLocaleString(undefined, { minimumFractionDigits: 2 })}</h3>
-            <span className="text-xs text-cyan-600 font-medium inline-flex items-center gap-1 mt-1">
-              <DollarSign className="w-3.5 h-3.5" /> Cumulative Payouts
-            </span>
-          </div>
-          <div className="w-12 h-12 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center">
-            <DollarSign className="w-6 h-6" />
-          </div>
-        </motion.div>
+        <Cards
+          title="Total Procurement Spent"
+          value={`$${totalPayoutSum.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
+          trendText="Cumulative Payouts"
+          trendIcon={DollarSign}
+          icon={DollarSign}
+          iconBg="bg-cyan-50"
+          iconColor="text-cyan-600"
+          trendColor="text-cyan-600"
+        />
       </div>
 
-      {/* Control Bar Filters */}
-      <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search by vendor name, contact person, or supply category..."
-            className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-cyan-500 focus:bg-white transition"
-          />
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-gray-400" />
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs font-medium text-gray-700 outline-none focus:ring-2 focus:ring-cyan-500 transition"
-            >
-              <option value="All">All Statuses</option>
-              <option value="Active">Active</option>
-              <option value="Pending Review">Pending Review</option>
-              <option value="Inactive">Inactive</option>
-            </select>
-          </div>
-
-          <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs font-medium text-gray-700 outline-none focus:ring-2 focus:ring-cyan-500 transition"
-          >
-            <option value="All">All Categories</option>
-            <option value="Electronics">Electronics</option>
-            <option value="Hardware">Hardware</option>
-            <option value="Packaging">Packaging</option>
-            <option value="Logistics">Logistics</option>
-            <option value="Furniture">Furniture</option>
-            <option value="Office Supplies">Office Supplies</option>
-          </select>
-        </div>
-      </div>
+      <Searchbar
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Search by vendor name, contact person, or supply category..."
+        statusValue={selectedStatus}
+        onStatusChange={setSelectedStatus}
+        statusOptions={[
+          { value: "All", label: "All Statuses" },
+          { value: "Active", label: "Active" },
+          { value: "Pending Review", label: "Pending Review" },
+          { value: "Inactive", label: "Inactive" }
+        ]}
+        filterValue={selectedCategory}
+        onFilterChange={setSelectedCategory}
+        filterOptions={[
+          { value: "All", label: "All Categories" },
+          { value: "Electronics", label: "Electronics" },
+          { value: "Hardware", label: "Hardware" },
+          { value: "Packaging", label: "Packaging" },
+          { value: "Logistics", label: "Logistics" },
+          { value: "Furniture", label: "Furniture" },
+          { value: "Office Supplies", label: "Office Supplies" }
+        ]}
+      />
 
       {/* Vendor Table */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">

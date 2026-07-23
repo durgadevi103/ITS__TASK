@@ -29,7 +29,11 @@ const Signup = () => {
       setEmailError("Not valid email");
       return false;
     }
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (/[A-Z]/.test(trimmed)) {
+      setEmailError("Uppercase letters are not allowed");
+      return false;
+    }
+    const emailRegex = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/;
     if (!emailRegex.test(trimmed)) {
       setEmailError("Not valid email");
       return false;
@@ -340,8 +344,12 @@ const Signup = () => {
                   setEmail(e.target.value);
                   if (error) setError("");
                   if (emailError) {
-                    const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-                    if (regex.test(e.target.value.trim())) {
+                    const val = e.target.value.trim();
+                    const hasUppercase = /[A-Z]/.test(val);
+                    const regex = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/;
+                    if (!hasUppercase && regex.test(val)) {
+                      setEmailError("");
+                    } else if (!hasUppercase && emailError === "Uppercase letters are not allowed") {
                       setEmailError("");
                     }
                   }
