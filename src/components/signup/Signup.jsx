@@ -98,7 +98,7 @@ const Signup = () => {
     return false;
   };
 
-  const handleSignup = (e) => {
+  const handleSignup = async (e) => {
     if (e) e.preventDefault();
     setError("");
     setSuccess("");
@@ -136,43 +136,39 @@ const Signup = () => {
 
     setIsLoading(true);
 
-    setTimeout(() => {
-      // Check if user already exists
-      const storedUsers = JSON.parse(localStorage.getItem('registered_users') || '[]');
-      const allUsers = [...DEFAULT_CREDENTIALS, ...storedUsers];
+    try {
+      const response = await fetch('http://localhost:5086/input/insert', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: trimmedName,
+          email: trimmedEmail.toLowerCase(),
+          pass: password
+        }),
+      });
 
-      const userExists = allUsers.some(
-        (u) => u.email.toLowerCase() === trimmedEmail.toLowerCase()
-      );
+      const data = await response.json();
 
-      if (userExists) {
-        setError("An account with this email already exists. Please log in.");
-        setIsLoading(false);
-        return;
+      if (data.success) {
+        setSuccess("Account created successfully! Redirecting to login...");
+        setTimeout(() => {
+          navigate("/login", {
+            state: {
+              message: "Account created successfully! Please log in with your credentials.",
+              email: trimmedEmail.toLowerCase(),
+            },
+          });
+        }, 1200);
+      } else {
+        setError(data.message || "Signup failed. Please try again.");
       }
-
-      // Register new user
-      const newUser = {
-        fullName: trimmedName,
-        email: trimmedEmail.toLowerCase(),
-        password: password,
-        createdAt: new Date().toISOString()
-      };
-
-      storedUsers.push(newUser);
-      localStorage.setItem('registered_users', JSON.stringify(storedUsers));
-
-      setSuccess("Account created successfully! Redirecting to login...");
-
-      setTimeout(() => {
-        navigate("/login", {
-          state: {
-            message: "Account created successfully! Please log in with your credentials.",
-            email: newUser.email,
-          },
-        });
-      }, 1200);
-    }, 500);
+    } catch (error) {
+      setError("Network error. Ensure backend is running.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

@@ -135,6 +135,64 @@ const Login = () => {
     }, 500);
   };
 
+
+  // Backend Integration 
+  
+  const handleLoginBackend = async (e) => {
+    if (e) e.preventDefault();
+    setError("");
+    setSuccess("");
+    setEmailError("");
+    setPasswordError("");
+
+    if (!email.trim()) {
+      setEmailError("Email is required");
+      setError("Please enter your email.");
+      return;
+    }
+
+    if (!password) {
+      setPasswordError("Password is required");
+      setError("Please enter your password.");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('http://localhost:5086/input/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: email.trim(), pass: password }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setSuccess(data.message || "Login successful.");
+        setEmailError("");
+        setPasswordError("");
+        // Store user data
+        localStorage.setItem('currentUser', JSON.stringify({
+          email: data.user.email,
+          fullName: data.user.fullName,
+          loginTime: new Date().toISOString()
+        }));
+        setTimeout(() => navigate('/'), 1200);
+      } else {
+        setError("account not valid");
+        setEmailError("account not valid");
+        setPasswordError("account not valid");
+      }
+    } catch (error) {
+      setError("Network error. Ensure backend is running.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="relative min-h-screen overflow-y-auto bg-gradient-to-br from-blue-900 via-indigo-700 to-cyan-500 flex items-center justify-center px-3 sm:px-6 py-12 sm:py-16">
 
@@ -264,7 +322,7 @@ const Login = () => {
           )}
         </AnimatePresence>
 
-        <form onSubmit={handleLogin}>
+        <form onSubmit={handleLoginBackend}>
           {/* Email */}
           <motion.div
             initial={{ opacity: 0, x: -50 }}
@@ -288,21 +346,7 @@ const Login = () => {
                 onChange={(e) => {
                   setEmail(e.target.value);
                   if (error) setError("");
-                  if (emailError) {
-                    const val = e.target.value.trim();
-                    const hasUppercase = /[A-Z]/.test(val);
-                    const regex = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/;
-                    if (!hasUppercase && regex.test(val)) {
-                      setEmailError("");
-                    } else if (!hasUppercase && emailError === "Uppercase letters are not allowed") {
-                      setEmailError("");
-                    }
-                  }
-                }}
-                onBlur={() => {
-                  if (email.trim()) {
-                    validateEmailField(email);
-                  }
+                  setEmailError("");
                 }}
                 placeholder="e.g. user@example.com"
                 className={`w-full rounded-xl py-3 pl-4 pr-12 text-gray-900 outline-none transition font-medium ${
@@ -333,46 +377,23 @@ const Login = () => {
               <label className="text-white font-medium">
                 Password
               </label>
-              <div className="flex items-center gap-2">
-                {passwordError && (
-                  <span className="text-xs font-semibold text-red-300 bg-red-500/30 border border-red-400/50 rounded-md px-2 py-0.5 animate-pulse">
-                    {passwordError}
-                  </span>
-                )}
-                <span className={`text-xs px-2 py-0.5 rounded-md border ${
-                  password.length === 10 && !passwordError
-                    ? "bg-emerald-950/50 border-emerald-400/40 text-emerald-200"
-                    : password.length > 10
-                    ? "bg-red-950/60 border-red-400/60 text-red-300 font-bold"
-                    : "bg-cyan-950/40 border-cyan-400/30 text-cyan-200"
-                }`}>
-                  {password.length}/10 chars
+              {passwordError && (
+                <span className="text-xs font-semibold text-red-300 bg-red-500/30 border border-red-400/50 rounded-md px-2 py-0.5 animate-pulse">
+                  {passwordError}
                 </span>
-              </div>
+              )}
             </div>
 
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
                 value={password}
-                onFocus={() => {
-                  // Validate email as soon as user clicks password box!
-                  validateEmailField();
-                }}
                 onChange={(e) => {
-                  const val = e.target.value;
-                  setPassword(val);
+                  setPassword(e.target.value);
                   if (error) setError("");
-                  if (val.length > 10) {
-                    setPasswordError("not allowed more than 10 characters");
-                  } else {
-                    validatePasswordField(val);
-                  }
+                  setPasswordError("");
                 }}
-                onBlur={() => {
-                  if (password) validatePasswordField();
-                }}
-                placeholder="Password (max 10 chars: A-Z, 0-9, @#$)"
+                placeholder="Enter your password"
                 className={`w-full rounded-xl py-3 pl-4 pr-12 text-gray-900 outline-none transition font-medium ${
                   passwordError
                     ? "bg-red-100/95 border-2 border-red-500 text-red-900 placeholder-red-400 focus:ring-2 focus:ring-red-400"
