@@ -25,6 +25,7 @@ const Navbar = ({ usedata, onToggleSidebar, isSidebarOpen }) => {
   };
 
   const displayName = currentUser ? (currentUser.fullName || currentUser.email) : "Admin User";
+  const displayAvatar = currentUser?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=2563eb&color=fff&bold=true`;
   
   return (
     <nav className="fixed top-0 left-0 md:left-64 right-0 bg-white text-gray-800 border-b border-gray-100 shadow-sm z-40 h-16">
@@ -65,7 +66,7 @@ const Navbar = ({ usedata, onToggleSidebar, isSidebarOpen }) => {
               className="flex items-center gap-2 hover:bg-gray-50 p-1.5 rounded-xl transition"
             >
               <img
-                src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=120"
+                src={displayAvatar}
                 alt="Profile"
                 className="w-8 h-8 rounded-full object-cover border border-gray-200"
               />

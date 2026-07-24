@@ -5,7 +5,6 @@ import {
   ChevronDown,
   Eye,
   Pencil,
-  Trash2,
   Mail,
   Phone,
   User,
@@ -235,19 +234,7 @@ const EmployeeList = () => {
     return matchesSearch && matchesDept && matchesStatus;
   });
 
-  const handleDelete = (id, e) => {
-    e.stopPropagation(); // Prevent changing active selection
-    const updated = employees.filter(emp => emp.id !== id);
-    setEmployees(updated);
-    localStorage.setItem("employees", JSON.stringify(updated));
-    setToastMsg("Employee profile deleted.");
-    setTimeout(() => setToastMsg(""), 3000);
 
-    // If deleted employee was selected, reset
-    if (selectedEmployee && selectedEmployee.id === id) {
-      setSelectedEmployee(updated.length > 0 ? updated[0] : null);
-    }
-  };
 
   const getDeptColor = (dept) => {
     switch (dept) {
@@ -366,7 +353,7 @@ const EmployeeList = () => {
         
         {/* Left Pane: Employee List Card */}
         <div className={`bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col overflow-hidden h-full transition-all duration-300 ${
-          selectedEmployee ? 'flex-[1.8] lg:min-w-0' : 'flex-1'
+          selectedEmployee ? 'hidden lg:flex lg:flex-[1.8] lg:min-w-0' : 'flex-1'
         }`}>
           {/* Scrollable table container */}
           <div className="flex-1 overflow-auto min-h-0">
@@ -444,13 +431,7 @@ const EmployeeList = () => {
                         >
                           <Pencil size={14} />
                         </button>
-                        <button
-                          onClick={(e) => handleDelete(emp.id, e)}
-                          className="p-1 hover:bg-red-50 text-red-400 hover:text-red-600 rounded-md transition cursor-pointer"
-                          title="Delete Profile"
-                        >
-                          <Trash2 size={14} />
-                        </button>
+
                       </div>
                     </td>
                   </tr>
@@ -488,7 +469,7 @@ const EmployeeList = () => {
               initial={{ opacity: 0, x: 15 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 15 }}
-              className="flex-[1.2] flex flex-col gap-4 h-full overflow-hidden min-w-[320px] lg:min-w-0"
+              className="flex-1 lg:flex-[1.2] flex flex-col gap-4 h-full overflow-hidden min-w-[300px] lg:min-w-0"
             >
               {/* Profile Card Summary */}
               <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col items-center justify-center relative shrink-0">
@@ -532,7 +513,7 @@ const EmployeeList = () => {
               {/* Details Tabs Section */}
               <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex-1 min-h-0 flex flex-col overflow-hidden">
                 {/* Tab Navigation header */}
-                <div className="flex flex-wrap items-center gap-4 border-b border-gray-100 pb-2 text-xs font-bold shrink-0">
+                <div className="flex items-center gap-4 border-b border-gray-100 pb-2 text-xs font-bold shrink-0 overflow-x-auto whitespace-nowrap [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                   {["Personal Information", "Job Information", "Account Information", "Documents"].map((tab) => {
                     const label = tab === "Personal Information" ? "Personal" :
                                   tab === "Job Information" ? "Job" :

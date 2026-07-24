@@ -103,19 +103,17 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      const response = await api.post('/input/login', { email: email.trim(), pass: password });
+      const response = await api.post('/auth/login', { email: email.trim(), pass: password });
       const data = response.data;
 
-      if (data.success) {
+      if (data.success === true) {
         setSuccess(data.message || "Login successful.");
-        setEmailError("");
-        setPasswordError("");
-        // Store user data
-        localStorage.setItem('currentUser', JSON.stringify({
-          email: data.user.email,
-          fullName: data.user.fullName,
-          loginTime: new Date().toISOString()
-        }));
+        // localStorage.setItem('currentUser', JSON.stringify({
+        //   email: email.trim(),
+        //   fullName: data.user?.username || "Admin User",
+        //   avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(data.user?.username || "Admin User")}&background=2563eb&color=fff&bold=true`,
+        //   loginTime: new Date().toISOString()
+        // }));
         setTimeout(() => navigate('/'), 1200);
       } else {
         setError("account not valid");

@@ -138,11 +138,12 @@ const Signup = () => {
     setIsLoading(true);
 
     try {
-      const response = await api.post('/input/insert', {
+      const response = await api.post('/auth/signup', {
         username: trimmedName,
         email: trimmedEmail.toLowerCase(),
         pass: password
       });
+      console.log(response)
       const data = response.data;
 
       if (data.success) {
