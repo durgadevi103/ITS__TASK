@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Users,
   Search,
   ChevronDown,
   Eye,
@@ -14,7 +13,8 @@ import {
   ChevronLeft,
   ChevronRight,
   FileText,
-  Download
+  Download,
+  X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -198,7 +198,7 @@ const EmployeeList = () => {
         const parsed = JSON.parse(saved);
         if (parsed && parsed.length > 0) {
           // Merge details if missing
-          return parsed.map((e, index) => {
+          return parsed.map((e) => {
             const match = defaultEmployees.find(d => d.id === e.id);
             return { ...match, ...e };
           });
@@ -214,16 +214,11 @@ const EmployeeList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDept, setSelectedDept] = useState("All Departments");
   const [selectedStatus, setSelectedStatus] = useState("All Status");
-  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [selectedEmployee, setSelectedEmployee] = useState(() => {
+    return employees.length > 0 ? employees[0] : null;
+  });
   const [activeTab, setActiveTab] = useState("Personal Information");
   const [toastMsg, setToastMsg] = useState("");
-
-  // Select first employee as active details by default (Durga Devi)
-  useEffect(() => {
-    if (employees.length > 0 && !selectedEmployee) {
-      setSelectedEmployee(employees[0]);
-    }
-  }, [employees, selectedEmployee]);
 
   // Filters
   const filteredEmployees = employees.filter(emp => {
@@ -275,7 +270,7 @@ const EmployeeList = () => {
   };
 
   return (
-    <div className="p-6 bg-[#f8fafc] min-h-screen space-y-6 text-gray-700">
+    <div className="p-4 bg-[#f8fafc] h-[calc(100vh-4rem)] flex flex-col gap-4 text-gray-700 overflow-hidden">
       
       {/* Toast Notice */}
       <AnimatePresence>
@@ -294,414 +289,429 @@ const EmployeeList = () => {
         )}
       </AnimatePresence>
 
-      {/* Breadcrumbs & Title */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-extrabold text-gray-900">Employees</h1>
-          <nav className="text-xs text-gray-400 font-semibold mt-1 flex items-center gap-1.5">
-            <span className="cursor-pointer hover:text-blue-600" onClick={() => navigate('/')}>Dashboard</span>
+      {/* Unified Header & Filter Section */}
+      <div className="bg-white px-4 py-3 rounded-xl border border-gray-200 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-3 shrink-0">
+        {/* Left Side: Title & Breadcrumbs */}
+        <div className="flex flex-col">
+          <h1 className="text-xl font-bold text-gray-900 leading-tight">Employees</h1>
+          <nav className="text-[10px] text-gray-400 font-semibold flex items-center gap-1.5">
+            <span className="cursor-pointer hover:text-blue-600 transition" onClick={() => navigate('/')}>Dashboard</span>
             <span>/</span>
             <span className="text-gray-500">Employees</span>
           </nav>
         </div>
         
-        <button
-          onClick={() => navigate('/add-employee')}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2.5 rounded-xl shadow-lg shadow-blue-600/20 transition active:scale-95 text-sm self-start sm:self-auto"
-        >
-          <Plus size={16} />
-          <span>Add Employee</span>
-        </button>
+        {/* Right Side: Search, Filters & Action Button */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 flex-1 lg:justify-end w-full">
+          {/* Search Input with border */}
+          <div className="relative flex-1 max-w-xs w-full">
+            <Search size={14} className="text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search employee..."
+              className="w-full pl-8.5 pr-3 py-1.5 bg-gray-50/50 border border-gray-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition"
+            />
+          </div>
+
+          {/* Filters & Button Group */}
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            {/* Department Select */}
+            <div className="relative flex-1 sm:flex-initial">
+              <select
+                value={selectedDept}
+                onChange={(e) => setSelectedDept(e.target.value)}
+                className="w-full sm:w-auto bg-white border border-gray-200 rounded-lg pl-3 pr-8 py-1.5 text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition cursor-pointer appearance-none min-w-[130px]"
+              >
+                <option value="All Departments">All Departments</option>
+                <option value="IT">IT</option>
+                <option value="HR">HR</option>
+                <option value="Finance">Finance</option>
+                <option value="Marketing">Marketing</option>
+                <option value="Operations">Operations</option>
+              </select>
+              <ChevronDown size={12} className="text-gray-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
+
+            {/* Status Select */}
+            <div className="relative flex-1 sm:flex-initial">
+              <select
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+                className="w-full sm:w-auto bg-white border border-gray-200 rounded-lg pl-3 pr-8 py-1.5 text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition cursor-pointer appearance-none min-w-[110px]"
+              >
+                <option value="All Status">All Status</option>
+                <option value="Active">Active</option>
+                <option value="On Leave">On Leave</option>
+                <option value="Inactive">Inactive</option>
+              </select>
+              <ChevronDown size={12} className="text-gray-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
+
+            {/* Add Employee Button */}
+            <button
+              onClick={() => navigate('/add-employee')}
+              className="flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3.5 py-1.5 rounded-lg shadow-md shadow-blue-600/10 transition active:scale-95 text-xs whitespace-nowrap ml-auto sm:ml-0 cursor-pointer"
+            >
+              <Plus size={14} />
+              <span>Add Employee</span>
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* Filter and Search Section */}
-      <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Main Split-Pane Content Area */}
+      <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-4 overflow-hidden">
         
-        {/* Search */}
-        <div className="relative flex-1 max-w-sm">
-          <Search size={16} className="text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search by name, email or ID..."
-            className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
-          />
-        </div>
-
-        {/* Dropdowns */}
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Department Select */}
-          <div className="relative">
-            <select
-              value={selectedDept}
-              onChange={(e) => setSelectedDept(e.target.value)}
-              className="bg-white border border-gray-200 rounded-xl pl-4 pr-10 py-2 text-xs font-semibold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500 transition cursor-pointer appearance-none min-w-[150px]"
-            >
-              <option value="All Departments">All Departments</option>
-              <option value="IT">IT</option>
-              <option value="HR">HR</option>
-              <option value="Finance">Finance</option>
-              <option value="Marketing">Marketing</option>
-              <option value="Operations">Operations</option>
-            </select>
-            <ChevronDown size={14} className="text-gray-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-          </div>
-
-          {/* Status Select */}
-          <div className="relative">
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className="bg-white border border-gray-200 rounded-xl pl-4 pr-10 py-2 text-xs font-semibold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500 transition cursor-pointer appearance-none min-w-[130px]"
-            >
-              <option value="All Status">All Status</option>
-              <option value="Active">Active</option>
-              <option value="On Leave">On Leave</option>
-              <option value="Inactive">Inactive</option>
-            </select>
-            <ChevronDown size={14} className="text-gray-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-          </div>
-        </div>
-
-      </div>
-
-      {/* Employee Table */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[1000px]">
-            <thead>
-              <tr className="bg-gray-50/50 border-b border-gray-100 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                <th className="py-4 px-5">Employee ID</th>
-                <th className="py-4 px-4">Profile</th>
-                <th className="py-4 px-4">Name</th>
-                <th className="py-4 px-4">Email</th>
-                <th className="py-4 px-4">Phone</th>
-                <th className="py-4 px-4">Department</th>
-                <th className="py-4 px-4">Designation</th>
-                <th className="py-4 px-4">Joining Date</th>
-                <th className="py-4 px-4">Status</th>
-                <th className="py-4 px-5 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 text-sm">
-              {filteredEmployees.map((emp) => (
-                <tr
-                  key={emp.id}
-                  onClick={() => setSelectedEmployee(emp)}
-                  className={`hover:bg-[#f8fafc]/80 transition cursor-pointer ${
-                    selectedEmployee && selectedEmployee.id === emp.id ? 'bg-[#f1f5f9]/60' : ''
-                  }`}
-                >
-                  {/* ID */}
-                  <td className="py-4 px-5 font-semibold text-gray-800 tracking-tight">{emp.id}</td>
-                  
-                  {/* Profile */}
-                  <td className="py-3 px-4">
-                    <img
-                      src={emp.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=120"}
-                      alt={emp.name}
-                      className="w-10 h-10 rounded-full object-cover border border-gray-200"
-                    />
-                  </td>
-
-                  {/* Name */}
-                  <td className="py-4 px-4 font-bold text-gray-900">{emp.name}</td>
-                  
-                  {/* Email */}
-                  <td className="py-4 px-4 text-gray-500 font-medium">{emp.email}</td>
-                  
-                  {/* Phone */}
-                  <td className="py-4 px-4 text-gray-500 font-medium">{emp.phone}</td>
-                  
-                  {/* Department */}
-                  <td className="py-4 px-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${getDeptColor(emp.department)}`}>
-                      {emp.department}
-                    </span>
-                  </td>
-
-                  {/* Designation */}
-                  <td className="py-4 px-4 text-gray-700 font-semibold">{emp.designation}</td>
-                  
-                  {/* Joining Date */}
-                  <td className="py-4 px-4 text-gray-500 font-medium">{emp.joiningDate}</td>
-                  
-                  {/* Status */}
-                  <td className="py-4 px-4">
-                    <span className={`px-3 py-1 rounded-full text-[11px] font-bold ${getStatusColor(emp.status)}`}>
-                      {emp.status}
-                    </span>
-                  </td>
-
-                  {/* Actions */}
-                  <td className="py-4 px-5 text-right" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex items-center justify-end gap-1.5">
-                      <button
-                        onClick={() => setSelectedEmployee(emp)}
-                        className="p-1.5 hover:bg-blue-50 text-blue-500 hover:text-blue-600 rounded-lg transition"
-                        title="View Details"
-                      >
-                        <Eye size={15} />
-                      </button>
-                      <button
-                        onClick={() => navigate('/add-employee')}
-                        className="p-1.5 hover:bg-amber-50 text-amber-500 hover:text-amber-600 rounded-lg transition"
-                        title="Edit Employee"
-                      >
-                        <Pencil size={15} />
-                      </button>
-                      <button
-                        onClick={(e) => handleDelete(emp.id, e)}
-                        className="p-1.5 hover:bg-red-50 text-red-400 hover:text-red-600 rounded-lg transition"
-                        title="Delete Profile"
-                      >
-                        <Trash2 size={15} />
-                      </button>
-                    </div>
-                  </td>
-
+        {/* Left Pane: Employee List Card */}
+        <div className={`bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col overflow-hidden h-full transition-all duration-300 ${
+          selectedEmployee ? 'flex-[1.8] lg:min-w-0' : 'flex-1'
+        }`}>
+          {/* Scrollable table container */}
+          <div className="flex-1 overflow-auto min-h-0">
+            <table className="w-full text-left border-collapse min-w-[650px]">
+              <thead className="sticky top-0 bg-gray-50/90 backdrop-blur-xs border-b border-gray-100 text-[10px] font-bold text-gray-400 uppercase tracking-wider z-10">
+                <tr>
+                  <th className="py-2.5 px-4">Employee</th>
+                  <th className="py-2.5 px-4">Role & Dept</th>
+                  <th className="py-2.5 px-4">Contact</th>
+                  <th className="py-2.5 px-4">Status</th>
+                  <th className="py-2.5 px-4 text-right">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination bar */}
-        <div className="p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="text-xs text-gray-400 font-semibold">
-            Showing 1 to {filteredEmployees.length} of {employees.length} entries
-          </div>
-          <div className="flex items-center gap-1.5">
-            <button className="p-1.5 border border-gray-200 text-gray-400 rounded-lg hover:bg-gray-50 transition cursor-pointer">
-              <ChevronLeft size={14} />
-            </button>
-            <button className="w-8 h-8 flex items-center justify-center bg-blue-600 text-white rounded-lg text-xs font-bold shadow-sm cursor-pointer">
-              1
-            </button>
-            <button className="w-8 h-8 flex items-center justify-center border border-gray-200 text-gray-500 rounded-lg text-xs font-bold hover:bg-gray-50 transition cursor-pointer">
-              2
-            </button>
-            <button className="w-8 h-8 flex items-center justify-center border border-gray-200 text-gray-500 rounded-lg text-xs font-bold hover:bg-gray-50 transition cursor-pointer">
-              3
-            </button>
-            <button className="w-8 h-8 flex items-center justify-center border border-gray-200 text-gray-500 rounded-lg text-xs font-bold hover:bg-gray-50 transition cursor-pointer">
-              4
-            </button>
-            <button className="p-1.5 border border-gray-200 text-gray-400 rounded-lg hover:bg-gray-50 transition cursor-pointer">
-              <ChevronRight size={14} />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Interactive Employee Details Panel at the Bottom */}
-      {selectedEmployee && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-          {/* Profile Card Left */}
-          <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center justify-center relative">
-            <span className="absolute top-5 left-5 text-sm font-extrabold text-gray-900">Employee Details</span>
-            
-            <div className="mt-8 flex flex-col items-center">
-              <img
-                src={selectedEmployee.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=120"}
-                alt={selectedEmployee.name}
-                className="w-24 h-24 rounded-full object-cover border-4 border-gray-50 shadow-md"
-              />
-              
-              <h3 className="text-lg font-bold text-gray-900 mt-4">{selectedEmployee.name}</h3>
-              <span className={`px-3 py-0.5 rounded-full text-[10px] font-extrabold mt-1.5 ${getStatusColor(selectedEmployee.status)}`}>
-                {selectedEmployee.status}
-              </span>
-            </div>
-
-            {/* List Contact Details */}
-            <div className="w-full mt-6 space-y-3.5 border-t border-gray-50 pt-5 text-xs font-medium text-gray-500">
-              <div className="flex items-center gap-3">
-                <User size={15} className="text-gray-400 shrink-0" />
-                <span className="text-gray-800">{selectedEmployee.id}</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Mail size={15} className="text-gray-400 shrink-0" />
-                <span className="text-gray-800 truncate">{selectedEmployee.email}</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Phone size={15} className="text-gray-400 shrink-0" />
-                <span className="text-gray-800">{selectedEmployee.phone}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Details Tabs Right */}
-          <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-between">
-            <div>
-              {/* Tab Navigation header */}
-              <div className="flex flex-wrap items-center gap-6 border-b border-gray-100 pb-3 text-sm font-bold">
-                {["Personal Information", "Job Information", "Account Information", "Documents"].map((tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab)}
-                    className={`pb-3 relative transition-all duration-150 ${
-                      activeTab === tab 
-                        ? "text-blue-600 border-b-2 border-blue-600" 
-                        : "text-gray-400 hover:text-gray-600"
+              </thead>
+              <tbody className="divide-y divide-gray-100 text-xs">
+                {filteredEmployees.map((emp) => (
+                  <tr
+                    key={emp.id}
+                    onClick={() => setSelectedEmployee(emp)}
+                    className={`hover:bg-[#f8fafc]/80 transition cursor-pointer ${
+                      selectedEmployee && selectedEmployee.id === emp.id ? 'bg-[#f1f5f9]/70' : ''
                     }`}
                   >
-                    {tab}
-                  </button>
-                ))}
-              </div>
-
-              {/* Tab Content Areas */}
-              <div className="mt-6">
-                
-                {/* Personal Information Tab */}
-                {activeTab === "Personal Information" && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-xs font-semibold">
-                    <div className="flex justify-between items-center py-1">
-                      <span className="text-gray-400">Full Name</span>
-                      <span className="text-gray-800 text-right">{selectedEmployee.name}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-1">
-                      <span className="text-gray-400">Emergency Contact</span>
-                      <span className="text-gray-800 text-right">{selectedEmployee.emergencyContact || "Ramesh Devi (Father)"}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-1">
-                      <span className="text-gray-400">Date of Birth</span>
-                      <span className="text-gray-800 text-right">{selectedEmployee.dob || "12-09-1999"}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-1">
-                      <span className="text-gray-400">Emergency Phone</span>
-                      <span className="text-gray-800 text-right">{selectedEmployee.emergencyPhone || "9876500000"}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-1">
-                      <span className="text-gray-400">Gender</span>
-                      <span className="text-gray-800 text-right">{selectedEmployee.gender || "Female"}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-1">
-                      <span className="text-gray-400">Blood Group</span>
-                      <span className="text-gray-800 text-right">{selectedEmployee.bloodGroup || "O+"}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-1">
-                      <span className="text-gray-400">Email</span>
-                      <span className="text-gray-800 text-right">{selectedEmployee.email}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-1">
-                      <span className="text-gray-400">Marital Status</span>
-                      <span className="text-gray-800 text-right">{selectedEmployee.maritalStatus || "Single"}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-1">
-                      <span className="text-gray-400">Phone Number</span>
-                      <span className="text-gray-800 text-right">{selectedEmployee.phone}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-1">
-                      <span className="text-gray-400">Nationality</span>
-                      <span className="text-gray-800 text-right">{selectedEmployee.nationality || "Indian"}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-1 sm:col-span-2 border-t border-gray-50 pt-3">
-                      <span className="text-gray-400">Address</span>
-                      <span className="text-gray-800 text-right sm:text-left">{selectedEmployee.address || "123, Anna Nagar, Chennai, Tamil Nadu - 600040"}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-1 sm:col-span-2">
-                      <span className="text-gray-400">Languages Known</span>
-                      <span className="text-gray-800 text-right sm:text-left">{selectedEmployee.languages || "Tamil, English, Hindi"}</span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Job Information Tab */}
-                {activeTab === "Job Information" && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-xs font-semibold">
-                    <div className="flex justify-between items-center py-1">
-                      <span className="text-gray-400">Job Title / Role</span>
-                      <span className="text-gray-800 text-right">{selectedEmployee.designation}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-1">
-                      <span className="text-gray-400">Work Shift</span>
-                      <span className="text-gray-800 text-right">{selectedEmployee.shift || "Day Shift"}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-1">
-                      <span className="text-gray-400">Department</span>
-                      <span className="text-gray-800 text-right">{selectedEmployee.department}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-1">
-                      <span className="text-gray-400">Employment Type</span>
-                      <span className="text-gray-800 text-right">{selectedEmployee.type || "Full Time"}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-1">
-                      <span className="text-gray-400">Supervisor / Manager</span>
-                      <span className="text-gray-800 text-right">{selectedEmployee.manager || "Aravind Swamy"}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-1">
-                      <span className="text-gray-400">Desk Location</span>
-                      <span className="text-gray-800 text-right">{selectedEmployee.desk || "Bay 4 - Floor 2"}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-1 sm:col-span-2">
-                      <span className="text-gray-400">Joined Date</span>
-                      <span className="text-gray-800 text-right sm:text-left">{selectedEmployee.joiningDate}</span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Account Information Tab */}
-                {activeTab === "Account Information" && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-xs font-semibold">
-                    <div className="flex justify-between items-center py-1">
-                      <span className="text-gray-400">Employee ID</span>
-                      <span className="text-gray-800 text-right">{selectedEmployee.id}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-1">
-                      <span className="text-gray-400">Username</span>
-                      <span className="text-gray-800 text-right">{selectedEmployee.username || "durga.devi"}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-1">
-                      <span className="text-gray-400">System Role</span>
-                      <span className="text-gray-800 text-right">{selectedEmployee.role || "Developer"}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-1">
-                      <span className="text-gray-400">Work Email</span>
-                      <span className="text-gray-800 text-right">{selectedEmployee.email}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-1 sm:col-span-2 border-t border-gray-50 pt-3">
-                      <span className="text-gray-400">Last Login Timestamp</span>
-                      <span className="text-gray-800 text-right sm:text-left">{selectedEmployee.lastLogin || "23-07-2026 09:12 AM"}</span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Documents Tab */}
-                {activeTab === "Documents" && (
-                  <div className="space-y-3.5 text-xs font-semibold">
-                    {[
-                      { name: "Resume_CV.pdf", size: "1.2 MB", type: "PDF" },
-                      { name: "Offer_Letter.pdf", size: "850 KB", type: "PDF" },
-                      { name: "Aadhaar_ID_Card.png", size: "2.4 MB", type: "Image" }
-                    ].map((doc, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100/70 border border-gray-100 rounded-xl transition cursor-pointer">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-blue-50 text-blue-500 rounded-lg">
-                            <FileText size={18} />
-                          </div>
-                          <div>
-                            <p className="text-gray-800 font-bold">{doc.name}</p>
-                            <p className="text-[10px] text-gray-400 font-semibold">{doc.type} • {doc.size}</p>
-                          </div>
+                    {/* Employee Profile (Avatar + Name + ID) */}
+                    <td className="py-2.5 px-4">
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={emp.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=120"}
+                          alt={emp.name}
+                          className="w-9 h-9 rounded-full object-cover border border-gray-100 shadow-xs"
+                        />
+                        <div>
+                          <div className="font-bold text-gray-900 leading-tight">{emp.name}</div>
+                          <div className="text-[10px] text-gray-400 font-semibold mt-0.5">{emp.id}</div>
                         </div>
-                        <button className="p-2 text-gray-400 hover:text-blue-500 hover:bg-white rounded-lg transition border border-transparent hover:border-gray-200">
-                          <Download size={14} />
+                      </div>
+                    </td>
+                    
+                    {/* Role & Dept (Designation + Department Badge) */}
+                    <td className="py-2.5 px-4">
+                      <div className="font-semibold text-gray-800 leading-tight">{emp.designation}</div>
+                      <div className="mt-1">
+                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${getDeptColor(emp.department)}`}>
+                          {emp.department}
+                        </span>
+                      </div>
+                    </td>
+
+                    {/* Contact (Email + Phone) */}
+                    <td className="py-2.5 px-4">
+                      <div className="text-gray-600 font-medium leading-tight">{emp.email}</div>
+                      <div className="text-[10px] text-gray-400 mt-0.5 font-medium">{emp.phone}</div>
+                    </td>
+
+                    {/* Status badge */}
+                    <td className="py-2.5 px-4">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${getStatusColor(emp.status)}`}>
+                        {emp.status}
+                      </span>
+                    </td>
+
+                    {/* Actions */}
+                    <td className="py-2.5 px-4 text-right" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          onClick={() => setSelectedEmployee(emp)}
+                          className="p-1 hover:bg-blue-50 text-blue-500 hover:text-blue-600 rounded-md transition cursor-pointer"
+                          title="View Details"
+                        >
+                          <Eye size={14} />
+                        </button>
+                        <button
+                          onClick={() => navigate('/add-employee')}
+                          className="p-1 hover:bg-amber-50 text-amber-500 hover:text-amber-600 rounded-md transition cursor-pointer"
+                          title="Edit Employee"
+                        >
+                          <Pencil size={14} />
+                        </button>
+                        <button
+                          onClick={(e) => handleDelete(emp.id, e)}
+                          className="p-1 hover:bg-red-50 text-red-400 hover:text-red-600 rounded-md transition cursor-pointer"
+                          title="Delete Profile"
+                        >
+                          <Trash2 size={14} />
                         </button>
                       </div>
-                    ))}
-                  </div>
-                )}
-
-              </div>
-            </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
 
+          {/* Compact Pagination Bar */}
+          <div className="p-3 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0 bg-gray-50/30">
+            <div className="text-[11px] text-gray-400 font-semibold">
+              Showing 1 to {filteredEmployees.length} of {employees.length} entries
+            </div>
+            <div className="flex items-center gap-1">
+              <button className="p-1 border border-gray-200 text-gray-400 rounded-md hover:bg-gray-50 transition cursor-pointer">
+                <ChevronLeft size={12} />
+              </button>
+              <button className="w-6 h-6 flex items-center justify-center bg-blue-600 text-white rounded-md text-[10px] font-bold shadow-xs cursor-pointer">
+                1
+              </button>
+              <button className="w-6 h-6 flex items-center justify-center border border-gray-200 text-gray-500 rounded-md text-[10px] font-bold hover:bg-gray-50 transition cursor-pointer">
+                2
+              </button>
+              <button className="p-1 border border-gray-200 text-gray-400 rounded-md hover:bg-gray-50 transition cursor-pointer">
+                <ChevronRight size={12} />
+              </button>
+            </div>
+          </div>
         </div>
-      )}
+
+        {/* Right Pane: Selected Employee Details Panel */}
+        <AnimatePresence mode="wait">
+          {selectedEmployee && (
+            <motion.div
+              initial={{ opacity: 0, x: 15 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 15 }}
+              className="flex-[1.2] flex flex-col gap-4 h-full overflow-hidden min-w-[320px] lg:min-w-0"
+            >
+              {/* Profile Card Summary */}
+              <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col items-center justify-center relative shrink-0">
+                <button
+                  onClick={() => setSelectedEmployee(null)}
+                  className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 p-1 hover:bg-gray-100 rounded-lg transition cursor-pointer"
+                  title="Close Details"
+                >
+                  <X size={14} />
+                </button>
+                
+                <div className="flex flex-col items-center">
+                  <img
+                    src={selectedEmployee.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=120"}
+                    alt={selectedEmployee.name}
+                    className="w-16 h-16 rounded-full object-cover border-2 border-gray-50 shadow-sm"
+                  />
+                  <h3 className="text-sm font-bold text-gray-900 mt-2.5 leading-tight">{selectedEmployee.name}</h3>
+                  <span className="text-[10px] text-gray-400 font-semibold mt-0.5">{selectedEmployee.designation}</span>
+                  <span className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold mt-1.5 ${getStatusColor(selectedEmployee.status)}`}>
+                    {selectedEmployee.status}
+                  </span>
+                </div>
+
+                <div className="w-full mt-4 space-y-2 border-t border-gray-50 pt-3 text-[10px] font-medium text-gray-500">
+                  <div className="flex items-center gap-2">
+                    <User size={13} className="text-gray-400 shrink-0" />
+                    <span className="text-gray-800 font-semibold">{selectedEmployee.id}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Mail size={13} className="text-gray-400 shrink-0" />
+                    <span className="text-gray-800 truncate font-semibold">{selectedEmployee.email}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Phone size={13} className="text-gray-400 shrink-0" />
+                    <span className="text-gray-800 font-semibold">{selectedEmployee.phone}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Details Tabs Section */}
+              <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex-1 min-h-0 flex flex-col overflow-hidden">
+                {/* Tab Navigation header */}
+                <div className="flex flex-wrap items-center gap-4 border-b border-gray-100 pb-2 text-xs font-bold shrink-0">
+                  {["Personal Information", "Job Information", "Account Information", "Documents"].map((tab) => {
+                    const label = tab === "Personal Information" ? "Personal" :
+                                  tab === "Job Information" ? "Job" :
+                                  tab === "Account Information" ? "Account" : "Docs";
+                    return (
+                      <button
+                        key={tab}
+                        onClick={() => setActiveTab(tab)}
+                        className={`pb-2 relative transition-all duration-150 cursor-pointer ${
+                          activeTab === tab 
+                            ? "text-blue-600 border-b-2 border-blue-600" 
+                            : "text-gray-400 hover:text-gray-600"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Scrollable Tab Content Area */}
+                <div className="flex-1 overflow-y-auto min-h-0 py-3 pr-1 text-[11px] font-semibold text-gray-700 scrollbar-thin">
+                  
+                  {/* Personal Information Tab */}
+                  {activeTab === "Personal Information" && (
+                    <div className="space-y-2.5">
+                      <div className="grid grid-cols-2 gap-2 border-b border-gray-50 pb-2">
+                        <div>
+                          <span className="text-[9px] text-gray-400 block">Full Name</span>
+                          <span className="text-gray-800">{selectedEmployee.name}</span>
+                        </div>
+                        <div>
+                          <span className="text-[9px] text-gray-400 block">Gender</span>
+                          <span className="text-gray-800">{selectedEmployee.gender || "Female"}</span>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 border-b border-gray-50 pb-2">
+                        <div>
+                          <span className="text-[9px] text-gray-400 block">Date of Birth</span>
+                          <span className="text-gray-800">{selectedEmployee.dob || "12-09-1999"}</span>
+                        </div>
+                        <div>
+                          <span className="text-[9px] text-gray-400 block">Blood Group</span>
+                          <span className="text-gray-800">{selectedEmployee.bloodGroup || "O+"}</span>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 border-b border-gray-50 pb-2">
+                        <div>
+                          <span className="text-[9px] text-gray-400 block">Emergency Contact</span>
+                          <span className="text-gray-800 truncate block">{selectedEmployee.emergencyContact || "Ramesh Devi (Father)"}</span>
+                        </div>
+                        <div>
+                          <span className="text-[9px] text-gray-400 block">Emergency Phone</span>
+                          <span className="text-gray-800">{selectedEmployee.emergencyPhone || "9876500000"}</span>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 border-b border-gray-50 pb-2">
+                        <div>
+                          <span className="text-[9px] text-gray-400 block">Marital Status</span>
+                          <span className="text-gray-800">{selectedEmployee.maritalStatus || "Single"}</span>
+                        </div>
+                        <div>
+                          <span className="text-[9px] text-gray-400 block">Nationality</span>
+                          <span className="text-gray-800">{selectedEmployee.nationality || "Indian"}</span>
+                        </div>
+                      </div>
+                      <div className="border-b border-gray-50 pb-2">
+                        <span className="text-[9px] text-gray-400 block">Address</span>
+                        <span className="text-gray-800 leading-snug">{selectedEmployee.address || "123, Anna Nagar, Chennai, Tamil Nadu - 600040"}</span>
+                      </div>
+                      <div>
+                        <span className="text-[9px] text-gray-400 block">Languages Known</span>
+                        <span className="text-gray-800">{selectedEmployee.languages || "Tamil, English, Hindi"}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Job Information Tab */}
+                  {activeTab === "Job Information" && (
+                    <div className="space-y-2.5">
+                      <div className="grid grid-cols-2 gap-2 border-b border-gray-50 pb-2">
+                        <div>
+                          <span className="text-[9px] text-gray-400 block">Job Title / Role</span>
+                          <span className="text-gray-800">{selectedEmployee.designation}</span>
+                        </div>
+                        <div>
+                          <span className="text-[9px] text-gray-400 block">Work Shift</span>
+                          <span className="text-gray-800">{selectedEmployee.shift || "Day Shift"}</span>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 border-b border-gray-50 pb-2">
+                        <div>
+                          <span className="text-[9px] text-gray-400 block">Department</span>
+                          <span className="text-gray-800">{selectedEmployee.department}</span>
+                        </div>
+                        <div>
+                          <span className="text-[9px] text-gray-400 block">Employment Type</span>
+                          <span className="text-gray-800">{selectedEmployee.type || "Full Time"}</span>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 border-b border-gray-50 pb-2">
+                        <div>
+                          <span className="text-[9px] text-gray-400 block">Supervisor / Manager</span>
+                          <span className="text-gray-800 truncate block">{selectedEmployee.manager || "Aravind Swamy"}</span>
+                        </div>
+                        <div>
+                          <span className="text-[9px] text-gray-400 block">Desk Location</span>
+                          <span className="text-gray-800">{selectedEmployee.desk || "Bay 4 - Floor 2"}</span>
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-[9px] text-gray-400 block">Joined Date</span>
+                        <span className="text-gray-800">{selectedEmployee.joiningDate}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Account Information Tab */}
+                  {activeTab === "Account Information" && (
+                    <div className="space-y-2.5">
+                      <div className="grid grid-cols-2 gap-2 border-b border-gray-50 pb-2">
+                        <div>
+                          <span className="text-[9px] text-gray-400 block">Employee ID</span>
+                          <span className="text-gray-800">{selectedEmployee.id}</span>
+                        </div>
+                        <div>
+                          <span className="text-[9px] text-gray-400 block">Username</span>
+                          <span className="text-gray-800">{selectedEmployee.username || "durga.devi"}</span>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 border-b border-gray-50 pb-2">
+                        <div>
+                          <span className="text-[9px] text-gray-400 block">System Role</span>
+                          <span className="text-gray-800">{selectedEmployee.role || "Developer"}</span>
+                        </div>
+                        <div>
+                          <span className="text-[9px] text-gray-400 block">Work Email</span>
+                          <span className="text-gray-800 truncate block">{selectedEmployee.email}</span>
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-[9px] text-gray-400 block">Last Login Timestamp</span>
+                        <span className="text-gray-800">{selectedEmployee.lastLogin || "23-07-2026 09:12 AM"}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Documents Tab */}
+                  {activeTab === "Documents" && (
+                    <div className="space-y-2">
+                      {[
+                        { name: "Resume_CV.pdf", size: "1.2 MB", type: "PDF" },
+                        { name: "Offer_Letter.pdf", size: "850 KB", type: "PDF" },
+                        { name: "Aadhaar_ID_Card.png", size: "2.4 MB", type: "Image" }
+                      ].map((doc, idx) => (
+                        <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 hover:bg-gray-100 border border-gray-100 rounded-lg transition cursor-pointer">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div className="p-1.5 bg-blue-50 text-blue-500 rounded-md shrink-0">
+                              <FileText size={14} />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-gray-800 font-bold truncate leading-normal">{doc.name}</p>
+                              <p className="text-[9px] text-gray-400 font-semibold">{doc.type} • {doc.size}</p>
+                            </div>
+                          </div>
+                          <button className="p-1 text-gray-400 hover:text-blue-500 hover:bg-white rounded-md transition border border-transparent hover:border-gray-200 cursor-pointer shrink-0">
+                            <Download size={12} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
     </div>
   );

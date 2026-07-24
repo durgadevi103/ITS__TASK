@@ -1,22 +1,21 @@
-import React, { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Menu, X, Bell, ChevronDown, User, LogOut } from "lucide-react";
+import { Menu, X, Bell, ChevronDown, LogOut } from "lucide-react";
 
 const Navbar = ({ usedata, onToggleSidebar, isSidebarOpen }) => {
-  const [currentUser, setCurrentUser] = useState(null);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const navigate = useNavigate();
-
-  useEffect(() => {
+  const [currentUser, setCurrentUser] = useState(() => {
     const userStr = localStorage.getItem("currentUser");
     if (userStr) {
       try {
-        setCurrentUser(JSON.parse(userStr));
+        return JSON.parse(userStr);
       } catch (e) {
         console.error(e);
       }
     }
-  }, []);
+    return null;
+  });
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const navigate = useNavigate();
 
   const handleLogout = () => {
     localStorage.removeItem("currentUser");

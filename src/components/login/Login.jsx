@@ -1,35 +1,29 @@
-import React, { useState, useEffect } from 'react';
-import { Mail, Lock, Eye, EyeOff, User, AlertCircle, CheckCircle2, Sparkles, ArrowLeft } from "lucide-react";
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Mail, Eye, EyeOff, AlertCircle, CheckCircle2, Sparkles, ArrowLeft } from "lucide-react";
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from "framer-motion";
+import api from '../../api/axios.js';
+
 
 // Default valid credentials for quick testing
+// eslint-disable-next-line react-refresh/only-export-components
 export const DEFAULT_CREDENTIALS = [
   { email: "admin@example.com", password: "Adm1n@", fullName: "Admin User" },
   { email: "user@example.com", password: "User1#", fullName: "Demo User" }
 ];
 
 const Login = () => {
-  const [email, setEmail] = useState("");
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const [email, setEmail] = useState(() => location.state?.email || "");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [success, setSuccess] = useState(() => location.state?.message || "");
   const [isLoading, setIsLoading] = useState(false);
-
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  useEffect(() => {
-    if (location.state?.email) {
-      setEmail(location.state.email);
-    }
-    if (location.state?.message) {
-      setSuccess(location.state.message);
-    }
-  }, [location.state]);
 
   const fillDemoCredentials = () => {
     setEmail(DEFAULT_CREDENTIALS[0].email);
@@ -70,7 +64,7 @@ const Login = () => {
     }
     const hasLetter = /[a-zA-Z]/.test(p);
     const hasNumber = /[0-9]/.test(p);
-    const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]/.test(p);
+    const hasSpecial = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(p);
 
     const missing = [];
     if (!hasLetter) missing.push("alphabet");
@@ -86,54 +80,7 @@ const Login = () => {
     return true;
   };
 
-  const handleLogin = (e) => {
-    if (e) e.preventDefault();
-    setError("");
-    setSuccess("");
 
-    const isEmailValid = validateEmailField();
-    const isPasswordValid = validatePasswordField();
-
-    if (!isEmailValid || !isPasswordValid) {
-      setError("Please fix the errors highlighted in red.");
-      return;
-    }
-
-    const trimmedEmail = email.trim();
-    setIsLoading(true);
-
-    setTimeout(() => {
-      // Retrieve registered users from localStorage
-      const storedUsers = JSON.parse(localStorage.getItem('registered_users') || '[]');
-      const allUsers = [...DEFAULT_CREDENTIALS, ...storedUsers];
-
-      // Validate credentials
-      const user = allUsers.find(
-        (u) => u.email.toLowerCase() === trimmedEmail.toLowerCase() && u.password === password
-      );
-
-      if (user) {
-        setSuccess(`Welcome back, ${user.fullName || 'User'}! Login successful.`);
-        setEmailError("");
-        setPasswordError("");
-        // Store current user session
-        localStorage.setItem('currentUser', JSON.stringify({
-          email: user.email,
-          fullName: user.fullName || 'User',
-          loginTime: new Date().toISOString()
-        }));
-
-        setTimeout(() => {
-          navigate('/');
-        }, 1200);
-      } else {
-        setError("Invalid email or password. Please check your credentials.");
-        setEmailError("Not valid email or password");
-        setPasswordError("Not valid email or password");
-        setIsLoading(false);
-      }
-    }, 500);
-  };
 
 
   // Backend Integration 
@@ -145,30 +92,19 @@ const Login = () => {
     setEmailError("");
     setPasswordError("");
 
-    if (!email.trim()) {
-      setEmailError("Email is required");
-      setError("Please enter your email.");
-      return;
-    }
+    const isEmailValid = validateEmailField();
+    const isPasswordValid = validatePasswordField();
 
-    if (!password) {
-      setPasswordError("Password is required");
-      setError("Please enter your password.");
+    if (!isEmailValid || !isPasswordValid) {
+      setError("Please fix the errors highlighted in red.");
       return;
     }
 
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5086/input/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email: email.trim(), pass: password }),
-      });
-
-      const data = await response.json();
+      const response = await api.post('/input/login', { email: email.trim(), pass: password });
+      const data = response.data;
 
       if (data.success) {
         setSuccess(data.message || "Login successful.");
@@ -186,7 +122,7 @@ const Login = () => {
         setEmailError("account not valid");
         setPasswordError("account not valid");
       }
-    } catch (error) {
+    } catch {
       setError("Network error. Ensure backend is running.");
     } finally {
       setIsLoading(false);
@@ -194,7 +130,7 @@ const Login = () => {
   };
 
   return (
-    <div className="relative min-h-screen overflow-y-auto bg-gradient-to-br from-blue-900 via-indigo-700 to-cyan-500 flex items-center justify-center px-3 sm:px-6 py-12 sm:py-16">
+    <div className="relative h-screen max-h-screen overflow-hidden bg-gradient-to-br from-blue-900 via-indigo-700 to-cyan-500 flex items-center justify-center px-3 sm:px-6 py-4">
 
       {/* Top Left 'Back to Home' Button */}
       <motion.button
@@ -251,7 +187,7 @@ const Login = () => {
         whileHover={{
           y: -4,
         }}
-        className="relative z-10 w-full max-w-md bg-white/20 backdrop-blur-xl border border-white/30 rounded-3xl shadow-2xl p-6 sm:p-8 mt-8 sm:mt-0"
+        className="relative z-10 w-full max-w-md bg-white/20 backdrop-blur-xl border border-white/30 rounded-2xl shadow-2xl p-5 sm:p-6 mt-4 sm:mt-0"
       >
         <motion.h1
           initial={{ opacity: 0, y: -30 }}

@@ -1,8 +1,9 @@
-import React, { useState } from "react";
-import { User, Mail, Eye, Lock, EyeOff, AlertCircle, CheckCircle2, ArrowLeft } from "lucide-react";
-import { useNavigate, Link } from "react-router-dom";
+import { useState } from "react";
+import { User, Mail, Eye, EyeOff, AlertCircle, CheckCircle2, ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { DEFAULT_CREDENTIALS } from "../login/Login";
+import api from '../../api/axios.js';
+
 
 const Signup = () => {
   const [fullName, setFullName] = useState("");
@@ -54,7 +55,7 @@ const Signup = () => {
     }
     const hasLetter = /[a-zA-Z]/.test(p);
     const hasNumber = /[0-9]/.test(p);
-    const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]/.test(p);
+    const hasSpecial = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(p);
 
     const missing = [];
     if (!hasLetter) missing.push("alphabet");
@@ -137,19 +138,12 @@ const Signup = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5086/input/insert', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: trimmedName,
-          email: trimmedEmail.toLowerCase(),
-          pass: password
-        }),
+      const response = await api.post('/input/insert', {
+        username: trimmedName,
+        email: trimmedEmail.toLowerCase(),
+        pass: password
       });
-
-      const data = await response.json();
+      const data = response.data;
 
       if (data.success) {
         setSuccess("Account created successfully! Redirecting to login...");
@@ -164,7 +158,7 @@ const Signup = () => {
       } else {
         setError(data.message || "Signup failed. Please try again.");
       }
-    } catch (error) {
+    } catch {
       setError("Network error. Ensure backend is running.");
     } finally {
       setIsLoading(false);
@@ -172,7 +166,7 @@ const Signup = () => {
   };
 
   return (
-    <div className="relative min-h-screen overflow-y-auto bg-gradient-to-br from-blue-900 via-indigo-700 to-cyan-500 flex items-center justify-center px-3 sm:px-6 py-12 sm:py-16">
+    <div className="relative h-screen max-h-screen overflow-hidden bg-gradient-to-br from-blue-900 via-indigo-700 to-cyan-500 flex items-center justify-center px-3 sm:px-6 py-4">
 
       {/* Top Left 'Back to Home' Button */}
       <motion.button
@@ -229,7 +223,7 @@ const Signup = () => {
         whileHover={{
           y: -4,
         }}
-        className="relative z-10 w-full max-w-md bg-white/20 backdrop-blur-xl border border-white/30 rounded-3xl shadow-2xl p-6 sm:p-8 mt-8 sm:mt-0"
+        className="relative z-10 w-full max-w-md bg-white/20 backdrop-blur-xl border border-white/30 rounded-2xl shadow-2xl p-5 sm:p-6 mt-4 sm:mt-0"
       >
         <motion.h1
           initial={{ opacity: 0, y: -30 }}
