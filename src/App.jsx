@@ -8,8 +8,10 @@ import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom
 import Signup from './components/signup/Signup'
 import EmployeeList from './components/employee/EmployeeList'
 import AddEmployee from './components/employee/AddEmployee'
+import Department from './components/department/Department'
 import Navbar from './mainscreen/Navbar'
 import Sidebar from './mainscreen/Sidebar'
+import Dashboard from './components/dashboard/Dashboard'
 
 // Simple elegant placeholder component for pages under development
 const Placeholder = ({ title }) => (
@@ -30,7 +32,7 @@ const Placeholder = ({ title }) => (
 
 // Inline Layout component that renders Sidebar, Navbar, and route Outlet
 const Layout = () => {
-  const [useData, setData] = useState("Employees");
+  const [useData, setData] = useState("Dashboard"); // Default title is Dashboard
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleGetdata = (value) => {
@@ -62,13 +64,13 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Layout />}>
-          <Route index element={<EmployeeList />} />
-          <Route path="dashboard" element={<Placeholder title="Dashboard" />} />
+          <Route index element={<Dashboard />} />
+          <Route path="dashboard" element={<Dashboard />} />
           <Route path="employees" element={<EmployeeList />} />
           <Route path="add-employee" element={<AddEmployee />} />
           
           {/* Placeholders for other sidebar sections */}
-          <Route path="departments" element={<Placeholder title="Departments" />} />
+          <Route path="departments" element={<Department />} />
           <Route path="attendance" element={<Placeholder title="Attendance Tracking" />} />
           <Route path="leave-management" element={<Placeholder title="Leave Management" />} />
           <Route path="payroll" element={<Placeholder title="Payroll & Salary" />} />

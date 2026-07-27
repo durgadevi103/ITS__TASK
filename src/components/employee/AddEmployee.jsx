@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   UserPlus,
@@ -6,6 +6,7 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import api from '../../api/axios';
 
 const AddEmployee = () => {
   const navigate = useNavigate();
@@ -34,59 +35,77 @@ const AddEmployee = () => {
   });
 
   const [showToast, setShowToast] = useState(false);
+  const [departments, setDepartments] = useState([]);
 
-  const handleSubmit = (e) => {
+  useEffect(() => {
+    const fetchDepts = async () => {
+      try {
+        const response = await api.get('/department/list');
+        if (response.data.success && response.data.list) {
+          setDepartments(response.data.list);
+          if (response.data.list.length > 0) {
+            const names = response.data.list.map(d => d.name);
+            if (!names.includes('IT')) {
+              setForm(prev => ({ ...prev, department: names[0] }));
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Error loading departments for employee registration", err);
+      }
+    };
+    fetchDepts();
+  }, []);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.name || !form.email || !form.designation) return;
 
-    // Load current list
-    const saved = localStorage.getItem("employees");
-    let currentEmployees = [];
-
-    if (saved) {
-      try {
-        currentEmployees = JSON.parse(saved);
-      } catch (err) {
-        console.error(err);
+    try {
+      // 1. Fetch current list to determine the next numeric ID
+      let nextNum = 1;
+      const responseList = await api.get('/employee/list');
+      if (responseList.data.success && responseList.data.list && responseList.data.list.length > 0) {
+        const ids = responseList.data.list.map(emp => parseInt(emp.employee_id));
+        const maxId = Math.max(...ids.filter(id => !isNaN(id)));
+        nextNum = maxId > 0 ? maxId + 1 : 1;
       }
+
+      // 2. Prepare payload matching backend parameter names
+      const payload = {
+        employee_id: nextNum,
+        emp_name: form.name,
+        emp_email: form.email,
+        emp_dob: form.dob,
+        emp_gender: form.gender,
+        emp_ph_no: form.phone,
+        emp_address: form.address,
+        emp_emg_contact: form.emergencyContact,
+        emp_emg_phone: form.emergencyPhone,
+        emp_bld_grp: form.bloodGroup,
+        emp_merit: form.maritalStatus,
+        emp_nationality: form.nationality,
+        emp_language: form.languages,
+        emp_dept: form.department,
+        emp_slary: '35000',
+        emp_desigation: form.designation
+      };
+
+      // 3. Post to backend
+      const responseCreate = await api.post('/employee/create', payload);
+      if (responseCreate.data.success) {
+        setShowToast(true);
+        setTimeout(() => {
+          setShowToast(false);
+          navigate("/employees");
+        }, 2000);
+      } else {
+        alert("Failed to save employee profile to database.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error contacting backend server. Make sure it is running.");
     }
-
-    // Avatar lists
-    const avatars = [
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=120",
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=120",
-      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=120",
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=120",
-      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=120",
-      "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=120"
-    ];
-    
-    // Create new ID (EMP001, EMP002, ...)
-    const nextNum = currentEmployees.length > 0 
-      ? Math.max(...currentEmployees.map(emp => {
-          const numeric = parseInt(emp.id.replace("EMP", ""));
-          return isNaN(numeric) ? 0 : numeric;
-        })) + 1
-      : 1;
-    const formattedId = `EMP${String(nextNum).padStart(3, '0')}`;
-
-    const newEmp = {
-      ...form,
-      id: formattedId,
-      avatarUrl: avatars[Math.floor(Math.random() * avatars.length)],
-      username: form.name.toLowerCase().replace(" ", "."),
-      role: form.designation,
-      lastLogin: "Just Created"
-    };
-
-    localStorage.setItem("employees", JSON.stringify([newEmp, ...currentEmployees]));
-    
-    setShowToast(true);
-    
-    setTimeout(() => {
-      setShowToast(false);
-      navigate("/employees");
-    }, 2000);
   };
 
   return (
@@ -320,11 +339,15 @@ const AddEmployee = () => {
                     onChange={(e) => setForm({ ...form, department: e.target.value })}
                     className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-gray-800 font-medium cursor-pointer"
                   >
-                    <option value="IT">IT</option>
-                    <option value="HR">HR</option>
-                    <option value="Finance">Finance</option>
-                    <option value="Marketing">Marketing</option>
-                    <option value="Operations">Operations</option>
+                    {departments.length === 0 ? (
+                      <option value="">No Departments Available</option>
+                    ) : (
+                      departments.map((dept) => (
+                        <option key={dept.dept_id_code} value={dept.name}>
+                          {dept.name}
+                        </option>
+                      ))
+                    )}
                   </select>
                 </div>
 

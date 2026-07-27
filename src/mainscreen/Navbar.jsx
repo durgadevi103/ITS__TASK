@@ -24,24 +24,24 @@ const Navbar = ({ usedata, onToggleSidebar, isSidebarOpen }) => {
     navigate("/login");
   };
 
-  const displayName = currentUser ? (currentUser.fullName || currentUser.email) : "Admin User";
+  const displayName = currentUser ? (currentUser.fullName || currentUser.email) : "Oormila";
   const displayAvatar = currentUser?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=2563eb&color=fff&bold=true`;
   
   return (
-    <nav className="fixed top-0 left-0 md:left-64 right-0 bg-white text-gray-800 border-b border-gray-100 shadow-sm z-40 h-16">
+    <nav className="fixed top-0 left-0 md:left-64 right-0 bg-gradient-to-r from-blue-600 to-blue-800 text-white border-b border-blue-500/20 shadow-sm z-40 h-16">
       <div className="mx-auto flex items-center justify-between px-6 h-full">
         
         {/* Left Side: Mobile Menu Toggle & Title */}
         <div className="flex items-center gap-3">
           <button
-            className="md:hidden text-gray-600 p-1.5 hover:bg-gray-100 rounded-lg transition"
+            className="md:hidden text-blue-100 p-1.5 hover:bg-white/10 hover:text-white rounded-lg transition"
             onClick={onToggleSidebar}
             aria-label="Toggle Navigation"
           >
             {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
           
-          <div className="font-bold text-gray-900 tracking-wide capitalize hidden md:block">
+          <div className="font-extrabold text-white tracking-wide capitalize hidden md:block">
             {usedata || "Dashboard"}
           </div>
         </div>
@@ -50,30 +50,30 @@ const Navbar = ({ usedata, onToggleSidebar, isSidebarOpen }) => {
         <div className="flex items-center gap-4">
           
           {/* Notification Bell */}
-          <button className="relative p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-xl transition">
+          <button className="relative p-2 text-blue-100 hover:text-white hover:bg-white/10 rounded-xl transition">
             <Bell size={20} />
-            <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center border border-white">
+            <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center border border-blue-600">
               3
             </span>
           </button>
 
-          <div className="h-6 w-px bg-gray-200" />
+          <div className="h-6 w-px bg-white/20" />
 
           {/* User Account Dropdown */}
           <div className="relative">
             <button
               onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="flex items-center gap-2 hover:bg-gray-50 p-1.5 rounded-xl transition"
+              className="flex items-center gap-2 hover:bg-white/10 p-1.5 rounded-xl transition"
             >
               <img
                 src={displayAvatar}
                 alt="Profile"
-                className="w-8 h-8 rounded-full object-cover border border-gray-200"
+                className="w-8 h-8 rounded-full object-cover border border-white/20"
               />
-              <span className="text-sm font-semibold text-gray-700 hidden sm:inline-block">
+              <span className="text-sm font-semibold text-white hidden sm:inline-block">
                 {displayName}
               </span>
-              <ChevronDown size={14} className="text-gray-400" />
+              <ChevronDown size={14} className="text-blue-200" />
             </button>
 
             {dropdownOpen && (

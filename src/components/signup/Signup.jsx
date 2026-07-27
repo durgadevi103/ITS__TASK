@@ -148,6 +148,12 @@ const Signup = () => {
 
       if (data.success) {
         setSuccess("Account created successfully! Redirecting to login...");
+        
+        // Save name for session lookup
+        localStorage.setItem(`signup_name_${trimmedEmail.toLowerCase()}`, trimmedName);
+
+
+
         setTimeout(() => {
           navigate("/login", {
             state: {
@@ -301,11 +307,10 @@ const Signup = () => {
                   if (fullNameError) setFullNameError("");
                 }}
                 placeholder="Enter your full name"
-                className={`w-full rounded-xl py-3 pl-4 pr-12 text-gray-900 outline-none transition font-medium ${
-                  fullNameError
+                className={`w-full rounded-xl py-3 pl-4 pr-12 text-gray-900 outline-none transition font-medium ${fullNameError
                     ? "bg-red-100/95 border-2 border-red-500 text-red-900 placeholder-red-400 focus:ring-2 focus:ring-red-400"
                     : "bg-white/80 focus:ring-2 focus:ring-cyan-400"
-                }`}
+                  }`}
               />
               <User className={`absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none ${fullNameError ? "text-red-500" : "text-gray-500"}`} />
             </div>
@@ -351,11 +356,10 @@ const Signup = () => {
                   }
                 }}
                 placeholder="e.g. user@example.com"
-                className={`w-full rounded-xl py-3 pl-4 pr-12 text-gray-900 outline-none transition font-medium ${
-                  emailError
+                className={`w-full rounded-xl py-3 pl-4 pr-12 text-gray-900 outline-none transition font-medium ${emailError
                     ? "bg-red-100/95 border-2 border-red-500 text-red-900 placeholder-red-400 focus:ring-2 focus:ring-red-400"
                     : "bg-white/80 focus:ring-2 focus:ring-cyan-400"
-                }`}
+                  }`}
               />
               <Mail className={`absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none ${emailError ? "text-red-500" : "text-gray-500"}`} />
             </div>
@@ -385,13 +389,12 @@ const Signup = () => {
                     {passwordError}
                   </span>
                 )}
-                <span className={`text-xs px-2 py-0.5 rounded-md border ${
-                  password.length === 10 && !passwordError
+                <span className={`text-xs px-2 py-0.5 rounded-md border ${password.length === 10 && !passwordError
                     ? "bg-emerald-950/50 border-emerald-400/40 text-emerald-200"
                     : password.length > 10
-                    ? "bg-red-950/60 border-red-400/60 text-red-300 font-bold"
-                    : "bg-cyan-950/40 border-cyan-400/30 text-cyan-200"
-                }`}>
+                      ? "bg-red-950/60 border-red-400/60 text-red-300 font-bold"
+                      : "bg-cyan-950/40 border-cyan-400/30 text-cyan-200"
+                  }`}>
                   {password.length}/10 chars
                 </span>
               </div>
@@ -422,11 +425,10 @@ const Signup = () => {
                   if (password) validatePasswordField();
                 }}
                 placeholder="Password (max 10 chars: A-Z, 0-9, @#$)"
-                className={`w-full rounded-xl py-3 pl-4 pr-12 text-gray-900 outline-none transition font-medium ${
-                  passwordError
+                className={`w-full rounded-xl py-3 pl-4 pr-12 text-gray-900 outline-none transition font-medium ${passwordError
                     ? "bg-red-100/95 border-2 border-red-500 text-red-900 placeholder-red-400 focus:ring-2 focus:ring-red-400"
                     : "bg-white/80 focus:ring-2 focus:ring-cyan-400"
-                }`}
+                  }`}
               />
 
               <button
@@ -497,13 +499,12 @@ const Signup = () => {
                   if (confirmPassword) validateConfirmPasswordField(confirmPassword, password, true);
                 }}
                 placeholder="Confirm password"
-                className={`w-full rounded-xl py-3 pl-4 pr-12 text-gray-900 outline-none transition font-medium ${
-                  isPasswordMatched
+                className={`w-full rounded-xl py-3 pl-4 pr-12 text-gray-900 outline-none transition font-medium ${isPasswordMatched
                     ? "bg-emerald-100/95 border-2 border-emerald-500 text-emerald-900 placeholder-emerald-400 focus:ring-2 focus:ring-emerald-400"
                     : confirmPasswordError
-                    ? "bg-red-100/95 border-2 border-red-500 text-red-900 placeholder-red-400 focus:ring-2 focus:ring-red-400"
-                    : "bg-white/80 focus:ring-2 focus:ring-cyan-400"
-                }`}
+                      ? "bg-red-100/95 border-2 border-red-500 text-red-900 placeholder-red-400 focus:ring-2 focus:ring-red-400"
+                      : "bg-white/80 focus:ring-2 focus:ring-cyan-400"
+                  }`}
               />
 
               <button

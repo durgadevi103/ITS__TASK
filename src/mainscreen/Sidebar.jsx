@@ -42,29 +42,29 @@ const Sidebar = ({ frstValue, isOpen, onClose }) => {
 
       {/* Sidebar Container */}
       <div
-        className={`fixed top-0 left-0 h-full w-64 bg-[#090d16] text-white z-50 transform transition-transform duration-300 ease-in-out md:translate-x-0 ${
+        className={`fixed top-0 left-0 h-full w-64 bg-gradient-to-b from-slate-950 via-slate-900 to-indigo-950 text-white z-50 transform transition-transform duration-300 ease-in-out md:translate-x-0 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
-        } flex flex-col justify-between border-r border-gray-900`}
+        } flex flex-col justify-between border-r border-slate-900 shadow-xl`}
       >
         <div>
           {/* Header Branding */}
-          <div className="flex items-center justify-between p-5 border-b border-gray-900">
+          <div className="flex items-center justify-between p-5 border-b border-white/5">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-600/30 shrink-0">
+              <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shadow-inner shrink-0">
                 <Users className="w-5 h-5 text-white" />
               </div>
               <div className="leading-tight">
                 <h2 className="text-sm font-extrabold tracking-wider text-white uppercase">
                   EMPLOYEE
                 </h2>
-                <p className="text-[10px] font-bold text-gray-500 tracking-widest uppercase">
+                <p className="text-[10px] font-extrabold text-indigo-300 tracking-widest uppercase">
                   MANAGEMENT
                 </p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="md:hidden text-gray-400 hover:text-white p-1.5 rounded-xl hover:bg-gray-800 transition"
+              className="md:hidden text-slate-300 hover:text-white p-1.5 rounded-xl hover:bg-white/10 transition"
               aria-label="Close sidebar"
             >
               <X size={18} />
@@ -79,10 +79,10 @@ const Sidebar = ({ frstValue, isOpen, onClose }) => {
                 to={item.path}
                 onClick={() => onData(item.name)}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
+                  `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
                     isActive || (item.name === "Employees" && window.location.pathname === "/")
-                      ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25"
-                      : "text-gray-400 hover:text-gray-200 hover:bg-gray-800/40"
+                      ? "bg-white text-slate-900 shadow-md shadow-slate-950/20 font-bold"
+                      : "text-slate-300 hover:text-white hover:bg-white/5"
                   }`
                 }
               >
@@ -94,11 +94,11 @@ const Sidebar = ({ frstValue, isOpen, onClose }) => {
         </div>
 
         {/* Logout at the bottom */}
-        <div className="p-4 border-t border-gray-900">
+        <div className="p-4 border-t border-white/5">
           <NavLink
             to="/login"
             onClick={() => onData("Logout")}
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-400 hover:text-gray-200 hover:bg-gray-800/40 transition-all duration-200"
+            className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-all duration-200"
           >
             <LogOut size={18} />
             <span>Logout</span>

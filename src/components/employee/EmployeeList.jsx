@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Search,
@@ -16,208 +16,76 @@ import {
   X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import api from '../../api/axios';
 
 const EmployeeList = () => {
   const navigate = useNavigate();
-
-  // Mock list with complete profile details matching the mock image
-  const defaultEmployees = [
-    {
-      id: "EMP001",
-      name: "Durga Devi",
-      email: "durga@email.com",
-      phone: "9876543210",
-      department: "IT",
-      designation: "Frontend Developer",
-      joiningDate: "15-07-2024",
-      status: "Active",
-      avatarUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=120",
-      // Personal details
-      dob: "12-09-1999",
-      gender: "Female",
-      address: "123, Anna Nagar, Chennai, Tamil Nadu - 600040",
-      emergencyContact: "Ramesh Devi (Father)",
-      emergencyPhone: "9876500000",
-      bloodGroup: "O+",
-      maritalStatus: "Single",
-      nationality: "Indian",
-      languages: "Tamil, English, Hindi",
-      // Job info
-      shift: "Day Shift",
-      type: "Full Time",
-      manager: "Aravind Swamy",
-      desk: "Bay 4 - Floor 2",
-      // Account info
-      username: "durga.devi",
-      role: "Developer",
-      lastLogin: "23-07-2026 09:12 AM"
-    },
-    {
-      id: "EMP002",
-      name: "Rahul Kumar",
-      email: "rahul@email.com",
-      phone: "9876543211",
-      department: "HR",
-      designation: "HR Executive",
-      joiningDate: "10-06-2024",
-      status: "Active",
-      avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=120",
-      dob: "24-05-1995",
-      gender: "Male",
-      address: "456, Lake View Road, Bangalore, Karnataka - 560001",
-      emergencyContact: "Sunita Kumar (Mother)",
-      emergencyPhone: "9876500001",
-      bloodGroup: "A+",
-      maritalStatus: "Married",
-      nationality: "Indian",
-      languages: "Kannada, Hindi, English",
-      shift: "Day Shift",
-      type: "Full Time",
-      manager: "Priya Nair",
-      desk: "Bay 1 - Floor 1",
-      username: "rahul.kumar",
-      role: "HR Executive",
-      lastLogin: "23-07-2026 10:45 AM"
-    },
-    {
-      id: "EMP003",
-      name: "Priya Sharma",
-      email: "priya@email.com",
-      phone: "9876543212",
-      department: "Finance",
-      designation: "Accountant",
-      joiningDate: "05-05-2024",
-      status: "On Leave",
-      avatarUrl: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=120",
-      dob: "08-11-1993",
-      gender: "Female",
-      address: "789, Residency Road, Hyderabad, Telangana - 500002",
-      emergencyContact: "Karan Sharma (Spouse)",
-      emergencyPhone: "9876500002",
-      bloodGroup: "B+",
-      maritalStatus: "Married",
-      nationality: "Indian",
-      languages: "Telugu, Hindi, English",
-      shift: "Day Shift",
-      type: "Full Time",
-      manager: "Vikram Malhotra",
-      desk: "Bay 2 - Floor 3",
-      username: "priya.sharma",
-      role: "Finance Admin",
-      lastLogin: "22-07-2026 05:30 PM"
-    },
-    {
-      id: "EMP004",
-      name: "Arun Raj",
-      email: "arun@email.com",
-      phone: "9876543213",
-      department: "IT",
-      designation: "Backend Developer",
-      joiningDate: "20-04-2024",
-      status: "Active",
-      avatarUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=120",
-      dob: "15-02-1997",
-      gender: "Male",
-      address: "12, Beach Road, Chennai, Tamil Nadu - 600004",
-      emergencyContact: "Rajasekar (Father)",
-      emergencyPhone: "9876500003",
-      bloodGroup: "O-",
-      maritalStatus: "Single",
-      nationality: "Indian",
-      languages: "Tamil, English",
-      shift: "Night Shift",
-      type: "Full Time",
-      manager: "Aravind Swamy",
-      desk: "Bay 5 - Floor 2",
-      username: "arun.raj",
-      role: "Developer",
-      lastLogin: "23-07-2026 08:00 AM"
-    },
-    {
-      id: "EMP005",
-      name: "Sneha Reddy",
-      email: "sneha@email.com",
-      phone: "9876543214",
-      department: "Marketing",
-      designation: "Marketing Executive",
-      joiningDate: "18-03-2024",
-      status: "Active",
-      avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=120",
-      dob: "30-07-1996",
-      gender: "Female",
-      address: "99, MG Road, Vijayawada, Andhra Pradesh - 520010",
-      emergencyContact: "Nageswara Reddy (Father)",
-      emergencyPhone: "9876500004",
-      bloodGroup: "AB+",
-      maritalStatus: "Single",
-      nationality: "Indian",
-      languages: "Telugu, Hindi, English",
-      shift: "Day Shift",
-      type: "Full Time",
-      manager: "Sanjay Kumar",
-      desk: "Bay 3 - Floor 1",
-      username: "sneha.reddy",
-      role: "Marketing Manager",
-      lastLogin: "23-07-2026 11:15 AM"
-    },
-    {
-      id: "EMP006",
-      name: "Vikram Singh",
-      email: "vikram@email.com",
-      phone: "9876543215",
-      department: "Operations",
-      designation: "Operations Manager",
-      joiningDate: "12-02-2024",
-      status: "Inactive",
-      avatarUrl: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=120",
-      dob: "05-04-1990",
-      gender: "Male",
-      address: "10, Sector 15, Noida, Uttar Pradesh - 201301",
-      emergencyContact: "Rita Singh (Spouse)",
-      emergencyPhone: "9876500005",
-      bloodGroup: "B-",
-      maritalStatus: "Married",
-      nationality: "Indian",
-      languages: "Hindi, Punjabi, English",
-      shift: "Day Shift",
-      type: "Full Time",
-      manager: "Rajiv Bajaj",
-      desk: "Cabin 3 - Floor 4",
-      username: "vikram.singh",
-      role: "Operations Admin",
-      lastLogin: "20-07-2026 06:00 PM"
-    }
-  ];
-
-  // State
-  const [employees, setEmployees] = useState(() => {
-    const saved = localStorage.getItem("employees");
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (parsed && parsed.length > 0) {
-          // Merge details if missing
-          return parsed.map((e) => {
-            const match = defaultEmployees.find(d => d.id === e.id);
-            return { ...match, ...e };
-          });
-        }
-      } catch (err) {
-        console.error(err);
-      }
-    }
-    localStorage.setItem("employees", JSON.stringify(defaultEmployees));
-    return defaultEmployees;
-  });
+  // State: starts empty and fetches from backend
+  const [employees, setEmployees] = useState([]);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDept, setSelectedDept] = useState("All Departments");
   const [selectedStatus, setSelectedStatus] = useState("All Status");
-  const [selectedEmployee, setSelectedEmployee] = useState(() => {
-    return employees.length > 0 ? employees[0] : null;
-  });
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [activeTab, setActiveTab] = useState("Personal Information");
   const [toastMsg, setToastMsg] = useState("");
+  const [departments, setDepartments] = useState([]);
+
+  const fetchEmployees = async () => {
+    try {
+      const response = await api.get('/employee/list');
+      if (response.data.success) {
+        // Sort by database employee_id ascending to keep stable order
+        const sorted = response.data.list.sort((a, b) => a.employee_id - b.employee_id);
+        const mapped = sorted.map((emp, index) => ({
+          id: `EMP${String(index + 1).padStart(3, '0')}`,
+          employee_id: emp.employee_id,
+          name: emp.emp_name,
+          email: emp.emp_email,
+          dob: emp.emp_dob,
+          gender: emp.emp_gender,
+          phone: emp.emp_ph_no,
+          address: emp.emp_address,
+          emergencyContact: emp.emp_emg_contact,
+          emergencyPhone: emp.emp_emg_phone,
+          bloodGroup: emp.emp_bld_grp,
+          maritalStatus: emp.emp_merit,
+          nationality: emp.emp_nationality,
+          languages: emp.emp_language,
+          department: emp.emp_dept,
+          designation: emp.emp_desigation,
+          salary: emp.emp_slary || '',
+          status: 'Active',
+          avatarUrl: emp.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(emp.emp_name)}&background=2563eb&color=fff&bold=true`
+        }));
+        setEmployees(mapped);
+        
+        // Auto select first employee
+        if (mapped.length > 0) {
+          setSelectedEmployee(mapped[0]);
+        }
+      }
+    } catch (err) {
+      console.error("Error loading employees from backend", err);
+      setEmployees([]);
+    }
+  };
+
+  const fetchDepartments = async () => {
+    try {
+      const response = await api.get('/department/list');
+      if (response.data.success) {
+        setDepartments(response.data.list);
+      }
+    } catch (err) {
+      console.error("Error loading departments for filtering", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchEmployees();
+    fetchDepartments();
+  }, []);
 
   // Filters
   const filteredEmployees = employees.filter(emp => {
@@ -312,11 +180,11 @@ const EmployeeList = () => {
                 className="w-full sm:w-auto bg-white border border-gray-200 rounded-lg pl-3 pr-8 py-1.5 text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition cursor-pointer appearance-none min-w-[130px]"
               >
                 <option value="All Departments">All Departments</option>
-                <option value="IT">IT</option>
-                <option value="HR">HR</option>
-                <option value="Finance">Finance</option>
-                <option value="Marketing">Marketing</option>
-                <option value="Operations">Operations</option>
+                {departments.map((dept) => (
+                  <option key={dept.dept_id_code} value={dept.name}>
+                    {dept.name}
+                  </option>
+                ))}
               </select>
               <ChevronDown size={12} className="text-gray-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>

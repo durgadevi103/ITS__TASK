@@ -84,7 +84,7 @@ const Login = () => {
 
 
   // Backend Integration 
-  
+
   const handleLoginBackend = async (e) => {
     if (e) e.preventDefault();
     setError("");
@@ -105,15 +105,16 @@ const Login = () => {
     try {
       const response = await api.post('/auth/login', { email: email.trim(), pass: password });
       const data = response.data;
-
+      
       if (data.success === true) {
         setSuccess(data.message || "Login successful.");
-        // localStorage.setItem('currentUser', JSON.stringify({
-        //   email: email.trim(),
-        //   fullName: data.user?.username || "Admin User",
-        //   avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(data.user?.username || "Admin User")}&background=2563eb&color=fff&bold=true`,
-        //   loginTime: new Date().toISOString()
-        // }));
+        const loggedInName = localStorage.getItem(`signup_name_${email.trim().toLowerCase()}`) || "Oormila";
+        localStorage.setItem('currentUser', JSON.stringify({
+          email: email.trim(),
+          fullName: loggedInName,
+          avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(loggedInName)}&background=2563eb&color=fff&bold=true`,
+          loginTime: new Date().toISOString()
+        }));
         setTimeout(() => navigate('/'), 1200);
       } else {
         setError("account not valid");
@@ -283,11 +284,10 @@ const Login = () => {
                   setEmailError("");
                 }}
                 placeholder="e.g. user@example.com"
-                className={`w-full rounded-xl py-3 pl-4 pr-12 text-gray-900 outline-none transition font-medium ${
-                  emailError
+                className={`w-full rounded-xl py-3 pl-4 pr-12 text-gray-900 outline-none transition font-medium ${emailError
                     ? "bg-red-100/95 border-2 border-red-500 text-red-900 placeholder-red-400 focus:ring-2 focus:ring-red-400"
                     : "bg-white/80 focus:ring-2 focus:ring-cyan-400"
-                }`}
+                  }`}
               />
               <Mail className={`absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none ${emailError ? "text-red-500" : "text-gray-500"}`} />
             </div>
@@ -328,11 +328,10 @@ const Login = () => {
                   setPasswordError("");
                 }}
                 placeholder="Enter your password"
-                className={`w-full rounded-xl py-3 pl-4 pr-12 text-gray-900 outline-none transition font-medium ${
-                  passwordError
+                className={`w-full rounded-xl py-3 pl-4 pr-12 text-gray-900 outline-none transition font-medium ${passwordError
                     ? "bg-red-100/95 border-2 border-red-500 text-red-900 placeholder-red-400 focus:ring-2 focus:ring-red-400"
                     : "bg-white/80 focus:ring-2 focus:ring-cyan-400"
-                }`}
+                  }`}
               />
 
               <button
