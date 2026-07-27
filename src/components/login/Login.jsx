@@ -114,7 +114,7 @@ const Login = () => {
       
       if (data.success === true) {
         setSuccess(data.message || "Login successful.");
-        const loggedInName = data.user?.username || "Oormila";
+        const loggedInName = data.user?.username || email.trim().split('@')[0] || "Oormila";
         localStorage.setItem('currentUser', JSON.stringify({
           email: email.trim(),
           fullName: loggedInName,

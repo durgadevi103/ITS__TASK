@@ -24,7 +24,11 @@ const Navbar = ({ usedata, onToggleSidebar, isSidebarOpen }) => {
     navigate("/login");
   };
 
-  const displayName = currentUser ? (currentUser.fullName || currentUser.email) : "Oormila";
+  const displayName = currentUser 
+    ? (currentUser.fullName && currentUser.fullName !== "Oormila" 
+        ? currentUser.fullName 
+        : (currentUser.email ? currentUser.email.split('@')[0] : "Oormila")) 
+    : "Oormila";
   const displayAvatar = currentUser?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=2563eb&color=fff&bold=true`;
   
   return (
