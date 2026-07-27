@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Mail, Eye, EyeOff, AlertCircle, CheckCircle2, Sparkles, ArrowLeft } from "lucide-react";
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from "framer-motion";
@@ -15,6 +15,12 @@ export const DEFAULT_CREDENTIALS = [
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    if (localStorage.getItem("currentUser")) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [navigate]);
 
   const [email, setEmail] = useState(() => location.state?.email || "");
   const [password, setPassword] = useState("");
@@ -108,14 +114,14 @@ const Login = () => {
       
       if (data.success === true) {
         setSuccess(data.message || "Login successful.");
-        const loggedInName = localStorage.getItem(`signup_name_${email.trim().toLowerCase()}`) || "Oormila";
+        const loggedInName = data.user?.username || "Oormila";
         localStorage.setItem('currentUser', JSON.stringify({
           email: email.trim(),
           fullName: loggedInName,
           avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(loggedInName)}&background=2563eb&color=fff&bold=true`,
           loginTime: new Date().toISOString()
         }));
-        setTimeout(() => navigate('/'), 1200);
+        setTimeout(() => navigate('/dashboard'), 1200);
       } else {
         setError("account not valid");
         setEmailError("account not valid");
@@ -135,7 +141,7 @@ const Login = () => {
       <motion.button
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
-        onClick={() => navigate("/")}
+        onClick={() => navigate("/dashboard")}
         className="absolute top-4 left-4 sm:top-6 sm:left-6 z-30 flex items-center gap-2 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl border border-white/30 transition text-xs sm:text-sm font-medium shadow-lg hover:scale-105 active:scale-95"
       >
         <ArrowLeft className="w-4 h-4" />

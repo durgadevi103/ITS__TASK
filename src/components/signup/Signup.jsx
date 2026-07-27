@@ -148,9 +148,6 @@ const Signup = () => {
 
       if (data.success) {
         setSuccess("Account created successfully! Redirecting to login...");
-        
-        // Save name for session lookup
-        localStorage.setItem(`signup_name_${trimmedEmail.toLowerCase()}`, trimmedName);
 
 
 
@@ -179,7 +176,7 @@ const Signup = () => {
       <motion.button
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
-        onClick={() => navigate("/")}
+        onClick={() => navigate("/dashboard")}
         className="absolute top-4 left-4 sm:top-6 sm:left-6 z-30 flex items-center gap-2 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl border border-white/30 transition text-xs sm:text-sm font-medium shadow-lg hover:scale-105 active:scale-95"
       >
         <ArrowLeft className="w-4 h-4" />

@@ -59,25 +59,37 @@ const Layout = () => {
   );
 };
 
+// ProtectedRoute component to ensure only logged-in users access layout pages
+const ProtectedRoute = () => {
+  const currentUser = localStorage.getItem("currentUser");
+  return currentUser ? <Outlet /> : <Navigate to="/login" replace />;
+};
+
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="employees" element={<EmployeeList />} />
-          <Route path="add-employee" element={<AddEmployee />} />
-          
-          {/* Placeholders for other sidebar sections */}
-          <Route path="departments" element={<Department />} />
-          <Route path="attendance" element={<Placeholder title="Attendance Tracking" />} />
-          <Route path="leave-management" element={<Placeholder title="Leave Management" />} />
-          <Route path="payroll" element={<Placeholder title="Payroll & Salary" />} />
-          <Route path="reports" element={<Placeholder title="Analytics & Reports" />} />
-          <Route path="settings" element={<Placeholder title="System Settings" />} />
+        {/* Root path redirects to login */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
+
+        {/* Protected layout routes */}
+        <Route element={<ProtectedRoute />}>
+          <Route element={<Layout />}>
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="employees" element={<EmployeeList />} />
+            <Route path="add-employee" element={<AddEmployee />} />
+            
+            {/* Placeholders for other sidebar sections */}
+            <Route path="departments" element={<Department />} />
+            <Route path="attendance" element={<Placeholder title="Attendance Tracking" />} />
+            <Route path="leave-management" element={<Placeholder title="Leave Management" />} />
+            <Route path="payroll" element={<Placeholder title="Payroll & Salary" />} />
+            <Route path="reports" element={<Placeholder title="Analytics & Reports" />} />
+            <Route path="settings" element={<Placeholder title="System Settings" />} />
+          </Route>
         </Route>
 
+        {/* Public auth routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
       </Routes>
