@@ -1,38 +1,32 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Menu, X, Bell, ChevronDown, LogOut } from "lucide-react";
+import api from "../api/axios.js";
 
-const Navbar = ({ usedata, onToggleSidebar, isSidebarOpen }) => {
-  const [currentUser, setCurrentUser] = useState(() => {
-    const userStr = localStorage.getItem("currentUser");
-    if (userStr) {
-      try {
-        return JSON.parse(userStr);
-      } catch (e) {
-        console.error(e);
-      }
-    }
-    return null;
-  });
+const Navbar = ({ usedata, onToggleSidebar, isSidebarOpen, currentUser, setCurrentUser }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    localStorage.removeItem("currentUser");
-    setCurrentUser(null);
+  const handleLogout = async () => {
+    try {
+      await api.post("/auth/logout");
+    } catch (e) {
+      console.error("Logout failed", e);
+    }
+    if (setCurrentUser) {
+      setCurrentUser(null);
+    }
     setDropdownOpen(false);
     navigate("/login");
   };
 
   const displayName = currentUser 
-    ? (currentUser.fullName && currentUser.fullName !== "Oormila" 
-        ? currentUser.fullName 
-        : (currentUser.email ? currentUser.email.split('@')[0] : "Oormila")) 
-    : "Oormila";
-  const displayAvatar = currentUser?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=2563eb&color=fff&bold=true`;
+    ? (currentUser.username || currentUser.fullName || (currentUser.email ? currentUser.email.split('@')[0] : "User")) 
+    : "User";
+  const displayAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=2563eb&color=fff&bold=true`;
   
   return (
-    <nav className="fixed top-0 left-0 md:left-64 right-0 bg-gradient-to-r from-blue-600 to-blue-800 text-white border-b border-blue-500/20 shadow-sm z-40 h-16 overflow-hidden">
+    <nav className="fixed top-0 left-0 md:left-64 right-0 bg-white/90 backdrop-blur-md text-slate-700 border-b border-slate-200/50 shadow-sm z-40 h-16">
       {/* Floating Bubbles Background */}
       <div className="bubble-container">
         <div className="bubble-nb w-5 h-5 left-[5%]" style={{ animationDelay: '0s', animationDuration: '8s' }} />
@@ -49,14 +43,14 @@ const Navbar = ({ usedata, onToggleSidebar, isSidebarOpen }) => {
         {/* Left Side: Mobile Menu Toggle & Title */}
         <div className="flex items-center gap-3">
           <button
-            className="md:hidden text-blue-100 p-1.5 hover:bg-white/10 hover:text-white rounded-lg transition"
+            className="md:hidden text-slate-500 p-1.5 hover:bg-slate-100 hover:text-slate-700 rounded-lg transition"
             onClick={onToggleSidebar}
             aria-label="Toggle Navigation"
           >
             {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
           
-          <div className="font-extrabold text-white tracking-wide capitalize hidden md:block">
+          <div className="font-extrabold text-slate-800 tracking-wide capitalize hidden md:block">
             {usedata || "Dashboard"}
           </div>
         </div>
@@ -65,30 +59,30 @@ const Navbar = ({ usedata, onToggleSidebar, isSidebarOpen }) => {
         <div className="flex items-center gap-4">
           
           {/* Notification Bell */}
-          <button className="relative p-2 text-blue-100 hover:text-white hover:bg-white/10 rounded-xl transition">
+          <button className="relative p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition">
             <Bell size={20} />
-            <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center border border-blue-600">
+            <span className="absolute top-1 right-1 w-4 h-4 bg-red-550 text-white text-[9px] font-bold rounded-full flex items-center justify-center border border-white">
               3
             </span>
           </button>
 
-          <div className="h-6 w-px bg-white/20" />
+          <div className="h-6 w-px bg-slate-200" />
 
           {/* User Account Dropdown */}
           <div className="relative">
             <button
               onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="flex items-center gap-2 hover:bg-white/10 p-1.5 rounded-xl transition"
+              className="flex items-center gap-2 hover:bg-slate-100 p-1.5 rounded-xl transition"
             >
               <img
                 src={displayAvatar}
                 alt="Profile"
-                className="w-8 h-8 rounded-full object-cover border border-white/20"
+                className="w-8 h-8 rounded-full object-cover border border-slate-200"
               />
-              <span className="text-sm font-semibold text-white hidden sm:inline-block">
+              <span className="text-sm font-semibold text-slate-700 hidden sm:inline-block">
                 {displayName}
               </span>
-              <ChevronDown size={14} className="text-blue-200" />
+              <ChevronDown size={14} className="text-slate-450" />
             </button>
 
             {dropdownOpen && (
@@ -99,7 +93,7 @@ const Navbar = ({ usedata, onToggleSidebar, isSidebarOpen }) => {
                 </div>
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition text-left font-medium"
+                  className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-55 transition text-left font-medium"
                 >
                   <LogOut size={16} />
                   Logout

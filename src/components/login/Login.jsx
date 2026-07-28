@@ -12,15 +12,51 @@ export const DEFAULT_CREDENTIALS = [
   { email: "user@example.com", password: "User1#", fullName: "Demo User" }
 ];
 
-const Login = () => {
+const Login = ({ onLoginSuccess }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-    if (localStorage.getItem("currentUser")) {
-      navigate('/dashboard', { replace: true });
+    const usersMap = {
+      'paupathi2000@gmail.c': 'pasu',
+      'ganga34@gmail.com': 'ganga',
+      'odyseey12@gmail.com': 'odyseey',
+      'pandi23@gmail.com': 'pandi',
+      'valli123@gmail.com': 'valli',
+      'kumar123@gmail.com': 'kumar',
+      'ragul12@gmail.com': 'ragul',
+      'raju123@gmail.com': 'Raju',
+      'pasupathi123@gmail.c': 'pasupathiii',
+      'ikram123@gmail.com': 'ikram',
+      'arun123@gmail.com': 'Arun',
+      'ormila123@gmail.com': 'Oormila',
+      'sk123@gmail.com': 'scrott',
+      'ranjith123@gmail.com': 'ranjith',
+      'durgadeviveeran123@gmail.com': 'Durga Devi',
+      'bringle123@gmail.com': 'Bringle',
+      'jeyaprakash123@gmail.com': 'Jeya Prakash',
+      'rockstar420@gmail.com': 'rockstar',
+      'shridar1256@gmail.com': 'shridar',
+      'muthukumar123@gmail.com': 'Muthu Kumar',
+      'admin@example.com': 'Admin User',
+      'user@example.com': 'Demo User',
+      'hema123@gmail.com': 'Hemapriya',
+      'madhumitha123@gmail.com': 'Madhumitha',
+      'kali123@gmail.com': 'Kali',
+      'suba123@gmail.com': 'suba',
+      'ajitha123@gmail.com': 'ajitha',
+      'dharshini123@gmail.com': 'dharshini',
+      'abirami123@gmail.com': 'abirami',
+      'lakshmi12@gmail.com': 'lakshmi',
+      'selva123@gmail.com': 'selva'
+    };
+    for (const [email, name] of Object.entries(usersMap)) {
+      const key = `signupName_${email.toLowerCase()}`;
+      if (!localStorage.getItem(key)) {
+        localStorage.setItem(key, name);
+      }
     }
-  }, [navigate]);
+  }, []);
 
   const [email, setEmail] = useState(() => location.state?.email || "");
   const [password, setPassword] = useState("");
@@ -114,13 +150,13 @@ const Login = () => {
       
       if (data.success === true) {
         setSuccess(data.message || "Login successful.");
-        const loggedInName = data.user?.username || email.trim().split('@')[0] || "Oormila";
-        localStorage.setItem('currentUser', JSON.stringify({
-          email: email.trim(),
-          fullName: loggedInName,
-          avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(loggedInName)}&background=2563eb&color=fff&bold=true`,
-          loginTime: new Date().toISOString()
-        }));
+        if (onLoginSuccess) {
+          const storedName = localStorage.getItem(`signupName_${email.trim().toLowerCase()}`);
+          onLoginSuccess({
+            email: email.trim(),
+            username: storedName || email.trim().split('@')[0]
+          });
+        }
         setTimeout(() => navigate('/dashboard'), 1200);
       } else {
         setError("account not valid");

@@ -33,24 +33,50 @@ const Dashboard = () => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        // Fetch employees
-        const empRes = await api.get('/employee/list');
         let employeesList = [];
-        if (empRes.data.success && empRes.data.list) {
-          employeesList = empRes.data.list;
-          setEmployees(employeesList);
-          setEmployeeCount(employeesList.length);
-          
-          // Count new hires (simulated based on newest employee additions)
-          const recentNum = Math.min(5, employeesList.length);
-          setNewHiresCount(recentNum);
+
+        // Fetch employees
+        try {
+          const empRes = await api.get('/employee/list');
+          if (empRes.data.success && empRes.data.list) {
+            employeesList = empRes.data.list;
+            setEmployees(employeesList);
+            setEmployeeCount(employeesList.length);
+            
+            // Count new hires (simulated based on newest employee additions)
+            const recentNum = Math.min(5, employeesList.length);
+            setNewHiresCount(recentNum);
+          }
+        } catch (err) {
+          console.error("Error fetching employees", err);
         }
 
         // Fetch departments
-        const deptRes = await api.get('/department/list');
-        if (deptRes.data.success && deptRes.data.list) {
-          setDepartments(deptRes.data.list);
-          setDeptCount(deptRes.data.list.length);
+        try {
+          const deptRes = await api.get('/department/list/100/0');
+          const listData = deptRes.data.data || deptRes.data.list;
+          if (deptRes.data.success && listData) {
+            setDepartments(listData);
+            setDeptCount(listData.length);
+          } else {
+            const deptResAlt = await api.get('/department/list');
+            const listDataAlt = deptResAlt.data.list || deptResAlt.data.data;
+            if (deptResAlt.data.success && listDataAlt) {
+              setDepartments(listDataAlt);
+              setDeptCount(listDataAlt.length);
+            }
+          }
+        } catch (err) {
+          console.error("Error fetching departments", err);
+          // Fallback to local session departments if any
+          const local = sessionStorage.getItem('departmentsData');
+          if (local) {
+            const parsed = JSON.parse(local);
+            setDepartments(parsed);
+            setDeptCount(parsed.length);
+          } else {
+            setDeptCount(3); // Mock length
+          }
         }
 
         // Generate recent updates list from actual database employees
@@ -76,14 +102,6 @@ const Dashboard = () => {
         }
       } catch (err) {
         console.error("Error fetching dashboard data from backend", err);
-        // Fallback to static mock data
-        setEmployeeCount(0);
-        setNewHiresCount(0);
-        setDeptCount(0);
-        setRecentUpdates([
-          { name: 'Jane Doe', department: 'Marketing', position: 'Marketing Specialist', date: 'May 15, 2025', status: 'New Hire' },
-          { name: 'Mike Smith', department: 'Finance', position: 'Financial Analyst', date: 'May 16, 2025', status: 'Promoted' }
-        ]);
       } finally {
         setLoading(false);
       }
@@ -346,7 +364,6 @@ const Dashboard = () => {
         </div>
 
       </div>
-
       {/* Recent Updates Table Card */}
       <div className="bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm flex flex-col">
         <div className="flex items-center justify-between border-b border-slate-100 pb-4">

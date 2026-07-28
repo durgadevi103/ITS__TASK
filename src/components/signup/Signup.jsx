@@ -148,8 +148,7 @@ const Signup = () => {
 
       if (data.success) {
         setSuccess("Account created successfully! Redirecting to login...");
-
-
+        localStorage.setItem(`signupName_${trimmedEmail.toLowerCase()}`, trimmedName);
 
         setTimeout(() => {
           navigate("/login", {

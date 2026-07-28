@@ -11,9 +11,11 @@ import {
   LogOut,
   X
 } from "lucide-react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+import api from "../api/axios.js";
 
-const Sidebar = ({ frstValue, isOpen, onClose }) => {
+const Sidebar = ({ frstValue, isOpen, onClose, currentUser, setCurrentUser }) => {
+  const navigate = useNavigate();
   const onData = (data) => {
     if (frstValue) frstValue(data);
     if (onClose) onClose();
@@ -108,9 +110,18 @@ const Sidebar = ({ frstValue, isOpen, onClose }) => {
         <div className="p-4 border-t border-white/5 relative z-10">
           <NavLink
             to="/login"
-            onClick={() => {
-              localStorage.removeItem("currentUser");
+            onClick={async (e) => {
+              e.preventDefault();
+              try {
+                await api.post("/auth/logout");
+              } catch (err) {
+                console.error("Logout failed", err);
+              }
+              if (setCurrentUser) {
+                setCurrentUser(null);
+              }
               onData("Logout");
+              navigate("/login");
             }}
             className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-blue-100 hover:text-white hover:bg-white/10 transition-all duration-200"
           >

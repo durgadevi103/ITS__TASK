@@ -73,12 +73,27 @@ const EmployeeList = () => {
 
   const fetchDepartments = async () => {
     try {
-      const response = await api.get('/department/list');
-      if (response.data.success) {
-        setDepartments(response.data.list);
+      const response = await api.get('/department/list/100/0');
+      const listData = response.data.data || response.data.list;
+      if (response.data.success && listData) {
+        const mapped = listData.map(d => ({
+          name: d.dept_name || d.name,
+          dept_code: d.dept_code || d.dept_id_code
+        }));
+        setDepartments(mapped);
+        return;
       }
     } catch (err) {
       console.error("Error loading departments for filtering", err);
+    }
+
+    // Fallback
+    const local = sessionStorage.getItem('departmentsData');
+    if (local) {
+      const parsed = JSON.parse(local);
+      setDepartments(parsed);
+    } else {
+      setDepartments([{ name: 'Information Technology' }, { name: 'Human Resources' }, { name: 'Finance' }]);
     }
   };
 

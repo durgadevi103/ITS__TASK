@@ -1,18 +1,18 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  CheckSquare, 
-  AlertTriangle, 
-  Umbrella, 
-  Calendar, 
-  Gift, 
-  LogOut, 
-  Search, 
-  MessageSquare, 
-  Bell, 
-  ChevronDown, 
-  Laptop, 
-  TrendingUp, 
-  TrendingDown, 
+import {
+  CheckSquare,
+  AlertTriangle,
+  Umbrella,
+  Calendar,
+  Gift,
+  LogOut,
+  Search,
+  MessageSquare,
+  Bell,
+  ChevronDown,
+  Laptop,
+  TrendingUp,
+  TrendingDown,
   Clock,
   ArrowRight,
   Smartphone,
@@ -27,31 +27,16 @@ const Attendance = () => {
   const [employeeCount, setEmployeeCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [overtimeTab, setOvertimeTab] = useState('Hours'); // 'Hours' or 'Employees'
-  
-  // Database states
-  const [dbStats, setDbStats] = useState(null);
-  const [dbCharts, setDbCharts] = useState([]);
 
-  // Fetch live stats and DB attendance data
+  // Fetch live stats from backend to scale counts
   useEffect(() => {
     const fetchAttendanceData = async () => {
       try {
         setLoading(true);
-        const [empRes, statsRes, chartsRes] = await Promise.all([
-          api.get('/employee/list'),
-          api.get('/attendance/stats'),
-          api.get('/attendance/charts')
-        ]);
-        
+        const empRes = await api.get('/employee/list');
         if (empRes.data.success && empRes.data.list) {
           setEmployees(empRes.data.list);
           setEmployeeCount(empRes.data.list.length);
-        }
-        if (statsRes.data.success) {
-          setDbStats(statsRes.data.stats);
-        }
-        if (chartsRes.data.success) {
-          setDbCharts(chartsRes.data.charts);
         }
       } catch (err) {
         console.error("Error fetching data for attendance scaling", err);
@@ -64,34 +49,30 @@ const Attendance = () => {
 
   // Compute metrics scaled to actual employee count or fallback to reference image values
   const stats = useMemo(() => {
-    const hasDb = !!dbStats;
     const isLive = employeeCount > 0;
-    
-    // Determine the baseline total employees from the DB or default to 5000
-    const dbTotal = hasDb ? (dbStats.checked_in + dbStats.not_checked_in + dbStats.on_leave + dbStats.weekly_off + dbStats.holiday) : 5000;
-    const N = isLive ? employeeCount : dbTotal;
-    const scale = isLive ? (N / dbTotal) : 1;
+    const N = isLive ? employeeCount : 5000;
 
-    const checkedIn = hasDb ? Math.round(dbStats.checked_in * scale) : 4500;
-    const notCheckedIn = isLive ? (N - checkedIn) : (hasDb ? dbStats.not_checked_in : 500);
-    const onLeave = hasDb ? Math.round(dbStats.on_leave * scale) : 456;
-    const weeklyOff = hasDb ? Math.round(dbStats.weekly_off * scale) : 145;
-    const holiday = hasDb ? Math.round(dbStats.holiday * scale) : 12;
-    const checkedOut = hasDb ? Math.round(dbStats.checked_out * scale) : 250;
+    // Proportions matching the reference image (approximate)
+    const checkedIn = isLive ? Math.round(N * 0.90) : 4500;
+    const notCheckedIn = N - checkedIn;
+    const onLeave = isLive ? Math.round(N * 0.0912) : 456;
+    const weeklyOff = isLive ? Math.round(N * 0.029) : 145;
+    const holiday = isLive ? Math.round(N * 0.0024) : 12;
+    const checkedOut = isLive ? Math.round(N * 0.05) : 250;
 
     // Attendance Source
-    const deviceCheckIns = hasDb ? Math.round(dbStats.device_checkins * scale) : 2000;
+    const deviceCheckIns = isLive ? Math.round(checkedIn * 0.444) : 2000;
     const appCheckIns = checkedIn - deviceCheckIns;
-    const activeDevices = hasDb ? Math.round(dbStats.active_devices * scale) : 145;
-    const inactiveDevices = hasDb ? Math.round(dbStats.inactive_devices * scale) : 5;
+    const activeDevices = isLive ? Math.round(weeklyOff * 1) : 145;
+    const inactiveDevices = isLive ? Math.round(holiday * 0.4) : 5;
 
     // Exceptions
-    const lateComing = hasDb ? Math.round(dbStats.late_coming * scale) : 250;
-    const earlyGoing = hasDb ? Math.round(dbStats.early_going * scale) : 500;
+    const lateComing = isLive ? Math.round(notCheckedIn * 0.5) : 250;
+    const earlyGoing = isLive ? Math.round(notCheckedIn * 1.0) : 500;
 
     // Pending Request
-    const reapplicationRequest = hasDb ? Math.round(dbStats.reapplication_requests * scale) : 250;
-    const leaveRequest = hasDb ? Math.round(dbStats.leave_requests * scale) : 500;
+    const reapplicationRequest = isLive ? Math.round(notCheckedIn * 0.5) : 250;
+    const leaveRequest = isLive ? Math.round(onLeave * 1.1) : 500;
 
     return {
       total: N,
@@ -110,14 +91,14 @@ const Attendance = () => {
       reapplicationRequest,
       leaveRequest
     };
-  }, [employeeCount, dbStats]);
+  }, [employeeCount]);
 
   // Compute percentages for donut chart
   const donutData = useMemo(() => {
     const { checkedIn, notCheckedIn, onLeave, weeklyOff, holiday } = stats;
     const sum = checkedIn + notCheckedIn + onLeave + weeklyOff + holiday;
     if (sum === 0) return [];
-    
+
     return [
       { name: 'Checked In', value: checkedIn, pct: (checkedIn / sum) * 100, color: '#3b82f6' },
       { name: 'Not Checked In', value: notCheckedIn, pct: (notCheckedIn / sum) * 100, color: '#f87171' },
@@ -127,47 +108,25 @@ const Attendance = () => {
     ];
   }, [stats]);
 
-  // Parse chart data loaded from database
-  const chartData = useMemo(() => {
-    const defaultData = {
-      on_time_checkin: [15, 14, 18, 14, 14, 16, 16],
-      overtime_hours: [20, 21, 23, 20, 28, 28, 0],
-      overtime_employees: [10, 12, 15, 8, 18, 22, 0]
-    };
-
-    if (dbCharts.length === 0) return defaultData;
-
-    const parsed = {};
-    dbCharts.forEach(c => {
-      parsed[c.chart_type] = [c.sun, c.mon, c.tue, c.wed, c.thu, c.fri, c.sat];
-    });
-
-    return {
-      on_time_checkin: parsed.on_time_checkin || defaultData.on_time_checkin,
-      overtime_hours: parsed.overtime_hours || defaultData.overtime_hours,
-      overtime_employees: parsed.overtime_employees || defaultData.overtime_employees
-    };
-  }, [dbCharts]);
-
   // Overtime Data Toggle
   const overtimeData = useMemo(() => {
     if (overtimeTab === 'Hours') {
-      return chartData.overtime_hours;
+      return [20, 22, 24, 20, 28, 28, 0]; // Sunday - Saturday
     } else {
-      return chartData.overtime_employees;
+      return [10, 12, 15, 8, 18, 22, 0]; // Sunday - Saturday
     }
-  }, [overtimeTab, chartData]);
+  }, [overtimeTab]);
 
   return (
     <div className="p-4 lg:p-6 bg-[#f5f7fc] min-h-screen text-slate-800 flex flex-col gap-6 animate-in fade-in duration-300">
-      
+
       {/* Top Header section */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 leading-tight">Attendance Dashboard</h1>
           <p className="text-xs text-slate-500 mt-1">Real-time attendance statistics, device tracking, and request updates.</p>
         </div>
-        
+
         {/* Date Filter */}
         <div className="flex items-center gap-2">
           <div className="relative">
@@ -183,7 +142,7 @@ const Attendance = () => {
 
       {/* Row 1: Statistics Donut & Attendance Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-        
+
         {/* Statistics Donut Chart */}
         <div className="lg:col-span-4 bg-white p-5 rounded-2xl border border-slate-200/50 shadow-sm flex flex-col justify-between hover:shadow-md transition duration-300">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -195,7 +154,7 @@ const Attendance = () => {
             <svg viewBox="0 0 160 160" className="w-36 h-36">
               {/* Background grey circle */}
               <circle cx="80" cy="80" r="55" fill="none" stroke="#f1f5f9" strokeWidth="18" />
-              
+
               {/* Dynamic Segments */}
               {(() => {
                 let accumulatedPercent = 0;
@@ -221,7 +180,7 @@ const Attendance = () => {
                 });
               })()}
             </svg>
-            
+
             {/* Center Label */}
             <div className="absolute text-center">
               <span className="block text-2xl font-extrabold text-slate-900 leading-none">{stats.total}</span>
@@ -249,7 +208,7 @@ const Attendance = () => {
 
           {/* Stat Cards Grid - 6 Items */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 my-auto py-4">
-            
+
             {/* Checked In */}
             <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-4 flex flex-col items-center justify-center text-center hover:bg-blue-50/20 hover:border-blue-200 transition duration-300">
               <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-3">
@@ -318,7 +277,7 @@ const Attendance = () => {
 
       {/* Row 2: On Time Check In, Overtime, Attendance Source */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        
+
         {/* On Time Check In Weekly Column Chart */}
         <div className="bg-white p-5 rounded-2xl border border-slate-200/50 shadow-sm flex flex-col justify-between hover:shadow-md transition duration-300">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
@@ -350,32 +309,36 @@ const Attendance = () => {
               <text x="18" y="154" className="text-[9px] font-bold fill-slate-400 text-right">0</text>
 
               {/* X Axis Labels & Columns */}
-              {chartData.on_time_checkin.map((val, idx) => {
-                const maxVal = 20;
-                const barHeight = (val / maxVal) * 130;
-                const barY = 150 - barHeight;
-                const barX = 42 + idx * 42;
-                const dayLabels = ['Son', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-                const isFriday = idx === 5;
+              {/* Sunday */}
+              <rect x="42" y="55" width="16" height="95" rx="3" fill="#c7d2fe" />
+              <text x="50" y="168" className="text-[9px] font-extrabold fill-slate-400 text-middle" textAnchor="middle">Son</text>
 
-                return (
-                  <g key={idx}>
-                    {isFriday ? (
-                      <>
-                        {/* Dark indigo body */}
-                        <rect x={barX} y={barY + 4} width="16" height={barHeight - 4} rx="3" fill="#3b82f6" />
-                        {/* Red top warning cap */}
-                        <rect x={barX} y={barY} width="16" height="8" rx="2" fill="#ef4444" />
-                      </>
-                    ) : (
-                      <rect x={barX} y={barY} width="16" height={barHeight} rx="3" fill="#c7d2fe" />
-                    )}
-                    <text x={barX + 8} y="168" className="text-[9px] font-extrabold fill-slate-400 text-middle" textAnchor="middle">
-                      {dayLabels[idx]}
-                    </text>
-                  </g>
-                );
-              })}
+              {/* Monday */}
+              <rect x="84" y="65" width="16" height="85" rx="3" fill="#c7d2fe" />
+              <text x="92" y="168" className="text-[9px] font-extrabold fill-slate-400 text-middle" textAnchor="middle">Mon</text>
+
+              {/* Tuesday */}
+              <rect x="126" y="34" width="16" height="116" rx="3" fill="#c7d2fe" />
+              <text x="134" y="168" className="text-[9px] font-extrabold fill-slate-400 text-middle" textAnchor="middle">Tue</text>
+
+              {/* Wednesday */}
+              <rect x="168" y="55" width="16" height="95" rx="3" fill="#c7d2fe" />
+              <text x="176" y="168" className="text-[9px] font-extrabold fill-slate-400 text-middle" textAnchor="middle">Wed</text>
+
+              {/* Thursday */}
+              <rect x="210" y="55" width="16" height="95" rx="3" fill="#c7d2fe" />
+              <text x="218" y="168" className="text-[9px] font-extrabold fill-slate-400 text-middle" textAnchor="middle">Thu</text>
+
+              {/* Friday - Active Exceptions check in */}
+              {/* Dark indigo body */}
+              <rect x="252" y="48" width="16" height="102" rx="3" fill="#3b82f6" />
+              {/* Red top warning cap */}
+              <rect x="252" y="44" width="16" height="8" rx="2" fill="#ef4444" />
+              <text x="260" y="168" className="text-[9px] font-extrabold fill-slate-400 text-middle" textAnchor="middle">Fri</text>
+
+              {/* Saturday */}
+              <rect x="294" y="48" width="16" height="102" rx="3" fill="#c7d2fe" />
+              <text x="302" y="168" className="text-[9px] font-extrabold fill-slate-400 text-middle" textAnchor="middle">Sat</text>
             </svg>
           </div>
         </div>
@@ -384,26 +347,24 @@ const Attendance = () => {
         <div className="bg-white p-5 rounded-2xl border border-slate-200/50 shadow-sm flex flex-col justify-between hover:shadow-md transition duration-300">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
             <h2 className="font-bold text-slate-800 text-sm">Overtime</h2>
-            
+
             {/* Custom Tab Switches */}
             <div className="flex bg-slate-100 p-0.5 rounded-xl border border-slate-200/20">
-              <button 
+              <button
                 onClick={() => setOvertimeTab('Hours')}
-                className={`px-3 py-1 rounded-lg text-[9px] font-bold transition duration-200 ${
-                  overtimeTab === 'Hours' 
-                    ? 'bg-blue-600 text-white shadow-sm' 
+                className={`px-3 py-1 rounded-lg text-[9px] font-bold transition duration-200 ${overtimeTab === 'Hours'
+                    ? 'bg-blue-600 text-white shadow-sm'
                     : 'text-slate-500 hover:text-slate-700'
-                }`}
+                  }`}
               >
                 Hours
               </button>
-              <button 
+              <button
                 onClick={() => setOvertimeTab('Employees')}
-                className={`px-3 py-1 rounded-lg text-[9px] font-bold transition duration-200 ${
-                  overtimeTab === 'Employees' 
-                    ? 'bg-blue-600 text-white shadow-sm' 
+                className={`px-3 py-1 rounded-lg text-[9px] font-bold transition duration-200 ${overtimeTab === 'Employees'
+                    ? 'bg-blue-600 text-white shadow-sm'
                     : 'text-slate-500 hover:text-slate-700'
-                }`}
+                  }`}
               >
                 Employees
               </button>
@@ -438,13 +399,13 @@ const Attendance = () => {
 
                 return (
                   <g key={idx}>
-                    <rect 
-                      x={barX} 
-                      y={barY} 
-                      width="16" 
-                      height={barHeight} 
-                      rx="3" 
-                      fill="#93c5fd" 
+                    <rect
+                      x={barX}
+                      y={barY}
+                      width="16"
+                      height={barHeight}
+                      rx="3"
+                      fill="#93c5fd"
                       className="transition-all duration-500 ease-out"
                     />
                     <text x={barX + 8} y="168" className="text-[9px] font-extrabold fill-slate-400 text-middle" textAnchor="middle">
@@ -465,7 +426,7 @@ const Attendance = () => {
           </div>
 
           <div className="grid grid-cols-2 gap-4 flex-1 justify-center py-2">
-            
+
             {/* Device Check Ins */}
             <div className="bg-slate-50/60 p-4 rounded-xl border border-slate-100/50 hover:-translate-y-0.5 hover:border-slate-200 transition duration-200 flex flex-col">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Device Check Ins</span>
@@ -497,7 +458,7 @@ const Attendance = () => {
 
       {/* Row 3: Exceptions & Pending Requests */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        
+
         {/* Exceptions Card */}
         <div className="bg-white p-5 rounded-2xl border border-slate-200/50 shadow-sm flex flex-col justify-between hover:shadow-md transition duration-300">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
@@ -506,7 +467,7 @@ const Attendance = () => {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            
+
             {/* Late Coming */}
             <div className="bg-slate-50/60 p-4 rounded-xl border border-slate-100 flex flex-col justify-between hover:border-rose-100 transition duration-200">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Late Coming</span>
@@ -536,7 +497,7 @@ const Attendance = () => {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            
+
             {/* Reapplication Request */}
             <div className="bg-slate-50/60 p-4 rounded-xl border border-slate-100 flex flex-col justify-between hover:border-blue-100 transition duration-200">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Reapplication Request</span>

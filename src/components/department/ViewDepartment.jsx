@@ -19,7 +19,7 @@ const ViewDepartment = ({ department, onBack }) => {
     const fetchEmployees = async () => {
       try {
         const response = await api.get('/employee/list');
-        if (response.data.success) {
+        if (response.data.success && response.data.list) {
           const mapped = response.data.list.map(emp => ({
             id: `EMP${String(emp.employee_id).padStart(3, '0')}`,
             employee_id: emp.employee_id,

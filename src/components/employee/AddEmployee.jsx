@@ -40,18 +40,35 @@ const AddEmployee = () => {
   useEffect(() => {
     const fetchDepts = async () => {
       try {
-        const response = await api.get('/department/list');
-        if (response.data.success && response.data.list) {
-          setDepartments(response.data.list);
-          if (response.data.list.length > 0) {
-            const names = response.data.list.map(d => d.name);
-            if (!names.includes('IT')) {
-              setForm(prev => ({ ...prev, department: names[0] }));
-            }
+        const response = await api.get('/department/list/100/0');
+        const listData = response.data.data || response.data.list;
+        if (response.data.success && listData && listData.length > 0) {
+          const mapped = listData.map(d => ({
+            name: d.dept_name || d.name,
+            dept_code: d.dept_code || d.dept_id_code
+          }));
+          setDepartments(mapped);
+          const names = mapped.map(d => d.name);
+          if (!names.includes('IT')) {
+            setForm(prev => ({ ...prev, department: names[0] }));
           }
+          return;
         }
       } catch (err) {
         console.error("Error loading departments for employee registration", err);
+      }
+
+      // Fallback
+      const local = sessionStorage.getItem('departmentsData');
+      if (local) {
+        const parsed = JSON.parse(local);
+        setDepartments(parsed);
+        if (parsed.length > 0) {
+          setForm(prev => ({ ...prev, department: parsed[0].name }));
+        }
+      } else {
+        const fallback = [{ name: 'Information Technology' }, { name: 'Human Resources' }, { name: 'Finance' }];
+        setDepartments(fallback);
       }
     };
     fetchDepts();
