@@ -12,6 +12,8 @@ import Department from './components/department/Department'
 import Navbar from './mainscreen/Navbar'
 import Sidebar from './mainscreen/Sidebar'
 import Dashboard from './components/dashboard/Dashboard'
+import Attendance from './components/attendance/Attendance'
+import LeaveManagement from './components/leave/LeaveManagement'
 
 // Simple elegant placeholder component for pages under development
 const Placeholder = ({ title }) => (
@@ -81,8 +83,8 @@ function App() {
             
             {/* Placeholders for other sidebar sections */}
             <Route path="departments" element={<Department />} />
-            <Route path="attendance" element={<Placeholder title="Attendance Tracking" />} />
-            <Route path="leave-management" element={<Placeholder title="Leave Management" />} />
+            <Route path="attendance" element={<Attendance />} />
+            <Route path="leave-management" element={<LeaveManagement />} />
             <Route path="payroll" element={<Placeholder title="Payroll & Salary" />} />
             <Route path="reports" element={<Placeholder title="Analytics & Reports" />} />
             <Route path="settings" element={<Placeholder title="System Settings" />} />
