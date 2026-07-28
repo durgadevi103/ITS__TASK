@@ -57,13 +57,28 @@ const LeaveManagement = () => {
   }, []);
 
 
-  // Leave Balances state for dynamic deduction on approval
-  const [leaveBalances, setLeaveBalances] = useState({
-    CL: { label: 'Casual Leave (CL)', used: 8.5, max: 12, color: 'bg-blue-600' },
-    SL: { label: 'Sick Leave (SL)', used: 7.0, max: 12, color: 'bg-emerald-600' },
-    PL: { label: 'Privilege Leave (PL)', used: 12.0, max: 20, color: 'bg-amber-500' },
-    ML: { label: 'Maternity Leave (ML)', used: 60.0, max: 90, color: 'bg-purple-600' }
-  });
+  // Leave Balances computed dynamically from DB request records
+  const leaveBalances = useMemo(() => {
+    const clUsed = requests
+      .filter(r => r.status === 'Approved' && r.leaveType.includes('Casual'))
+      .reduce((sum, r) => sum + r.days, 0);
+    const slUsed = requests
+      .filter(r => r.status === 'Approved' && r.leaveType.includes('Sick'))
+      .reduce((sum, r) => sum + r.days, 0);
+    const plUsed = requests
+      .filter(r => r.status === 'Approved' && r.leaveType.includes('Privilege'))
+      .reduce((sum, r) => sum + r.days, 0);
+    const mlUsed = requests
+      .filter(r => r.status === 'Approved' && r.leaveType.includes('Maternity'))
+      .reduce((sum, r) => sum + r.days, 0);
+
+    return {
+      CL: { label: 'Casual Leave (CL)', used: clUsed, max: 12, color: 'bg-blue-600' },
+      SL: { label: 'Sick Leave (SL)', used: slUsed, max: 12, color: 'bg-emerald-600' },
+      PL: { label: 'Privilege Leave (PL)', used: plUsed, max: 20, color: 'bg-amber-500' },
+      ML: { label: 'Maternity Leave (ML)', used: mlUsed, max: 90, color: 'bg-purple-600' }
+    };
+  }, [requests]);
 
   // Form states
   const [selectedEmpId, setSelectedEmpId] = useState('');
@@ -211,23 +226,6 @@ const LeaveManagement = () => {
 
   // Perform actions on requests (Approve, Reject, Cancel)
   const handleStatusChange = async (requestId, newStatus) => {
-    // Deduct leave balance if approved
-    const req = requests.find(r => r.id === requestId);
-    if (req && newStatus === 'Approved') {
-      const typeCode = req.leaveType.includes('Casual') ? 'CL' : 
-                       req.leaveType.includes('Sick') ? 'SL' : 
-                       req.leaveType.includes('Privilege') ? 'PL' : 'ML';
-      
-      setLeaveBalances(bal => {
-        const currentBal = bal[typeCode];
-        const updatedUsed = Math.min(currentBal.max, currentBal.used + req.days);
-        return {
-          ...bal,
-          [typeCode]: { ...currentBal, used: updatedUsed }
-        };
-      });
-    }
-
     try {
       const response = await api.put('/leave/update-status', { id: requestId, status: newStatus });
       if (response.data.success) {

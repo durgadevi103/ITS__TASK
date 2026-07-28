@@ -32,8 +32,19 @@ const Navbar = ({ usedata, onToggleSidebar, isSidebarOpen }) => {
   const displayAvatar = currentUser?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=2563eb&color=fff&bold=true`;
   
   return (
-    <nav className="fixed top-0 left-0 md:left-64 right-0 bg-gradient-to-r from-blue-600 to-blue-800 text-white border-b border-blue-500/20 shadow-sm z-40 h-16">
-      <div className="mx-auto flex items-center justify-between px-6 h-full">
+    <nav className="fixed top-0 left-0 md:left-64 right-0 bg-gradient-to-r from-blue-600 to-blue-800 text-white border-b border-blue-500/20 shadow-sm z-40 h-16 overflow-hidden">
+      {/* Floating Bubbles Background */}
+      <div className="bubble-container">
+        <div className="bubble-nb w-5 h-5 left-[5%]" style={{ animationDelay: '0s', animationDuration: '8s' }} />
+        <div className="bubble-nb w-8 h-8 left-[25%]" style={{ animationDelay: '2s', animationDuration: '11s' }} />
+        <div className="bubble-nb w-6 h-6 left-[55%]" style={{ animationDelay: '1s', animationDuration: '9s' }} />
+        <div className="bubble-nb w-7 h-7 left-[80%]" style={{ animationDelay: '3s', animationDuration: '12s' }} />
+        
+        <div className="bubble-nb-down w-6 h-6 left-[40%]" style={{ animationDelay: '1.5s', animationDuration: '10s' }} />
+        <div className="bubble-nb-down w-5 h-5 left-[70%]" style={{ animationDelay: '3.5s', animationDuration: '9s' }} />
+      </div>
+
+      <div className="mx-auto flex items-center justify-between px-6 h-full relative z-10">
         
         {/* Left Side: Mobile Menu Toggle & Title */}
         <div className="flex items-center gap-3">

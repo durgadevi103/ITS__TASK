@@ -24,10 +24,7 @@ const Sidebar = ({ frstValue, isOpen, onClose }) => {
     { name: "Employees", icon: Users, path: "/employees" },
     { name: "Departments", icon: Building2, path: "/departments" },
     { name: "Attendance", icon: Clock, path: "/attendance" },
-    { name: "Leave Management", icon: CalendarDays, path: "/leave-management" },
-    { name: "Payroll", icon: CreditCard, path: "/payroll" },
-    { name: "Reports", icon: BarChart3, path: "/reports" },
-    { name: "Settings", icon: Settings, path: "/settings" }
+    { name: "Leave Management", icon: CalendarDays, path: "/leave-management" }
   ];
 
   return (
@@ -44,9 +41,23 @@ const Sidebar = ({ frstValue, isOpen, onClose }) => {
       <div
         className={`fixed top-0 left-0 h-full w-64 bg-gradient-to-b from-blue-600 via-blue-700 to-blue-800 text-white z-50 transform transition-transform duration-300 ease-in-out md:translate-x-0 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
-        } flex flex-col justify-between border-r border-blue-500/20 shadow-xl`}
+        } flex flex-col justify-between border-r border-blue-500/20 shadow-xl overflow-hidden`}
       >
-        <div>
+        {/* Floating Bubbles Background */}
+        <div className="bubble-container">
+          <div className="bubble-sb w-8 h-8 left-[10%]" style={{ animationDelay: '0s', animationDuration: '14s' }} />
+          <div className="bubble-sb w-12 h-12 left-[30%]" style={{ animationDelay: '3s', animationDuration: '18s' }} />
+          <div className="bubble-sb w-6 h-6 left-[50%]" style={{ animationDelay: '1s', animationDuration: '12s' }} />
+          <div className="bubble-sb w-10 h-10 left-[70%]" style={{ animationDelay: '5s', animationDuration: '16s' }} />
+          <div className="bubble-sb w-8 h-8 left-[85%]" style={{ animationDelay: '2s', animationDuration: '15s' }} />
+          
+          <div className="bubble-sb-down w-10 h-10 left-[20%]" style={{ animationDelay: '4s', animationDuration: '20s' }} />
+          <div className="bubble-sb-down w-6 h-6 left-[45%]" style={{ animationDelay: '0.5s', animationDuration: '13s' }} />
+          <div className="bubble-sb-down w-12 h-12 left-[65%]" style={{ animationDelay: '6s', animationDuration: '17s' }} />
+          <div className="bubble-sb-down w-8 h-8 left-[80%]" style={{ animationDelay: '1.5s', animationDuration: '15s' }} />
+        </div>
+
+        <div className="relative z-10">
           {/* Header Branding */}
           <div className="flex items-center justify-between p-5 border-b border-white/5">
             <div className="flex items-center gap-3">
@@ -94,7 +105,7 @@ const Sidebar = ({ frstValue, isOpen, onClose }) => {
         </div>
 
         {/* Logout at the bottom */}
-        <div className="p-4 border-t border-white/5">
+        <div className="p-4 border-t border-white/5 relative z-10">
           <NavLink
             to="/login"
             onClick={() => {
