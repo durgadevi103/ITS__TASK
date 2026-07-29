@@ -1,11 +1,30 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Menu, X, Bell, ChevronDown, LogOut } from "lucide-react";
+import { Menu, X, Bell, ChevronDown, LogOut, Search, User, ShieldCheck } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import api from "../api/axios.js";
 
 const Navbar = ({ usedata, onToggleSidebar, isSidebarOpen, currentUser, setCurrentUser }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [searchFocused, setSearchFocused] = useState(false);
+  const dropdownRef = useRef(null);
+  const notifRef = useRef(null);
   const navigate = useNavigate();
+
+  // Close dropdowns on click outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setNotifOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -21,85 +40,183 @@ const Navbar = ({ usedata, onToggleSidebar, isSidebarOpen, currentUser, setCurre
   };
 
   const displayName = currentUser 
-    ? (currentUser.username || currentUser.fullName || (currentUser.email ? currentUser.email.split('@')[0] : "User")) 
-    : "User";
+    ? (currentUser.username || currentUser.fullName || (currentUser.email ? currentUser.email.split('@')[0] : "Admin")) 
+    : "Admin";
+  const displayEmail = currentUser?.email || "admin@example.com";
   const displayAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=2563eb&color=fff&bold=true`;
   
+  const notifications = [
+    { id: 1, title: "New Employee Added", time: "10 mins ago", unread: true },
+    { id: 2, title: "Leave Request Submitted", time: "1 hour ago", unread: true },
+    { id: 3, title: "Attendance Report Ready", time: "3 hours ago", unread: false },
+  ];
+
   return (
-    <nav className="fixed top-0 left-0 md:left-64 right-0 bg-white/90 backdrop-blur-md text-slate-700 border-b border-slate-200/50 shadow-sm z-40 h-16">
+    <nav className="fixed top-0 left-0 md:left-64 right-0 bg-white/80 backdrop-blur-xl text-slate-700 border-b border-slate-200/70 shadow-xs z-40 h-16 transition-all duration-300">
       {/* Floating Bubbles Background */}
       <div className="bubble-container">
         <div className="bubble-nb w-5 h-5 left-[5%]" style={{ animationDelay: '0s', animationDuration: '8s' }} />
         <div className="bubble-nb w-8 h-8 left-[25%]" style={{ animationDelay: '2s', animationDuration: '11s' }} />
         <div className="bubble-nb w-6 h-6 left-[55%]" style={{ animationDelay: '1s', animationDuration: '9s' }} />
         <div className="bubble-nb w-7 h-7 left-[80%]" style={{ animationDelay: '3s', animationDuration: '12s' }} />
-        
         <div className="bubble-nb-down w-6 h-6 left-[40%]" style={{ animationDelay: '1.5s', animationDuration: '10s' }} />
         <div className="bubble-nb-down w-5 h-5 left-[70%]" style={{ animationDelay: '3.5s', animationDuration: '9s' }} />
       </div>
 
-      <div className="mx-auto flex items-center justify-between px-6 h-full relative z-10">
+      <div className="mx-auto flex items-center justify-between px-4 sm:px-6 h-full relative z-10">
         
         {/* Left Side: Mobile Menu Toggle & Title */}
         <div className="flex items-center gap-3">
-          <button
-            className="md:hidden text-slate-500 p-1.5 hover:bg-slate-100 hover:text-slate-700 rounded-lg transition"
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            className="md:hidden text-slate-600 p-2 hover:bg-slate-100/80 rounded-xl transition cursor-pointer"
             onClick={onToggleSidebar}
             aria-label="Toggle Navigation"
           >
             {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
+          </motion.button>
           
-          <div className="font-extrabold text-slate-800 tracking-wide capitalize hidden md:block">
-            {usedata || "Dashboard"}
+          <div className="flex items-center gap-2">
+            <h1 className="font-black text-slate-900 text-base sm:text-lg tracking-tight capitalize hidden md:block">
+              {usedata || "Dashboard"}
+            </h1>
+            <span className="hidden lg:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-600 border border-blue-100">
+              <ShieldCheck size={12} /> Live Workspace
+            </span>
           </div>
         </div>
 
-        {/* Right Side: Bell & User Info */}
-        <div className="flex items-center gap-4">
-          
-          {/* Notification Bell */}
-          <button className="relative p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition">
-            <Bell size={20} />
-            <span className="absolute top-1 right-1 w-4 h-4 bg-red-550 text-white text-[9px] font-bold rounded-full flex items-center justify-center border border-white">
-              3
-            </span>
-          </button>
+        {/* Center/Right: Quick Search Bar */}
+        <div className="hidden sm:flex items-center flex-1 max-w-xs mx-6">
+          <motion.div 
+            animate={{ scale: searchFocused ? 1.02 : 1 }}
+            className={`w-full relative flex items-center bg-slate-100/70 rounded-xl px-3 py-1.5 border transition-all duration-200 ${
+              searchFocused ? 'bg-white border-blue-500 ring-2 ring-blue-500/20 shadow-md' : 'border-slate-200/60 hover:bg-slate-100'
+            }`}
+          >
+            <Search size={15} className={`mr-2 transition-colors ${searchFocused ? 'text-blue-600' : 'text-slate-400'}`} />
+            <input 
+              type="text" 
+              placeholder="Search employees, departments..." 
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setSearchFocused(false)}
+              className="w-full text-xs font-semibold text-slate-800 placeholder-slate-400 bg-transparent outline-none"
+            />
+          </motion.div>
+        </div>
 
-          <div className="h-6 w-px bg-slate-200" />
+        {/* Right Side: Bell Notifications & User Info */}
+        <div className="flex items-center gap-3 sm:gap-4">
+          
+          {/* Notification Bell Dropdown */}
+          <div className="relative" ref={notifRef}>
+            <motion.button 
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                setNotifOpen(!notifOpen);
+                setDropdownOpen(false);
+              }}
+              className="relative p-2.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100/80 rounded-xl transition cursor-pointer"
+            >
+              <Bell size={19} />
+              <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-rose-500 text-white text-[9px] font-extrabold rounded-full flex items-center justify-center border-2 border-white shadow-xs animate-pulse">
+                2
+              </span>
+            </motion.button>
+
+            <AnimatePresence>
+              {notifOpen && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute right-0 mt-2 w-80 bg-white border border-slate-200/80 rounded-2xl shadow-2xl py-3 z-50 overflow-hidden"
+                >
+                  <div className="px-4 pb-2 border-b border-slate-100 flex items-center justify-between">
+                    <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider">Notifications</h3>
+                    <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">2 New</span>
+                  </div>
+                  <div className="divide-y divide-slate-100 max-h-64 overflow-y-auto">
+                    {notifications.map((n) => (
+                      <div key={n.id} className={`p-3 hover:bg-slate-50 transition ${n.unread ? 'bg-blue-50/30' : ''}`}>
+                        <p className="text-xs font-bold text-slate-800">{n.title}</p>
+                        <p className="text-[10px] font-semibold text-slate-400 mt-0.5">{n.time}</p>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <div className="h-6 w-px bg-slate-200/80" />
 
           {/* User Account Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="flex items-center gap-2 hover:bg-slate-100 p-1.5 rounded-xl transition"
+          <div className="relative" ref={dropdownRef}>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => {
+                setDropdownOpen(!dropdownOpen);
+                setNotifOpen(false);
+              }}
+              className="flex items-center gap-2.5 hover:bg-slate-100/80 p-1.5 pr-2.5 rounded-xl transition cursor-pointer border border-transparent hover:border-slate-200/60"
             >
               <img
                 src={displayAvatar}
                 alt="Profile"
-                className="w-8 h-8 rounded-full object-cover border border-slate-200"
+                className="w-8 h-8 rounded-full object-cover border-2 border-blue-500/20 shadow-xs"
               />
-              <span className="text-sm font-semibold text-slate-700 hidden sm:inline-block">
-                {displayName}
-              </span>
-              <ChevronDown size={14} className="text-slate-450" />
-            </button>
-
-            {dropdownOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-2xl shadow-xl py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-                <div className="px-4 py-2 border-b border-gray-50">
-                  <p className="text-xs text-gray-400 font-medium">Logged in as</p>
-                  <p className="text-sm font-bold text-gray-800 truncate">{displayName}</p>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-55 transition text-left font-medium"
-                >
-                  <LogOut size={16} />
-                  Logout
-                </button>
+              <div className="text-left hidden sm:block leading-tight">
+                <span className="text-xs font-bold text-slate-800 block truncate max-w-[110px]">
+                  {displayName}
+                </span>
+                <span className="text-[9px] font-extrabold text-blue-600 block uppercase tracking-wider">
+                  Administrator
+                </span>
               </div>
-            )}
+              <ChevronDown size={14} className={`text-slate-400 transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`} />
+            </motion.button>
+
+            <AnimatePresence>
+              {dropdownOpen && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute right-0 mt-2 w-56 bg-white border border-slate-200/80 rounded-2xl shadow-2xl py-2 z-50 overflow-hidden"
+                >
+                  <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Signed in as</p>
+                    <p className="text-xs font-extrabold text-slate-900 truncate mt-0.5">{displayEmail}</p>
+                  </div>
+                  
+                  <div className="py-1">
+                    <button
+                      onClick={() => {
+                        setDropdownOpen(false);
+                        navigate("/settings");
+                      }}
+                      className="w-full flex items-center gap-2.5 px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 transition text-left font-semibold cursor-pointer"
+                    >
+                      <User size={15} className="text-slate-400" />
+                      Account Settings
+                    </button>
+                    
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs text-rose-600 hover:bg-rose-50 transition text-left font-bold cursor-pointer"
+                    >
+                      <LogOut size={15} className="text-rose-500" />
+                      Sign Out
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
         </div>
@@ -110,3 +227,4 @@ const Navbar = ({ usedata, onToggleSidebar, isSidebarOpen, currentUser, setCurre
 };
 
 export default Navbar;
+

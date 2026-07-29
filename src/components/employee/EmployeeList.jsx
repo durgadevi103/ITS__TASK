@@ -396,22 +396,28 @@ const EmployeeList = () => {
               {/* Details Tabs Section */}
               <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex-1 min-h-0 flex flex-col overflow-hidden">
                 {/* Tab Navigation header */}
-                <div className="flex items-center gap-4 border-b border-gray-100 pb-2 text-xs font-bold shrink-0 overflow-x-auto whitespace-nowrap [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <div className="flex items-center gap-4 border-b border-gray-100 pb-2 text-xs font-bold shrink-0 overflow-x-auto whitespace-nowrap [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden relative">
                   {["Personal Information", "Job Information", "Account Information", "Documents"].map((tab) => {
                     const label = tab === "Personal Information" ? "Personal" :
                                   tab === "Job Information" ? "Job" :
                                   tab === "Account Information" ? "Account" : "Docs";
+                    const isTabActive = activeTab === tab;
                     return (
                       <button
                         key={tab}
                         onClick={() => setActiveTab(tab)}
-                        className={`pb-2 relative transition-all duration-150 cursor-pointer ${
-                          activeTab === tab 
-                            ? "text-blue-600 border-b-2 border-blue-600" 
-                            : "text-gray-400 hover:text-gray-600"
+                        className={`pb-2 relative transition-colors duration-150 cursor-pointer ${
+                          isTabActive ? "text-blue-600 font-extrabold" : "text-gray-400 hover:text-gray-700"
                         }`}
                       >
                         {label}
+                        {isTabActive && (
+                          <motion.div
+                            layoutId="activeEmpTabPill"
+                            className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-full"
+                            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                          />
+                        )}
                       </button>
                     );
                   })}

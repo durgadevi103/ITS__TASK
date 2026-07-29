@@ -121,16 +121,20 @@ const Attendance = () => {
     <div className="p-4 lg:p-6 bg-[#f5f7fc] min-h-screen text-slate-800 flex flex-col gap-6 animate-in fade-in duration-300">
 
       {/* Top Header section */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <motion.div 
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+      >
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 leading-tight">Attendance Dashboard</h1>
-          <p className="text-xs text-slate-500 mt-1">Real-time attendance statistics, device tracking, and request updates.</p>
+          <h1 className="text-2xl font-black text-slate-900 leading-tight tracking-tight">Attendance Dashboard</h1>
+          <p className="text-xs font-semibold text-slate-500 mt-0.5">Real-time attendance statistics, device tracking, and request updates.</p>
         </div>
 
         {/* Date Filter */}
         <div className="flex items-center gap-2">
           <div className="relative">
-            <select className="bg-white border border-slate-200 rounded-xl pl-4 pr-9 py-2 text-xs font-bold text-slate-700 outline-none hover:bg-slate-50 focus:ring-2 focus:ring-blue-500 transition cursor-pointer appearance-none">
+            <select className="bg-white border border-slate-200/80 shadow-xs rounded-xl pl-4 pr-9 py-2 text-xs font-extrabold text-slate-700 outline-none hover:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition cursor-pointer appearance-none">
               <option>Today ({new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})</option>
               <option>Yesterday</option>
               <option>This Week</option>
@@ -138,7 +142,7 @@ const Attendance = () => {
             <ChevronDown size={14} className="text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Row 1: Statistics Donut & Attendance Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">

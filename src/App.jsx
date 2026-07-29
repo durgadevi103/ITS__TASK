@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
+import { motion, AnimatePresence } from 'framer-motion'
 import './App.css'
 import Login from "./components/login/Login";
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
 import Signup from './components/signup/Signup'
 import EmployeeList from './components/employee/EmployeeList'
 import AddEmployee from './components/employee/AddEmployee'
@@ -18,20 +16,45 @@ import api from './api/axios.js'
 
 // Simple elegant placeholder component for pages under development
 const Placeholder = ({ title }) => (
-  <div className="p-6 bg-[#f8fafc] min-h-screen flex items-center justify-center">
-    <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-xl max-w-md text-center space-y-4">
-      <div className="w-16 h-16 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center mx-auto text-xl font-bold">
+  <motion.div 
+    initial={{ opacity: 0, y: 12 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: -12 }}
+    transition={{ duration: 0.25 }}
+    className="p-6 bg-slate-50 min-h-screen flex items-center justify-center"
+  >
+    <div className="bg-white/90 backdrop-blur-xl p-8 rounded-3xl border border-slate-200/80 shadow-2xl max-w-md text-center space-y-4">
+      <div className="w-16 h-16 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto text-2xl font-bold shadow-inner">
         🛠️
       </div>
       <div>
-        <h2 className="text-xl font-bold text-gray-900">{title} Section</h2>
-        <p className="text-sm text-gray-500 mt-2">
+        <h2 className="text-xl font-extrabold text-slate-900">{title} Section</h2>
+        <p className="text-sm text-slate-500 mt-2 leading-relaxed">
           This module is currently being integrated into the Employee Management system.
         </p>
       </div>
     </div>
-  </div>
+  </motion.div>
 );
+
+// Animated Outlet Wrapper for page transitions
+const AnimatedOutlet = () => {
+  const location = useLocation();
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={location.pathname}
+        initial={{ opacity: 0, y: 10, scale: 0.995 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: -8, scale: 0.995 }}
+        transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+        className="w-full h-full"
+      >
+        <Outlet />
+      </motion.div>
+    </AnimatePresence>
+  );
+};
 
 // Inline Layout component that renders Sidebar, Navbar, and route Outlet
 const Layout = ({ currentUser, setCurrentUser }) => {
@@ -63,7 +86,7 @@ const Layout = ({ currentUser, setCurrentUser }) => {
         />
 
         <main className="ml-0 md:ml-64 mt-16 w-full md:w-[calc(100%-16rem)] min-h-[calc(100vh-4rem)] overflow-x-hidden transition-all duration-300">
-          <Outlet />
+          <AnimatedOutlet />
         </main>
       </div>
     </div>
@@ -100,8 +123,15 @@ function App() {
 
   if (loadingSession) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center gap-4 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-900/30 via-slate-900 to-indigo-900/30 blur-3xl opacity-50 pointer-events-none" />
+        <div className="relative z-10 flex flex-col items-center gap-3">
+          <div className="relative w-14 h-14">
+            <div className="absolute inset-0 rounded-full border-4 border-blue-500/20 border-t-blue-500 animate-spin" />
+            <div className="absolute inset-2 rounded-full border-4 border-indigo-500/20 border-b-indigo-400 animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.2s' }} />
+          </div>
+          <span className="text-xs font-bold text-slate-300 tracking-widest uppercase animate-pulse">Loading Workspace...</span>
+        </div>
       </div>
     );
   }
@@ -138,3 +168,4 @@ function App() {
 }
 
 export default App;
+
