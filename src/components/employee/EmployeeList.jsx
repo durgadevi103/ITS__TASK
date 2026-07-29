@@ -55,7 +55,7 @@ const EmployeeList = () => {
           department: emp.emp_dept,
           designation: emp.emp_desigation,
           salary: emp.emp_slary || '',
-          status: 'Active',
+          status: '',
           avatarUrl: emp.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(emp.emp_name)}&background=2563eb&color=fff&bold=true`
         }));
         setEmployees(mapped);

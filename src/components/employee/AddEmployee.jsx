@@ -16,22 +16,22 @@ const AddEmployee = () => {
     email: '',
     phone: '',
     designation: '',
-    department: 'IT',
-    status: 'Active',
+    department: '',
+    status: '',
     joiningDate: new Date().toISOString().split('T')[0],
-    dob: '1999-01-01',
-    gender: 'Female',
+    dob: '',
+    gender: '',
     address: '',
     emergencyContact: '',
     emergencyPhone: '',
-    bloodGroup: 'O+',
-    maritalStatus: 'Single',
-    nationality: 'Indian',
-    languages: 'English, Hindi',
-    shift: 'Day Shift',
-    type: 'Full Time',
-    manager: 'Aravind Swamy',
-    desk: 'Bay 1 - Floor 1',
+    bloodGroup: '',
+    maritalStatus: '',
+    nationality: '',
+    languages: '',
+    shift: '',
+    type: '',
+    manager: '',
+    desk: '',
   });
 
   const [showToast, setShowToast] = useState(false);
@@ -104,7 +104,7 @@ const AddEmployee = () => {
         emp_nationality: form.nationality,
         emp_language: form.languages,
         emp_dept: form.department,
-        emp_slary: '35000',
+        emp_salary: '35000',
         emp_desigation: form.designation
       };
 

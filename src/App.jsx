@@ -82,11 +82,16 @@ function App() {
   useEffect(() => {
     const fetchSession = async () => {
       try {
-        const res = await api.get('/auth/current-user');
-        if (res.data.success && res.data.user) {
-          setCurrentUser(res.data.user);
+        const storedUser = sessionStorage.getItem('currentUser');
+        if (storedUser) {
+          setCurrentUser(JSON.parse(storedUser));
         } else {
-          setCurrentUser(null);
+          const res = await api.get('/auth/current-user');
+          if (res.data.success && res.data.user) {
+            setCurrentUser(res.data.user);
+          } else {
+            setCurrentUser(null);
+          }
         }
       } catch (err) {
         console.error("Session fetch failed", err);
