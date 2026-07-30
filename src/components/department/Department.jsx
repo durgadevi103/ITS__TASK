@@ -41,7 +41,7 @@ const Department = () => {
   // Load departments from backend
   const fetchDepartments = async () => {
     try {
-      const response = await api.get('/department/list/100/0');
+      const response = await api.get('/department/list/20/0');
       const listData = response.data.data || response.data.list;
       if (response.data.success && listData) {
         // Sort by backend auto-increment ID ascending
@@ -56,7 +56,7 @@ const Department = () => {
           createdAt: d.created_at || new Date().toISOString().split('T')[0]
         }));
         setDepartments(mapped);
-        sessionStorage.setItem('departmentsData', JSON.stringify(mapped));
+        // sessionStorage.setItem('departmentsData', JSON.stringify(mapped));
         return;
       }
     } catch (err) {
@@ -64,13 +64,13 @@ const Department = () => {
     }
 
     // Fallback
-    const local = sessionStorage.getItem('departmentsData');
-    if (local) {
-      setDepartments(JSON.parse(local));
-    } else {
-      setDepartments(MOCK_DEPTS);
-      sessionStorage.setItem('departmentsData', JSON.stringify(MOCK_DEPTS));
-    }
+    // const local = sessionStorage.getItem('departmentsData');
+    // if (local) {
+    //   setDepartments(JSON.parse(local));
+    // } else {
+    //   setDepartments(MOCK_DEPTS);
+    //   sessionStorage.setItem('departmentsData', JSON.stringify(MOCK_DEPTS));
+    // }
   };
 
   useEffect(() => {
