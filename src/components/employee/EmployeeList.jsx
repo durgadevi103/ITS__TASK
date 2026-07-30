@@ -63,37 +63,59 @@ const EmployeeList = () => {
   const [activeTab, setActiveTab] = useState("Personal Information");
   const [toastMsg, setToastMsg] = useState("");
   const [departments, setDepartments] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 5;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedDept, selectedStatus]);
+
+  const pageVariants = {
+    hidden: { opacity: 0, y: 15 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: {
+        type: "spring",
+        stiffness: 100,
+        damping: 18
+      }
+    }
+  };
 
   const fetchEmployees = async () => {
     try {
       const response = await api.get('/employee/list');
       if (response.data.success) {
         const sorted = response.data.list.sort((a, b) => a.employee_id - b.employee_id);
-        const mapped = sorted.map((emp, index) => ({
-          id: `EMP${String(index + 1).padStart(3, '0')}`,
-          employee_id: emp.employee_id,
-          name: emp.emp_name,
-          email: emp.emp_email,
-          dob: emp.emp_dob,
-          gender: emp.emp_gender,
-          phone: emp.emp_ph_no,
-          address: emp.emp_address,
-          emergencyContact: emp.emp_emg_contact,
-          emergencyPhone: emp.emp_emg_phone,
-          bloodGroup: emp.emp_bld_grp,
-          maritalStatus: emp.emp_merit,
-          nationality: emp.emp_nationality,
-          languages: emp.emp_language,
-          department: emp.emp_dept,
-          designation: emp.emp_desigation,
-          salary: emp.emp_slary || '',
-          status: 'Active', // Default status as active for demo visuals
-          avatarUrl: emp.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(emp.emp_name)}&background=2563eb&color=fff&bold=true`
-        }));
+        const maxId = Math.max(...sorted.map(e => parseInt(e.employee_id)).filter(id => !isNaN(id)), 0);
+        const mapped = sorted.map((emp, index) => {
+          const empNumId = parseInt(emp.employee_id);
+          const isNewHire = sorted.length <= 3 || (empNumId >= maxId - 2);
+          return {
+            id: `EMP${String(index + 1).padStart(3, '0')}`,
+            employee_id: emp.employee_id,
+            name: emp.emp_name,
+            email: emp.emp_email,
+            dob: emp.emp_dob,
+            gender: emp.emp_gender,
+            phone: emp.emp_ph_no,
+            address: emp.emp_address,
+            emergencyContact: emp.emp_emg_contact,
+            emergencyPhone: emp.emp_emg_phone,
+            bloodGroup: emp.emp_bld_grp,
+            maritalStatus: emp.emp_merit,
+            nationality: emp.emp_nationality,
+            languages: emp.emp_language,
+            department: emp.emp_dept,
+            designation: emp.emp_designation || emp.emp_desigation,
+            salary: emp.emp_slary || '',
+            status: 'Active', // Default status as active for demo visuals
+            avatarUrl: emp.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(emp.emp_name)}&background=2563eb&color=fff&bold=true`,
+            isNewHire: isNewHire
+          };
+        });
         setEmployees(mapped);
-        if (mapped.length > 0) {
-          setSelectedEmployee(mapped[0]);
-        }
       }
     } catch (err) {
       console.error("Error loading employees from backend", err);
@@ -149,6 +171,8 @@ const EmployeeList = () => {
     return matchesSearch && matchesDept && matchesStatus;
   });
 
+  const displayedEmployees = filteredEmployees.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   const getDeptColor = (dept) => {
     switch (dept) {
       case "IT": return "bg-[#eff6ff] text-[#2563eb] border border-blue-100";
@@ -161,7 +185,12 @@ const EmployeeList = () => {
   };
 
   return (
-    <div className="p-4 bg-[#f8fafc] h-[calc(100vh-4rem)] flex flex-col gap-4 text-gray-700 overflow-hidden relative">
+    <motion.div 
+      initial="hidden"
+      animate="visible"
+      variants={pageVariants}
+      className="p-4 bg-[#f8fafc] h-[calc(100vh-4rem)] flex flex-col gap-4 text-gray-700 overflow-hidden relative"
+    >
       
       {/* Dynamic Slide-in Toast Notice */}
       <AnimatePresence>
@@ -181,88 +210,99 @@ const EmployeeList = () => {
       </AnimatePresence>
 
       {/* Unified Header & Filter Section */}
-      <div className="bg-white px-4 py-3 rounded-2xl border border-slate-100 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-3 shrink-0">
-        
-        {/* Left Side: Breadcrumbs */}
-        <div className="flex flex-col">
-          <h1 className="text-xl font-black text-slate-900 leading-tight">Employees</h1>
-          <nav className="text-[10px] text-gray-400 font-bold flex items-center gap-1.5">
-            <span className="cursor-pointer hover:text-blue-600 transition-colors" onClick={() => navigate('/')}>Dashboard</span>
-            <span>/</span>
-            <span className="text-gray-500">Employees</span>
-          </nav>
-        </div>
-        
-        {/* Right Side: Filters */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 flex-1 lg:justify-end w-full">
+      {!selectedEmployee && (
+        <div className="bg-white px-4 py-3 rounded-2xl border border-slate-100 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-3 shrink-0">
           
-          {/* Search Field */}
-          <div className="relative flex-1 max-w-xs w-full">
-            <Search size={14} className="text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search details..."
-              className="w-full pl-9 pr-3 py-2 bg-slate-50/50 border border-slate-200/80 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all duration-200 font-semibold"
-            />
+          {/* Left Side: Breadcrumbs */}
+          <div className="flex flex-col">
+            <h1 className="text-xl font-black text-slate-900 leading-tight">Employees</h1>
+            <nav className="text-[10px] text-gray-400 font-bold flex items-center gap-1.5">
+              <span className="cursor-pointer hover:text-blue-600 transition-colors" onClick={() => navigate('/')}>Dashboard</span>
+              <span>/</span>
+              <span className="text-gray-500">Employees</span>
+            </nav>
           </div>
-
-          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-            {/* Department Select */}
-            <div className="relative flex-1 sm:flex-initial">
-              <select
-                value={selectedDept}
-                onChange={(e) => setSelectedDept(e.target.value)}
-                className="w-full sm:w-auto bg-white border border-slate-200 rounded-xl pl-3 pr-8 py-2 text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 cursor-pointer appearance-none min-w-[130px]"
-              >
-                <option value="All Departments">All Departments</option>
-                {departments.map((dept) => (
-                  <option key={dept.dept_code || dept.name} value={dept.name}>
-                    {dept.name}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown size={13} className="text-gray-450 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          
+          {/* Right Side: Filters */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 flex-1 lg:justify-end w-full">
+            
+            {/* Search Field */}
+            <div className="relative flex-1 max-w-xs w-full">
+              <Search size={14} className="text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search details..."
+                className="w-full pl-9 pr-3 py-2 bg-slate-50/50 border border-slate-200/80 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all duration-200 font-semibold"
+              />
             </div>
 
-            {/* Status Select */}
-            <div className="relative flex-1 sm:flex-initial">
-              <select
-                value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
-                className="w-full sm:w-auto bg-white border border-slate-200 rounded-xl pl-3 pr-8 py-2 text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 cursor-pointer appearance-none min-w-[110px]"
-              >
-                <option value="All Status">All Status</option>
-                <option value="Active">Active</option>
-                <option value="On Leave">On Leave</option>
-                <option value="Inactive">Inactive</option>
-              </select>
-              <ChevronDown size={13} className="text-gray-450 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+              {/* Department Select */}
+              <div className="relative flex-1 sm:flex-initial">
+                <select
+                  value={selectedDept}
+                  onChange={(e) => setSelectedDept(e.target.value)}
+                  className="w-full sm:w-auto bg-white border border-slate-200 rounded-xl pl-3 pr-8 py-2 text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 cursor-pointer appearance-none min-w-[130px]"
+                >
+                  <option value="All Departments">All Departments</option>
+                  {departments.map((dept) => (
+                    <option key={dept.dept_code || dept.name} value={dept.name}>
+                      {dept.name}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown size={13} className="text-gray-450 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+
+              {/* Status Select */}
+              <div className="relative flex-1 sm:flex-initial">
+                <select
+                  value={selectedStatus}
+                  onChange={(e) => setSelectedStatus(e.target.value)}
+                  className="w-full sm:w-auto bg-white border border-slate-200 rounded-xl pl-3 pr-8 py-2 text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 cursor-pointer appearance-none min-w-[110px]"
+                >
+                  <option value="All Status">All Status</option>
+                  <option value="Active">Active</option>
+                  <option value="On Leave">On Leave</option>
+                  <option value="Inactive">Inactive</option>
+                </select>
+                <ChevronDown size={13} className="text-gray-450 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
             </div>
-
-            {/* Add Employee Action */}
-            <motion.button
-              whileHover={{ scale: 1.02, y: -0.5, boxShadow: "0 8px 20px rgba(37, 99, 235, 0.25)" }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => navigate('/add-employee')}
-              className="flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-black px-4 py-2 rounded-xl shadow-md shadow-blue-500/10 transition-all duration-150 text-xs whitespace-nowrap ml-auto sm:ml-0 cursor-pointer"
-            >
-              <Plus size={14} />
-              <span>Add Employee</span>
-            </motion.button>
           </div>
-
         </div>
-      </div>
+      )}
 
       {/* Split-Pane Grid Content Area */}
       <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-4 overflow-hidden select-none">
         
         {/* Left Card list */}
-        <div className={`bg-white rounded-2xl border border-slate-100 shadow-sm flex flex-col overflow-hidden h-full transition-all duration-300 ${
-          selectedEmployee ? 'hidden lg:flex lg:flex-[1.7] lg:min-w-0' : 'flex-1'
-        }`}>
+        {!selectedEmployee && (
+          <motion.div 
+            layout
+            className="bg-white rounded-2xl border border-slate-100 shadow-sm flex flex-col overflow-hidden h-full flex-1"
+          >
+            {/* List Header Card with Add Employee Button */}
+            <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between shrink-0 bg-slate-50/20">
+              <div className="font-extrabold text-sm text-slate-800 tracking-tight flex items-center gap-2">
+                <span>Employee List</span>
+                <span className="bg-blue-50 text-blue-600 text-[10px] px-2 py-0.5 rounded-full font-black">
+                  {filteredEmployees.length}
+                </span>
+              </div>
+              
+              <motion.button
+                whileHover={{ scale: 1.02, y: -0.5, boxShadow: "0 4px 12px rgba(37, 99, 235, 0.2)" }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => navigate('/add-employee')}
+                className="flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-black px-3.5 py-1.5 rounded-xl shadow-md shadow-blue-500/10 transition-all duration-150 text-[10.5px] whitespace-nowrap cursor-pointer"
+              >
+                <Plus size={13} />
+                <span>Add Employee</span>
+              </motion.button>
+            </div>
           
           <div className="flex-1 overflow-auto min-h-0">
             <table className="w-full text-left border-collapse min-w-[650px]">
@@ -277,8 +317,8 @@ const EmployeeList = () => {
               </thead>
               <tbody className="divide-y divide-slate-50 text-xs font-semibold text-slate-650">
                 <AnimatePresence mode="popLayout">
-                  {filteredEmployees.length > 0 ? (
-                    filteredEmployees.map((emp, i) => (
+                  {displayedEmployees.length > 0 ? (
+                    displayedEmployees.map((emp, i) => (
                       <motion.tr
                         key={emp.id}
                         layoutId={`empRow-${emp.id}`}
@@ -351,7 +391,7 @@ const EmployeeList = () => {
                             <motion.button
                               whileHover={{ scale: 1.1, backgroundColor: "#fffbeb" }}
                               whileTap={{ scale: 0.9 }}
-                              onClick={() => navigate('/add-employee')}
+                              onClick={() => navigate('/add-employee', { state: { employee: emp } })}
                               className="p-1.5 text-amber-500 rounded-lg transition-all duration-150 cursor-pointer"
                               title="Edit Employee"
                             >
@@ -380,58 +420,113 @@ const EmployeeList = () => {
           {/* Pagination bar */}
           <div className="p-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0 bg-slate-50/30">
             <div className="text-[10px] text-slate-400 font-black tracking-wide uppercase">
-              Showing 1 to {filteredEmployees.length} of {employees.length} entries
+              Showing {filteredEmployees.length > 0 ? (currentPage - 1) * pageSize + 1 : 0} to {Math.min(currentPage * pageSize, filteredEmployees.length)} of {filteredEmployees.length} entries
             </div>
             <div className="flex items-center gap-1">
-              <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="p-1.5 border border-slate-200 text-slate-450 rounded-xl hover:bg-slate-100 transition cursor-pointer">
+              <motion.button 
+                whileHover={{ scale: 1.05 }} 
+                whileTap={{ scale: 0.95 }} 
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className={`p-1.5 border border-slate-200 text-slate-450 rounded-xl hover:bg-slate-100 transition cursor-pointer ${currentPage === 1 ? 'opacity-50 pointer-events-none' : ''}`}
+              >
                 <ChevronLeft size={12} />
               </motion.button>
-              <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-6.5 h-6.5 flex items-center justify-center bg-blue-600 text-white rounded-xl text-[10px] font-black shadow shadow-blue-500/10 cursor-pointer">
-                1
-              </motion.button>
-              <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-6.5 h-6.5 flex items-center justify-center border border-slate-200 text-slate-650 rounded-xl text-[10px] font-black hover:bg-slate-100 transition cursor-pointer">
-                2
-              </motion.button>
-              <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="p-1.5 border border-slate-200 text-slate-450 rounded-xl hover:bg-slate-100 transition cursor-pointer">
+              {Array.from({ length: Math.ceil(filteredEmployees.length / pageSize) || 1 }, (_, idx) => idx + 1).map(pageNum => (
+                <motion.button 
+                  key={pageNum}
+                  whileHover={{ scale: 1.05 }} 
+                  whileTap={{ scale: 0.95 }} 
+                  onClick={() => setCurrentPage(pageNum)}
+                  className={`w-6.5 h-6.5 flex items-center justify-center rounded-xl text-[10px] font-black cursor-pointer transition ${
+                    currentPage === pageNum 
+                      ? "bg-blue-600 text-white shadow shadow-blue-500/10" 
+                      : "border border-slate-200 text-slate-650 hover:bg-slate-100"
+                  }`}
+                >
+                  {pageNum}
+                </motion.button>
+              ))}
+              <motion.button 
+                whileHover={{ scale: 1.05 }} 
+                whileTap={{ scale: 0.95 }} 
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(filteredEmployees.length / pageSize) || 1))}
+                disabled={currentPage === (Math.ceil(filteredEmployees.length / pageSize) || 1)}
+                className={`p-1.5 border border-slate-200 text-slate-450 rounded-xl hover:bg-slate-100 transition cursor-pointer ${currentPage === (Math.ceil(filteredEmployees.length / pageSize) || 1) ? 'opacity-50 pointer-events-none' : ''}`}
+              >
                 <ChevronRight size={12} />
               </motion.button>
             </div>
           </div>
 
-        </div>
+        </motion.div>
+      )}
 
-        {/* Right Details Card */}
-        <AnimatePresence mode="wait">
+        {/* Right Details Card (Show Only View) */}
+        <AnimatePresence>
           {selectedEmployee && (
             <motion.div
-              initial={{ opacity: 0, x: 25, scale: 0.98 }}
-              animate={{ opacity: 1, x: 0, scale: 1 }}
-              exit={{ opacity: 0, x: 25, scale: 0.98 }}
-              transition={{ type: "spring", damping: 22, stiffness: 180 }}
-              className="flex-1 lg:flex-[1.2] flex flex-col gap-4 h-full overflow-hidden min-w-[300px] lg:min-w-0"
+              initial={{ opacity: 0, scale: 0.98, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.98, y: 15 }}
+              transition={{ type: "spring", damping: 25, stiffness: 180 }}
+              className="flex-1 min-h-0 flex flex-col lg:flex-row gap-4 overflow-hidden"
             >
               {/* Profile Card Summary */}
               <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col items-center justify-center relative shrink-0">
-                <motion.button
-                  whileHover={{ scale: 1.08, backgroundColor: "#f1f5f9" }}
-                  whileTap={{ scale: 0.92 }}
-                  onClick={() => setSelectedEmployee(null)}
-                  className="absolute top-3 right-3 text-slate-400 hover:text-slate-650 p-1.5 rounded-xl transition cursor-pointer border border-transparent hover:border-slate-200/50"
-                  title="Close Details"
-                >
-                  <X size={13} />
-                </motion.button>
+                <div className="absolute top-3 right-3 flex items-center gap-1">
+                  <motion.button
+                    whileHover={{ scale: 1.08, backgroundColor: "#fffbeb" }}
+                    whileTap={{ scale: 0.92 }}
+                    onClick={() => navigate('/add-employee', { state: { employee: selectedEmployee } })}
+                    className="text-amber-500 hover:text-amber-600 p-1.5 rounded-xl transition cursor-pointer border border-transparent hover:border-slate-200/50"
+                    title="Edit Employee"
+                  >
+                    <Pencil size={13} />
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.08, backgroundColor: "#f1f5f9" }}
+                    whileTap={{ scale: 0.92 }}
+                    onClick={() => setSelectedEmployee(null)}
+                    className="text-slate-400 hover:text-slate-650 p-1.5 rounded-xl transition cursor-pointer border border-transparent hover:border-slate-200/50"
+                    title="Close Details"
+                  >
+                    <X size={13} />
+                  </motion.button>
+                </div>
                 
                 <div className="flex flex-col items-center">
-                  <img
-                    src={selectedEmployee.avatarUrl}
-                    alt={selectedEmployee.name}
-                    className="w-16.5 h-16.5 rounded-2xl object-cover border-2 border-white shadow-md shadow-slate-100"
-                  />
+                  <div className="relative">
+                    <img
+                      src={selectedEmployee.avatarUrl}
+                      alt={selectedEmployee.name}
+                      className="w-16.5 h-16.5 rounded-2xl object-cover border-2 border-white shadow-md shadow-slate-100"
+                    />
+                    {selectedEmployee.isNewHire && (
+                      <motion.span
+                        animate={{ scale: [1, 1.06, 1], boxShadow: ["0 2px 4px rgba(245,158,11,0.2)", "0 2px 8px rgba(245,158,11,0.4)", "0 2px 4px rgba(245,158,11,0.2)"] }}
+                        transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+                        className="absolute -top-2 -right-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full tracking-wider uppercase"
+                      >
+                        New Hire
+                      </motion.span>
+                    )}
+                  </div>
                   <h3 className="text-sm font-black text-slate-900 mt-3 leading-tight">{selectedEmployee.name}</h3>
-                  <span className="text-[10px] text-slate-400 font-bold mt-1 tracking-wide">{selectedEmployee.designation}</span>
-                  <div className="mt-2.5">
+                  <span className="text-[10px] text-slate-450 font-bold mt-1 tracking-wide uppercase">{selectedEmployee.designation}</span>
+                  
+                  {/* Department pill at the top */}
+                  <span className={`mt-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-black tracking-wide inline-block ${getDeptColor(selectedEmployee.department)}`}>
+                    {selectedEmployee.department}
+                  </span>
+
+                  <div className="mt-2.5 flex items-center gap-2">
                     <StatusBadge status={selectedEmployee.status} />
+                    {selectedEmployee.isNewHire && (
+                      <span className="bg-amber-50 text-amber-600 border border-amber-100 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wide">
+                        Recent Joined
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -662,7 +757,7 @@ const EmployeeList = () => {
         </AnimatePresence>
       </div>
 
-    </div>
+    </motion.div>
   );
 };
 

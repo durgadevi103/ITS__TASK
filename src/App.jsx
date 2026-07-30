@@ -62,7 +62,7 @@ const Layout = ({ currentUser, setCurrentUser }) => {
           setCurrentUser={setCurrentUser}
         />
 
-        <main className="ml-0 md:ml-64 mt-16 w-full md:w-[calc(100%-16rem)] min-h-[calc(100vh-4rem)] overflow-x-hidden transition-all duration-300">
+        <main className="ml-0 md:ml-16 mt-16 w-full md:w-[calc(100%-4rem)] min-h-[calc(100vh-4rem)] overflow-x-hidden transition-all duration-300">
           <Outlet />
         </main>
       </div>

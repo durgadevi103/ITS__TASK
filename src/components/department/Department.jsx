@@ -47,6 +47,7 @@ const Department = () => {
         // Sort by backend auto-increment ID ascending
         const sorted = listData.sort((a, b) => (a.dept_id || a.id) - (b.dept_id || b.id));
         const mapped = sorted.map((d, index) => ({
+          dept_id: d.dept_id,
           id: d.dept_id ? `DEP${String(d.dept_id).padStart(3, '0')}` : (typeof d.id === 'string' && d.id.startsWith('DEP') ? d.id : `DEP${String(d.id || index + 1).padStart(3, '0')}`),
           dept_id_code: d.dept_code || d.dept_id_code || `DEP${index + 1}`,
           name: d.dept_name || d.name,
@@ -143,10 +144,11 @@ const Department = () => {
     } else {
       // Editing
       const editPayload = {
-        dept_code: selectedDept.dept_id_code,
+        dept_id: selectedDept.dept_id,
+        dept_code: formData.dept_id_code,
         dept_name: formData.name,
         dept_desc: formData.description,
-        dept_status: formData.status
+        dept_status: formData.status === 'Active' ? 1 : 0
       };
 
       try {
@@ -186,8 +188,16 @@ const Department = () => {
     if (!target) return;
 
     const newStatus = target.status === 'Active' ? 'Inactive' : 'Active';
+    const editPayload = {
+      dept_id: target.dept_id,
+      dept_code: target.dept_id_code,
+      dept_name: target.name,
+      dept_desc: target.description,
+      dept_status: newStatus === 'Active' ? 1 : 0
+    };
+
     try {
-      const response = await api.put(`/department/toggle-status/${target.dept_id_code}`, { status: newStatus });
+      const response = await api.put('/department/edit', editPayload);
       if (response.data.success) {
         triggerToast(`Status for "${target.name}" set to ${newStatus}`, 'info');
         fetchDepartments();

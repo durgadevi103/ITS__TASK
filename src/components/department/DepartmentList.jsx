@@ -2,7 +2,6 @@ import React, { useState, useMemo } from 'react';
 import { 
   SearchBtn, 
   FilterBtn, 
-  AddDepartmentBtn, 
   ActionBtn 
 } from '../button';
 import { 
@@ -16,7 +15,8 @@ import {
   Unlock,
   CheckCircle,
   XCircle,
-  RotateCcw
+  RotateCcw,
+  Plus
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -38,7 +38,7 @@ const DepartmentList = ({
   const [sortDirection, setSortDirection] = useState('asc'); // asc, desc
 
   // Pagination state
-  const [perPage, setPerPage] = useState(10);
+  const [perPage, setPerPage] = useState(5);
   const [currentPage, setCurrentPage] = useState(1);
 
   const statuses = ['All', 'Active', 'Inactive'];
@@ -172,9 +172,6 @@ const DepartmentList = ({
             <span className="text-gray-500">Departments</span>
           </nav>
         </div>
-        
-        {/* Add Department Green Button at Top Right */}
-        <AddDepartmentBtn onClick={onAddClick} />
       </div>
 
       {/* Control Card (Search, Filters, Per Page) */}
@@ -224,6 +221,7 @@ const DepartmentList = ({
                 }}
                 className="bg-white border border-gray-200 rounded-lg pl-3 pr-7 py-1.5 text-xs text-gray-700 font-bold outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition cursor-pointer appearance-none min-w-[70px]"
               >
+                <option value={5}>5</option>
                 <option value={10}>10</option>
                 <option value={20}>20</option>
                 <option value={50}>50</option>
@@ -271,10 +269,29 @@ const DepartmentList = ({
 
       {/* Main Table Card */}
       <div className="flex-1 bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col overflow-hidden min-h-0">
-        
+        {/* List Header Card with Add Department Button */}
+        <div className="px-5 py-3.5 border-b border-gray-150 flex items-center justify-between shrink-0 bg-gray-50/20">
+          <div className="font-extrabold text-sm text-gray-800 tracking-tight flex items-center gap-2">
+            <span>Department List</span>
+            <span className="bg-blue-50 text-blue-600 text-[10px] px-2 py-0.5 rounded-full font-black">
+              {departments.length}
+            </span>
+          </div>
+          
+          <motion.button
+            whileHover={{ scale: 1.02, y: -0.5, boxShadow: "0 4px 12px rgba(37, 99, 235, 0.2)" }}
+            whileTap={{ scale: 0.98 }}
+            onClick={onAddClick}
+            className="flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-black px-3.5 py-1.5 rounded-xl shadow-md shadow-blue-500/10 transition-all duration-150 text-[10.5px] whitespace-nowrap cursor-pointer"
+          >
+            <Plus size={13} />
+            <span>Add Department</span>
+          </motion.button>
+        </div>
+
         {/* Scrollable table viewport */}
         <div className="flex-1 overflow-auto min-h-0">
-          <table className="w-full text-left border-collapse min-w-[800px]">
+          <table className="w-full text-left border-collapse min-w-full">
             <thead className="sticky top-0 bg-gray-50/90 backdrop-blur-xs border-b border-gray-100 text-[10px] font-bold text-gray-400 uppercase tracking-wider z-10">
               <tr>
                 <th className="py-3 px-4 w-12 text-center">#</th>

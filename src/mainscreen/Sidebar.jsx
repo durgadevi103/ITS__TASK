@@ -41,9 +41,11 @@ const Sidebar = ({ frstValue, isOpen, onClose, currentUser, setCurrentUser }) =>
 
       {/* Sidebar Container */}
       <div
-        className={`fixed top-0 left-0 h-full w-64 bg-gradient-to-b from-blue-600 via-blue-700 to-blue-800 text-white z-50 transform transition-transform duration-300 ease-in-out md:translate-x-0 ${
-          isOpen ? "translate-x-0" : "-translate-x-full"
-        } flex flex-col justify-between border-r border-blue-500/20 shadow-xl overflow-hidden`}
+        className={`fixed top-0 left-0 h-full bg-gradient-to-b from-[#3b82f6] via-[#06b6d4] to-[#10b981] text-white z-50 transition-all duration-300 ease-in-out flex flex-col justify-between border-r border-[#10b981]/20 shadow-xl overflow-hidden ${
+          isOpen 
+            ? "translate-x-0 w-64" 
+            : "-translate-x-full md:translate-x-0 w-16 hover:w-64 group"
+        }`}
       >
         {/* Floating Bubbles Background */}
         <div className="bubble-container">
@@ -66,7 +68,9 @@ const Sidebar = ({ frstValue, isOpen, onClose, currentUser, setCurrentUser }) =>
               <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shadow-inner shrink-0">
                 <Users className="w-5 h-5 text-white" />
               </div>
-              <div className="leading-tight">
+              <div className={`leading-tight transition-all duration-300 ${
+                isOpen ? "opacity-100 w-auto" : "opacity-0 w-0 group-hover:opacity-100 group-hover:w-auto"
+              } overflow-hidden whitespace-nowrap`}>
                 <h2 className="text-sm font-extrabold tracking-wider text-white uppercase">
                   EMPLOYEE
                 </h2>
@@ -77,7 +81,9 @@ const Sidebar = ({ frstValue, isOpen, onClose, currentUser, setCurrentUser }) =>
             </div>
             <button
               onClick={onClose}
-              className="md:hidden text-slate-300 hover:text-white p-1.5 rounded-xl hover:bg-white/10 transition"
+              className={`text-blue-100 hover:text-white p-1.5 rounded-xl hover:bg-white/10 transition cursor-pointer shrink-0 ${
+                isOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+              }`}
               aria-label="Close sidebar"
             >
               <X size={18} />
@@ -92,15 +98,19 @@ const Sidebar = ({ frstValue, isOpen, onClose, currentUser, setCurrentUser }) =>
                 to={item.path}
                 onClick={() => onData(item.name)}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                  `flex items-center gap-3 px-2.5 group-hover:px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
                     isActive || (item.name === "Employees" && window.location.pathname === "/")
-                      ? "bg-white text-blue-900 shadow-md shadow-blue-950/20 font-bold"
+                      ? "bg-white text-[#2563eb] shadow-md shadow-blue-950/20 font-bold"
                       : "text-blue-100 hover:text-white hover:bg-white/10"
                   }`
                 }
               >
-                <item.icon size={18} />
-                <span>{item.name}</span>
+                <item.icon size={18} className="shrink-0" />
+                <span className={`transition-all duration-300 ${
+                  isOpen ? "opacity-100 w-auto" : "opacity-0 w-0 group-hover:opacity-100 group-hover:w-auto"
+                } overflow-hidden whitespace-nowrap`}>
+                  {item.name}
+                </span>
               </NavLink>
             ))}
           </nav>
@@ -123,13 +133,20 @@ const Sidebar = ({ frstValue, isOpen, onClose, currentUser, setCurrentUser }) =>
               onData("Logout");
               navigate("/login");
             }}
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-blue-100 hover:text-white hover:bg-white/10 transition-all duration-200"
+            className="flex items-center gap-3 px-2.5 group-hover:px-4 py-3 rounded-xl text-sm font-medium text-blue-100 hover:text-white hover:bg-white/10 transition-all duration-200"
           >
-            <LogOut size={18} />
-            <span>Logout</span>
+            <LogOut size={18} className="shrink-0" />
+            <span className={`transition-all duration-300 ${
+              isOpen ? "opacity-100 w-auto" : "opacity-0 w-0 group-hover:opacity-100 group-hover:w-auto"
+            } overflow-hidden whitespace-nowrap`}>
+              Logout
+            </span>
           </NavLink>
         </div>
       </div>
+
+      {/* Desktop Hover Overlay Backdrop */}
+      <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs z-45 pointer-events-none opacity-0 transition-opacity duration-300 peer-hover:opacity-100 hidden md:block" />
     </>
   );
 };

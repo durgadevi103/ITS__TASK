@@ -27,7 +27,7 @@ const Navbar = ({ usedata, onToggleSidebar, isSidebarOpen, currentUser, setCurre
   const displayAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=2563eb&color=fff&bold=true`;
   
   return (
-    <nav className="fixed top-0 left-0 md:left-64 right-0 bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 text-white border-b border-blue-500/30 shadow-sm z-40 h-16">
+    <nav className="fixed top-0 left-0 md:left-16 right-0 bg-gradient-to-r from-[#3b82f6] via-[#06b6d4] to-[#10b981] text-white border-b border-[#10b981]/30 shadow-sm z-40 h-16">
       {/* Floating Bubbles Background */}
       <div className="bubble-container">
         <div className="bubble-nb w-5 h-5 left-[5%]" style={{ animationDelay: '0s', animationDuration: '8s' }} />
@@ -51,8 +51,14 @@ const Navbar = ({ usedata, onToggleSidebar, isSidebarOpen, currentUser, setCurre
             {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
           
-          <div className="font-extrabold text-white tracking-wide capitalize hidden md:block">
-            {usedata || "Dashboard"}
+          <div className="flex items-center gap-3 select-none">
+            <span className="font-black text-white tracking-wider uppercase text-xs md:text-sm">
+              Employee Management
+            </span>
+            <span className="h-4 w-px bg-white/20 hidden md:block" />
+            <span className="font-semibold text-blue-100 text-xs hidden md:block capitalize">
+              {usedata || "Dashboard"}
+            </span>
           </div>
         </div>
 
