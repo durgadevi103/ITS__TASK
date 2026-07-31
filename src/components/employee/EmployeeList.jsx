@@ -28,9 +28,9 @@ const StatusBadge = ({ status }) => {
       default: return "bg-gray-50 text-gray-500 border border-gray-100";
     }
   };
-  
+
   const glowColor = status === "Active" ? "rgba(16, 185, 129, 0.25)" :
-                    status === "On Leave" ? "rgba(245, 158, 11, 0.25)" : "rgba(156, 163, 175, 0.15)";
+    status === "On Leave" ? "rgba(245, 158, 11, 0.25)" : "rgba(156, 163, 175, 0.15)";
 
   return (
     <motion.span
@@ -44,10 +44,9 @@ const StatusBadge = ({ status }) => {
       }}
       className={`px-2.5 py-0.5 rounded-full text-[9.5px] font-black inline-flex items-center gap-1.5 tracking-wider uppercase ${getStatusColor(status)}`}
     >
-      <span className={`w-1.5 h-1.5 rounded-full ${
-        status === "Active" ? "bg-emerald-500" :
-        status === "On Leave" ? "bg-amber-500" : "bg-gray-400"
-      }`} />
+      <span className={`w-1.5 h-1.5 rounded-full ${status === "Active" ? "bg-emerald-500" :
+          status === "On Leave" ? "bg-amber-500" : "bg-gray-400"
+        }`} />
       {status}
     </motion.span>
   );
@@ -64,16 +63,23 @@ const EmployeeList = () => {
   const [toastMsg, setToastMsg] = useState("");
   const [departments, setDepartments] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 5;
+  const [pageSize, setPageSize] = useState(5);
+
+  const handleUpdateEmployeeStatus = (employeeId, newStatus) => {
+    localStorage.setItem(`employee_status_${employeeId}`, newStatus);
+    setEmployees(prev =>
+      prev.map(emp => emp.employee_id === employeeId ? { ...emp, status: newStatus } : emp)
+    );
+  };
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, selectedDept, selectedStatus]);
+  }, [searchTerm, selectedDept, selectedStatus, pageSize]);
 
   const pageVariants = {
     hidden: { opacity: 0, y: 15 },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       y: 0,
       transition: {
         type: "spring",
@@ -87,14 +93,15 @@ const EmployeeList = () => {
     try {
       const response = await api.get('/employee/list');
       if (response.data.success) {
-        const sorted = response.data.list.sort((a, b) => a.employee_id - b.employee_id);
-        const maxId = Math.max(...sorted.map(e => parseInt(e.employee_id)).filter(id => !isNaN(id)), 0);
+        const sorted = response.data.list.sort((a, b) => (a.emp_id || a.employee_id) - (b.emp_id || b.employee_id));
+        const maxId = Math.max(...sorted.map(e => parseInt(e.emp_id || e.employee_id)).filter(id => !isNaN(id)), 0);
         const mapped = sorted.map((emp, index) => {
-          const empNumId = parseInt(emp.employee_id);
+          const empNumId = parseInt(emp.emp_id || emp.employee_id);
           const isNewHire = sorted.length <= 3 || (empNumId >= maxId - 2);
+          const actualEmpId = emp.emp_id || emp.employee_id;
           return {
             id: `EMP${String(index + 1).padStart(3, '0')}`,
-            employee_id: emp.employee_id,
+            employee_id: actualEmpId,
             name: emp.emp_name,
             email: emp.emp_email,
             dob: emp.emp_dob,
@@ -109,8 +116,8 @@ const EmployeeList = () => {
             languages: emp.emp_language,
             department: emp.emp_dept,
             designation: emp.emp_designation || emp.emp_desigation,
-            salary: emp.emp_slary || '',
-            status: 'Active', // Default status as active for demo visuals
+            salary: emp.emp_salary || '',
+            status: localStorage.getItem(`employee_status_${actualEmpId}`) || 'Active',
             avatarUrl: emp.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(emp.emp_name)}&background=2563eb&color=fff&bold=true`,
             isNewHire: isNewHire
           };
@@ -159,11 +166,11 @@ const EmployeeList = () => {
     const emailStr = emp.email ? emp.email.toLowerCase() : "";
     const idStr = emp.id ? emp.id.toLowerCase() : "";
     const dbIdStr = emp.employee_id ? String(emp.employee_id).toLowerCase() : "";
-    
+
     const matchesSearch = nameStr.includes(searchTerm.toLowerCase()) ||
-                          emailStr.includes(searchTerm.toLowerCase()) ||
-                          idStr.includes(searchTerm.toLowerCase()) ||
-                          dbIdStr.includes(searchTerm.toLowerCase());
+      emailStr.includes(searchTerm.toLowerCase()) ||
+      idStr.includes(searchTerm.toLowerCase()) ||
+      dbIdStr.includes(searchTerm.toLowerCase());
 
     const matchesDept = selectedDept === "All Departments" || emp.department === selectedDept;
     const matchesStatus = selectedStatus === "All Status" || emp.status === selectedStatus;
@@ -185,13 +192,13 @@ const EmployeeList = () => {
   };
 
   return (
-    <motion.div 
+    <motion.div
       initial="hidden"
       animate="visible"
       variants={pageVariants}
-      className="p-4 bg-[#f8fafc] h-[calc(100vh-4rem)] flex flex-col gap-4 text-gray-700 overflow-hidden relative"
+      className="p-3 bg-[#f8fafc] h-[calc(100vh-4.2rem)] flex flex-col gap-3 text-gray-700 overflow-hidden relative"
     >
-      
+
       {/* Dynamic Slide-in Toast Notice */}
       <AnimatePresence>
         {toastMsg && (
@@ -212,7 +219,7 @@ const EmployeeList = () => {
       {/* Unified Header & Filter Section */}
       {!selectedEmployee && (
         <div className="bg-white px-4 py-3 rounded-2xl border border-slate-100 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-3 shrink-0">
-          
+
           {/* Left Side: Breadcrumbs */}
           <div className="flex flex-col">
             <h1 className="text-xl font-black text-slate-900 leading-tight">Employees</h1>
@@ -222,10 +229,10 @@ const EmployeeList = () => {
               <span className="text-gray-500">Employees</span>
             </nav>
           </div>
-          
+
           {/* Right Side: Filters */}
           <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 flex-1 lg:justify-end w-full">
-            
+
             {/* Search Field */}
             <div className="relative flex-1 max-w-xs w-full">
               <Search size={14} className="text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -277,10 +284,10 @@ const EmployeeList = () => {
 
       {/* Split-Pane Grid Content Area */}
       <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-4 overflow-hidden select-none">
-        
+
         {/* Left Card list */}
         {!selectedEmployee && (
-          <motion.div 
+          <motion.div
             layout
             className="bg-white rounded-2xl border border-slate-100 shadow-sm flex flex-col overflow-hidden h-full flex-1"
           >
@@ -292,175 +299,200 @@ const EmployeeList = () => {
                   {filteredEmployees.length}
                 </span>
               </div>
-              
+
               <motion.button
                 whileHover={{ scale: 1.02, y: -0.5, boxShadow: "0 4px 12px rgba(37, 99, 235, 0.2)" }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => navigate('/add-employee')}
-                className="flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-black px-3.5 py-1.5 rounded-xl shadow-md shadow-blue-500/10 transition-all duration-150 text-[10.5px] whitespace-nowrap cursor-pointer"
+                className="flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-black px-3.5 py-1.5 rounded-xl shadow-md shadow-blue-500/10 transition-all duration-150 text-[10.5px] whitespace-nowrap cursor-pointer glossy-shine"
               >
                 <Plus size={13} />
                 <span>Add Employee</span>
               </motion.button>
             </div>
-          
-          <div className="flex-1 overflow-auto min-h-0">
-            <table className="w-full text-left border-collapse min-w-[650px]">
-              <thead className="sticky top-0 bg-slate-50/90 backdrop-blur-xs border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest z-10">
-                <tr>
-                  <th className="py-3 px-4">Employee</th>
-                  <th className="py-3 px-4">Role & Dept</th>
-                  <th className="py-3 px-4">Contact</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50 text-xs font-semibold text-slate-650">
-                <AnimatePresence mode="popLayout">
-                  {displayedEmployees.length > 0 ? (
-                    displayedEmployees.map((emp, i) => (
-                      <motion.tr
-                        key={emp.id}
-                        layoutId={`empRow-${emp.id}`}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.98 }}
-                        transition={{ type: "spring", stiffness: 160, damping: 20, delay: i * 0.035 }}
-                        onClick={() => setSelectedEmployee(emp)}
-                        className={`hover:bg-[#f8fafc]/90 transition-colors duration-150 cursor-pointer relative border-b border-slate-50/50 group ${
-                          selectedEmployee && selectedEmployee.id === emp.id ? 'bg-[#f1f5f9]/70 font-semibold' : ''
-                        }`}
-                      >
-                        {/* Selected Indicator Pill */}
-                        {selectedEmployee && selectedEmployee.id === emp.id && (
-                          <motion.div
-                            layoutId="activeRowIndicator"
-                            className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600 rounded-r-lg z-20"
-                            transition={{ type: "spring", stiffness: 350, damping: 25 }}
-                          />
-                        )}
 
-                        {/* Avatar Profile */}
-                        <td className="py-3 px-4">
-                          <div className="flex items-center gap-3">
-                            <img
-                              src={emp.avatarUrl}
-                              alt={emp.name}
-                              className="w-9 h-9 rounded-full object-cover border border-slate-200 shadow-sm shrink-0"
+            <div className="flex-1 overflow-auto min-h-0">
+              <table className="w-full text-left border-collapse min-w-[650px]">
+                <thead className="sticky top-0 bg-slate-50/90 backdrop-blur-xs border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest z-10">
+                  <tr>
+                    <th className="py-3 px-4">Employee</th>
+                    <th className="py-3 px-4">Role & Dept</th>
+                    <th className="py-3 px-4">Contact</th>
+                    <th className="py-3 px-4">Status</th>
+                    <th className="py-3 px-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50 text-xs font-semibold text-slate-650">
+                  <AnimatePresence mode="popLayout">
+                    {displayedEmployees.length > 0 ? (
+                      displayedEmployees.map((emp, i) => (
+                        <motion.tr
+                          key={emp.id}
+                          layoutId={`empRow-${emp.id}`}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.98 }}
+                          transition={{ type: "spring", stiffness: 160, damping: 20, delay: i * 0.035 }}
+                          onClick={() => setSelectedEmployee(emp)}
+                          className={`hover:bg-[#f8fafc]/90 transition-colors duration-150 cursor-pointer relative border-b border-slate-50/50 group ${selectedEmployee && selectedEmployee.id === emp.id ? 'bg-[#f1f5f9]/70 font-semibold' : ''
+                            }`}
+                        >
+                          {/* Selected Indicator Pill */}
+                          {selectedEmployee && selectedEmployee.id === emp.id && (
+                            <motion.div
+                              layoutId="activeRowIndicator"
+                              className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600 rounded-r-lg z-20"
+                              transition={{ type: "spring", stiffness: 350, damping: 25 }}
                             />
-                            <div>
-                              <div className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors duration-150">{emp.name}</div>
-                              <div className="text-[10px] text-slate-400 font-bold mt-0.5">{emp.id}</div>
+                          )}
+
+                          {/* Avatar Profile */}
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-3">
+                              <img
+                                src={emp.avatarUrl}
+                                alt={emp.name}
+                                className="w-9 h-9 rounded-full object-cover border border-slate-200 shadow-sm shrink-0"
+                              />
+                              <div>
+                                <div className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors duration-150">{emp.name}</div>
+                                <div className="text-[10px] text-slate-400 font-bold mt-0.5">{emp.id}</div>
+                              </div>
                             </div>
-                          </div>
-                        </td>
-                        
-                        {/* Designation / Dept */}
-                        <td className="py-3 px-4">
-                          <div className="font-bold text-slate-800 leading-tight">{emp.designation}</div>
-                          <div className="mt-1">
-                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-black tracking-wide inline-block ${getDeptColor(emp.department)}`}>
-                              {emp.department}
-                            </span>
-                          </div>
-                        </td>
+                          </td>
 
-                        {/* Contact details */}
-                        <td className="py-3 px-4">
-                          <div className="text-slate-650 font-semibold leading-tight">{emp.email}</div>
-                          <div className="text-[9.5px] text-slate-400 mt-0.5 font-bold">{emp.phone}</div>
-                        </td>
+                          {/* Designation / Dept */}
+                          <td className="py-3 px-4">
+                            <div className="font-bold text-slate-800 leading-tight">{emp.designation}</div>
+                            <div className="mt-1">
+                              <span className={`px-2 py-0.5 rounded-full text-[9px] font-black tracking-wide inline-block ${getDeptColor(emp.department)}`}>
+                                {emp.department}
+                              </span>
+                            </div>
+                          </td>
 
-                        {/* Status badging */}
-                        <td className="py-3 px-4">
-                          <StatusBadge status={emp.status} />
-                        </td>
+                          {/* Contact details */}
+                          <td className="py-3 px-4">
+                            <div className="text-slate-650 font-semibold leading-tight">{emp.email}</div>
+                            <div className="text-[9.5px] text-slate-400 mt-0.5 font-bold">{emp.phone}</div>
+                          </td>
 
-                        {/* Button Actions */}
-                        <td className="py-3 px-4 text-right" onClick={(e) => e.stopPropagation()}>
-                          <div className="flex items-center justify-end gap-1.5">
-                            <motion.button
-                              whileHover={{ scale: 1.1, backgroundColor: "#eff6ff" }}
-                              whileTap={{ scale: 0.9 }}
-                              onClick={() => setSelectedEmployee(emp)}
-                              className="p-1.5 text-blue-500 rounded-lg transition-all duration-150 cursor-pointer"
-                              title="View Details"
-                            >
-                              <Eye size={14} />
-                            </motion.button>
-                            <motion.button
-                              whileHover={{ scale: 1.1, backgroundColor: "#fffbeb" }}
-                              whileTap={{ scale: 0.9 }}
-                              onClick={() => navigate('/add-employee', { state: { employee: emp } })}
-                              className="p-1.5 text-amber-500 rounded-lg transition-all duration-150 cursor-pointer"
-                              title="Edit Employee"
-                            >
-                              <Pencil size={14} />
-                            </motion.button>
-                          </div>
-                        </td>
+                          {/* Status badging */}
+                          <td className="py-3 px-4">
+                            <StatusBadge status={emp.status} />
+                          </td>
 
+                           {/* Button Actions */}
+                          <td className="py-3 px-4 text-right" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex items-center justify-end gap-1.5">
+                              {/* Status Quick Changer dropdown */}
+                              <div className="relative shrink-0 mr-1.5">
+                                <select
+                                  value={emp.status}
+                                  onChange={(e) => handleUpdateEmployeeStatus(emp.employee_id, e.target.value)}
+                                  className="bg-white border border-slate-200 rounded-lg pl-2 pr-5 py-1 text-[9.5px] font-bold text-slate-650 outline-none focus:ring-1 focus:ring-blue-500 transition cursor-pointer appearance-none min-w-[78px] text-center"
+                                >
+                                  <option value="Active">Active</option>
+                                  <option value="Inactive">Inactive</option>
+                                  <option value="On Leave">On Leave</option>
+                                </select>
+                                <ChevronDown size={9} className="text-gray-450 absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                              </div>
+
+                              <motion.button
+                                whileHover={{ scale: 1.1, backgroundColor: "#eff6ff" }}
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => setSelectedEmployee(emp)}
+                                className="p-1.5 text-blue-500 rounded-lg transition-all duration-150 cursor-pointer"
+                                title="View Details"
+                              >
+                                <Eye size={14} />
+                              </motion.button>
+                              <motion.button
+                                whileHover={{ scale: 1.1, backgroundColor: "#fffbeb" }}
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => navigate('/add-employee', { state: { employee: emp } })}
+                                className="p-1.5 text-amber-500 rounded-lg transition-all duration-150 cursor-pointer"
+                                title="Edit Employee"
+                              >
+                                <Pencil size={14} />
+                              </motion.button>
+                            </div>
+                          </td>
+
+                        </motion.tr>
+                      ))
+                    ) : (
+                      <motion.tr
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                      >
+                        <td colSpan="5" className="py-8 text-center text-slate-400 font-bold">
+                          No employees found matching filters.
+                        </td>
                       </motion.tr>
-                    ))
-                  ) : (
-                    <motion.tr
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                    >
-                      <td colSpan="5" className="py-8 text-center text-slate-400 font-bold">
-                        No employees found matching filters.
-                      </td>
-                    </motion.tr>
-                  )}
-                </AnimatePresence>
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination bar */}
-          <div className="p-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0 bg-slate-50/30">
-            <div className="text-[10px] text-slate-400 font-black tracking-wide uppercase">
-              Showing {filteredEmployees.length > 0 ? (currentPage - 1) * pageSize + 1 : 0} to {Math.min(currentPage * pageSize, filteredEmployees.length)} of {filteredEmployees.length} entries
+                    )}
+                  </AnimatePresence>
+                </tbody>
+              </table>
             </div>
-            <div className="flex items-center gap-1">
-              <motion.button 
-                whileHover={{ scale: 1.05 }} 
-                whileTap={{ scale: 0.95 }} 
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                className={`p-1.5 border border-slate-200 text-slate-450 rounded-xl hover:bg-slate-100 transition cursor-pointer ${currentPage === 1 ? 'opacity-50 pointer-events-none' : ''}`}
-              >
-                <ChevronLeft size={12} />
-              </motion.button>
-              {Array.from({ length: Math.ceil(filteredEmployees.length / pageSize) || 1 }, (_, idx) => idx + 1).map(pageNum => (
-                <motion.button 
-                  key={pageNum}
-                  whileHover={{ scale: 1.05 }} 
-                  whileTap={{ scale: 0.95 }} 
-                  onClick={() => setCurrentPage(pageNum)}
-                  className={`w-6.5 h-6.5 flex items-center justify-center rounded-xl text-[10px] font-black cursor-pointer transition ${
-                    currentPage === pageNum 
-                      ? "bg-blue-600 text-white shadow shadow-blue-500/10" 
-                      : "border border-slate-200 text-slate-650 hover:bg-slate-100"
+
+            {/* Pagination bar */}
+            <div className="p-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 shrink-0 bg-slate-50/30 font-medium select-none">
+              <div>
+                Showing <span className="font-bold text-slate-700">{filteredEmployees.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}</span> to <span className="font-bold text-slate-700">{Math.min(currentPage * pageSize, filteredEmployees.length)}</span> of <span className="font-bold text-slate-700">{filteredEmployees.length}</span> employees
+              </div>
+
+              {/* Next/Prev Page navigation controls */}
+              <div className="flex items-center gap-1.5 font-bold">
+                <button
+                  type="button"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  className={`px-2.5 py-1.5 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-100 transition cursor-pointer text-[10px] font-black ${
+                    currentPage === 1 ? 'opacity-40 pointer-events-none' : ''
                   }`}
                 >
-                  {pageNum}
-                </motion.button>
-              ))}
-              <motion.button 
-                whileHover={{ scale: 1.05 }} 
-                whileTap={{ scale: 0.95 }} 
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(filteredEmployees.length / pageSize) || 1))}
-                disabled={currentPage === (Math.ceil(filteredEmployees.length / pageSize) || 1)}
-                className={`p-1.5 border border-slate-200 text-slate-450 rounded-xl hover:bg-slate-100 transition cursor-pointer ${currentPage === (Math.ceil(filteredEmployees.length / pageSize) || 1) ? 'opacity-50 pointer-events-none' : ''}`}
-              >
-                <ChevronRight size={12} />
-              </motion.button>
-            </div>
-          </div>
+                  Prev
+                </button>
+                <span className="text-[10px] text-slate-400 font-extrabold uppercase px-1.5">
+                  Page {currentPage} of {Math.ceil(filteredEmployees.length / pageSize) || 1}
+                </span>
+                <button
+                  type="button"
+                  disabled={currentPage === (Math.ceil(filteredEmployees.length / pageSize) || 1)}
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(filteredEmployees.length / pageSize) || 1))}
+                  className={`px-2.5 py-1.5 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-100 transition cursor-pointer text-[10px] font-black ${
+                    currentPage === (Math.ceil(filteredEmployees.length / pageSize) || 1) ? 'opacity-40 pointer-events-none' : ''
+                  }`}
+                >
+                  Next
+                </button>
+              </div>
 
-        </motion.div>
-      )}
+              {/* Per Page Select dropdown (on the right side) */}
+              <div className="flex items-center gap-2 text-xs text-slate-500 font-semibold">
+                <span>Per Page:</span>
+                <div className="relative">
+                  <select
+                    value={pageSize}
+                    onChange={(e) => {
+                      setPageSize(Number(e.target.value));
+                      setCurrentPage(1);
+                    }}
+                    className="bg-white border border-slate-200 rounded-xl pl-3 pr-8 py-1.5 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 transition cursor-pointer appearance-none min-w-[70px]"
+                  >
+                    <option value={5}>5</option>
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                  </select>
+                  <ChevronDown size={13} className="text-gray-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </div>
+              </div>
+            </div>
+
+          </motion.div>
+        )}
 
         {/* Right Details Card (Show Only View) */}
         <AnimatePresence>
@@ -494,7 +526,7 @@ const EmployeeList = () => {
                     <X size={13} />
                   </motion.button>
                 </div>
-                
+
                 <div className="flex flex-col items-center">
                   <div className="relative">
                     <img
@@ -514,7 +546,7 @@ const EmployeeList = () => {
                   </div>
                   <h3 className="text-sm font-black text-slate-900 mt-3 leading-tight">{selectedEmployee.name}</h3>
                   <span className="text-[10px] text-slate-450 font-bold mt-1 tracking-wide uppercase">{selectedEmployee.designation}</span>
-                  
+
                   {/* Department pill at the top */}
                   <span className={`mt-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-black tracking-wide inline-block ${getDeptColor(selectedEmployee.department)}`}>
                     {selectedEmployee.department}
@@ -548,22 +580,22 @@ const EmployeeList = () => {
 
               {/* Details Tab Navigation */}
               <div className="bg-white p-4.5 rounded-2xl border border-slate-100 shadow-sm flex-1 min-h-0 flex flex-col overflow-hidden">
-                
+
                 {/* Tab Header */}
                 <div className="flex items-center gap-4.5 border-b border-slate-100 pb-2 text-xs font-black shrink-0 overflow-x-auto whitespace-nowrap scrollbar-none">
                   {["Personal Information", "Job Information", "Account Information", "Documents"].map((tab) => {
                     const label = tab === "Personal Information" ? "Personal" :
-                                  tab === "Job Information" ? "Job" :
-                                  tab === "Account Information" ? "Account" : "Docs";
+                      tab === "Job Information" ? "Job" :
+                        tab === "Account Information" ? "Account" : "Docs";
+                    const isTabActive = activeTab === tab;
                     return (
                       <button
                         key={tab}
                         onClick={() => setActiveTab(tab)}
-                        className={`pb-2 px-0.5 relative transition-all duration-150 cursor-pointer ${
-                          activeTab === tab 
-                            ? "text-blue-600" 
+                        className={`pb-2 px-0.5 relative transition-all duration-150 cursor-pointer ${activeTab === tab
+                            ? "text-blue-600"
                             : "text-slate-400 hover:text-slate-650"
-                        }`}
+                          }`}
                       >
                         <span>{label}</span>
                         {/* Smooth sliding active underline */}

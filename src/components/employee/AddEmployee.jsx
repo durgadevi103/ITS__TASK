@@ -20,7 +20,7 @@ const AddEmployee = () => {
     phone: '',
     designation: '',
     department: '',
-    status: '',
+    status: 'Active',
     joiningDate: new Date().toISOString().split('T')[0],
     dob: '',
     gender: '',
@@ -97,7 +97,7 @@ const AddEmployee = () => {
         phone: editEmployee.phone || '',
         designation: editEmployee.designation || '',
         department: editEmployee.department || '',
-        status: editEmployee.status || '',
+        status: editEmployee.status || 'Active',
         joiningDate: parseDateForInput(editEmployee.joiningDate),
         dob: parseDateForInput(editEmployee.dob),
         gender: editEmployee.gender || '',
@@ -140,12 +140,12 @@ const AddEmployee = () => {
           emp_language: form.languages,
           emp_dept: form.department,
           emp_salary: form.salary || '35000',
-          emp_desigation: form.designation,
-          emp_designation: form.designation
+          emp_desigation: form.designation
         };
 
         const responseUpdate = await api.put('/employee/edit', payload);
         if (responseUpdate.data.success) {
+          localStorage.setItem(`employee_status_${editEmployee.employee_id}`, form.status);
           setShowToast(true);
           setTimeout(() => {
             setShowToast(false);
@@ -160,7 +160,7 @@ const AddEmployee = () => {
         let nextNum = 1;
         const responseList = await api.get('/employee/list');
         if (responseList.data.success && responseList.data.list && responseList.data.list.length > 0) {
-          const ids = responseList.data.list.map(emp => parseInt(emp.employee_id));
+          const ids = responseList.data.list.map(emp => parseInt(emp.emp_id || emp.employee_id));
           const maxId = Math.max(...ids.filter(id => !isNaN(id)));
           nextNum = maxId > 0 ? maxId + 1 : 1;
         }
@@ -189,6 +189,7 @@ const AddEmployee = () => {
         // 3. Post to backend
         const responseCreate = await api.post('/employee/create', payload);
         if (responseCreate.data.success) {
+          localStorage.setItem(`employee_status_${nextNum}`, form.status || 'Active');
           setShowToast(true);
           setTimeout(() => {
             setShowToast(false);
@@ -205,7 +206,7 @@ const AddEmployee = () => {
   };
 
   return (
-    <div className="p-4 bg-[#f8fafc] h-[calc(100vh-4rem)] flex flex-col gap-4 text-gray-700 overflow-hidden">
+    <div className="p-3 bg-[#f8fafc] h-[calc(100vh-4.2rem)] flex flex-col gap-3 text-gray-700 overflow-hidden">
       {/* Toast Notification */}
       <AnimatePresence>
         {showToast && (
@@ -225,11 +226,11 @@ const AddEmployee = () => {
       </AnimatePresence>
 
       <div className="flex-1 w-full bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col overflow-hidden h-full">
-        
+
         {/* Header bar */}
         <div className="bg-gradient-to-r from-blue-600 to-indigo-700 px-5 py-4 text-white flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <button 
+            <button
               onClick={() => navigate('/employees')}
               className="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition text-white cursor-pointer"
               title="Back to Directory"
@@ -250,12 +251,12 @@ const AddEmployee = () => {
         <form onSubmit={handleSubmit} className="flex-1 min-h-0 flex flex-col overflow-hidden">
           {/* Scrollable Fields Section */}
           <div className="flex-1 overflow-y-auto p-5 md:p-6 space-y-6 text-xs text-gray-600">
-            
+
             {/* Section: Personal Info */}
             <div className="space-y-4">
               <h3 className="text-xs font-bold text-gray-900 border-b border-gray-50 pb-2">1. Personal Details</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                
+
                 {/* Full Name */}
                 <div className="space-y-1">
                   <label className="block font-semibold text-gray-700">Full Name</label>
@@ -413,7 +414,7 @@ const AddEmployee = () => {
             <div className="space-y-4 pt-4 border-t border-gray-50">
               <h3 className="text-xs font-bold text-gray-900 border-b border-gray-50 pb-2">2. Job & Position Details</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                
+
                 {/* Designation */}
                 <div className="space-y-1">
                   <label className="block font-semibold text-gray-700">Designation / Position</label>
@@ -537,7 +538,7 @@ const AddEmployee = () => {
             </button>
             <button
               type="submit"
-              className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md shadow-blue-600/10 transition active:scale-95 text-xs cursor-pointer"
+              className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md shadow-blue-600/10 transition active:scale-95 text-xs cursor-pointer glossy-shine"
             >
               {isEditMode ? "Update Profile" : "Save Employee"}
             </button>

@@ -1,16 +1,16 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  Calendar, 
-  CheckCircle2, 
-  Clock, 
-  XCircle, 
-  Send, 
-  Search, 
-  SlidersHorizontal, 
-  Download, 
-  MoreVertical, 
-  ChevronLeft, 
-  ChevronRight, 
+import {
+  Calendar,
+  CheckCircle2,
+  Clock,
+  XCircle,
+  Send,
+  Search,
+  SlidersHorizontal,
+  Download,
+  MoreVertical,
+  ChevronLeft,
+  ChevronRight,
   ChevronDown,
   User,
   Info,
@@ -24,6 +24,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 
 // Animated sparkline drawing itself for visual aesthetic
@@ -56,7 +57,7 @@ const AnimatedNumber = ({ value }) => {
     const increment = Math.ceil(end / 40) || 1;
     let stepTime = Math.abs(Math.floor(totalDuration / (end / increment)));
     stepTime = Math.max(12, Math.min(80, stepTime));
-    
+
     const timer = setInterval(() => {
       start += increment;
       if (start >= end) {
@@ -87,11 +88,10 @@ const Toast = ({ toast, onClose }) => {
       initial={{ opacity: 0, y: -20, scale: 0.9, x: 30 }}
       animate={{ opacity: 1, y: 0, scale: 1, x: 0 }}
       exit={{ opacity: 0, scale: 0.95, x: 30, transition: { duration: 0.25 } }}
-      className={`pointer-events-auto flex items-start gap-3 p-4 rounded-2xl shadow-xl border overflow-hidden relative backdrop-blur-md ${
-        toast.type === 'success'
+      className={`pointer-events-auto flex items-start gap-3 p-4 rounded-2xl shadow-xl border overflow-hidden relative backdrop-blur-md ${toast.type === 'success'
           ? 'bg-emerald-50/95 border-emerald-100/80 text-emerald-800'
           : 'bg-rose-50/95 border-rose-100/80 text-rose-800'
-      }`}
+        }`}
     >
       <div className="shrink-0 mt-0.5">
         {toast.type === 'success' ? (
@@ -109,21 +109,21 @@ const Toast = ({ toast, onClose }) => {
       >
         <X className="w-3.5 h-3.5" />
       </button>
-      
+
       {/* Animated countdown indicator */}
       <motion.div
         initial={{ width: '100%' }}
         animate={{ width: '0%' }}
         transition={{ duration: 4, ease: 'linear' }}
-        className={`absolute bottom-0 left-0 h-0.5 ${
-          toast.type === 'success' ? 'bg-emerald-500' : 'bg-rose-500'
-        }`}
+        className={`absolute bottom-0 left-0 h-0.5 ${toast.type === 'success' ? 'bg-emerald-500' : 'bg-rose-500'
+          }`}
       />
     </motion.div>
   );
 };
 
 const LeaveManagement = () => {
+  const navigate = useNavigate();
   const [employees, setEmployees] = useState([]);
   const [loadingEmployees, setLoadingEmployees] = useState(true);
   const [requests, setRequests] = useState([]);
@@ -145,48 +145,48 @@ const LeaveManagement = () => {
   const [rowsPerPage] = useState(5);
   const [actionMenuId, setActionMenuId] = useState(null);
 
-  // Mock leaves fallback
-  const MOCK_LEAVES = [
-    {
-      id: 1,
-      empName: 'Pasupathi',
-      empId: 'EMP003',
-      avatar: 'https://ui-avatars.com/api/?name=Pasupathi&background=2563eb&color=fff&bold=true',
-      leaveType: 'Casual Leave (CL)',
-      from: '10/08/2026',
-      to: '12/08/2026',
-      days: 3,
-      reason: 'Family function at home town',
-      status: 'Approved',
-      appliedOn: '01/08/2026'
-    },
-    {
-      id: 2,
-      empName: 'kumarram',
-      empId: 'EMP001',
-      avatar: 'https://ui-avatars.com/api/?name=kumarram&background=2563eb&color=fff&bold=true',
-      leaveType: 'Sick Leave (SL)',
-      from: '15/08/2026',
-      to: '16/08/2026',
-      days: 2,
-      reason: 'Fever and cold',
-      status: 'Pending',
-      appliedOn: '05/08/2026'
-    },
-    {
-      id: 3,
-      empName: 'raghul',
-      empId: 'EMP016',
-      avatar: 'https://ui-avatars.com/api/?name=raghul&background=2563eb&color=fff&bold=true',
-      leaveType: 'Privilege Leave (PL)',
-      from: '20/08/2026',
-      to: '25/08/2026',
-      days: 6,
-      reason: 'Personal vacation',
-      status: 'Pending',
-      appliedOn: '06/08/2026'
-    }
-  ];
+  // // Mock leaves fallback
+  // const MOCK_LEAVES = [
+  //   {
+  //     id: 1,
+  //     empName: 'Pasupathi',
+  //     empId: 'EMP003',
+  //     avatar: 'https://ui-avatars.com/api/?name=Pasupathi&background=2563eb&color=fff&bold=true',
+  //     leaveType: 'Casual Leave (CL)',
+  //     from: '10/08/2026',
+  //     to: '12/08/2026',
+  //     days: 3,
+  //     reason: 'Family function at home town',
+  //     status: 'Approved',
+  //     appliedOn: '01/08/2026'
+  //   },
+  //   {
+  //     id: 2,
+  //     empName: 'kumarram',
+  //     empId: 'EMP001',
+  //     avatar: 'https://ui-avatars.com/api/?name=kumarram&background=2563eb&color=fff&bold=true',
+  //     leaveType: 'Sick Leave (SL)',
+  //     from: '15/08/2026',
+  //     to: '16/08/2026',
+  //     days: 2,
+  //     reason: 'Fever and cold',
+  //     status: 'Pending',
+  //     appliedOn: '05/08/2026'
+  //   },
+  //   {
+  //     id: 3,
+  //     empName: 'raghul',
+  //     empId: 'EMP016',
+  //     avatar: 'https://ui-avatars.com/api/?name=raghul&background=2563eb&color=fff&bold=true',
+  //     leaveType: 'Privilege Leave (PL)',
+  //     from: '20/08/2026',
+  //     to: '25/08/2026',
+  //     days: 6,
+  //     reason: 'Personal vacation',
+  //     status: 'Pending',
+  //     appliedOn: '06/08/2026'
+  //   }
+  // ];
 
   // Helper for adding toast alerts
   const showToast = (message, type = 'success') => {
@@ -213,20 +213,13 @@ const LeaveManagement = () => {
           appliedOn: d.applied_on
         }));
         setRequests(mapped);
-        sessionStorage.setItem('leaveRequests', JSON.stringify(mapped));
-        return;
+      } else {
+        setRequests([]);
       }
     } catch (err) {
-      console.error("Error fetching leave requests from DB, switching to session storage fallback", err);
-    }
-
-    // Fallback
-    const localData = sessionStorage.getItem('leaveRequests');
-    if (localData) {
-      setRequests(JSON.parse(localData));
-    } else {
-      setRequests(MOCK_LEAVES);
-      sessionStorage.setItem('leaveRequests', JSON.stringify(MOCK_LEAVES));
+      console.error("Error fetching leave requests from DB", err);
+      setRequests([]);
+      showToast("Failed to fetch leave requests from database.", "error");
     }
   };
 
@@ -236,9 +229,14 @@ const LeaveManagement = () => {
       setLoadingEmployees(true);
       const res = await api.get('/employee/list');
       if (res.data.success && res.data.list) {
-        setEmployees(res.data.list);
-        if (res.data.list.length > 0) {
-          setSelectedEmpId(res.data.list[0].employee_id.toString());
+        const mapped = res.data.list.map(emp => ({
+          ...emp,
+          employee_id: emp.emp_id || emp.employee_id,
+          emp_name: emp.emp_name
+        }));
+        setEmployees(mapped);
+        if (mapped.length > 0) {
+          setSelectedEmpId(mapped[0].employee_id.toString());
         }
       }
     } catch (err) {
@@ -338,16 +336,23 @@ const LeaveManagement = () => {
       selectedEmp = employees.find(emp => emp.employee_id.toString() === selectedEmpId);
     }
 
-    const newEmpName = selectedEmp ? selectedEmp.emp_name : 'Priya Sharma';
+    const newEmpName = selectedEmp ? selectedEmp.emp_name : '';
     const newEmpIdCode = selectedEmp ? `EMP${String(selectedEmp.employee_id).padStart(3, '0')}` : 'EMP001';
     const newAvatar = selectedEmp?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(newEmpName)}&background=2563eb&color=fff&bold=true`;
 
     const formatDatePickerDate = (dateStr) => {
-      const d = new Date(dateStr);
-      const day = String(d.getDate()).padStart(2, '0');
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const year = d.getFullYear();
-      return `${day}/${month}/${year}`;
+      if (!dateStr) return '';
+      if (dateStr instanceof Date) {
+        const day = String(dateStr.getDate()).padStart(2, '0');
+        const month = String(dateStr.getMonth() + 1).padStart(2, '0');
+        const year = dateStr.getFullYear();
+        return `${day}/${month}/${year}`;
+      }
+      const parts = dateStr.split('-');
+      if (parts.length === 3) {
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+      }
+      return dateStr;
     };
 
     const payload = {
@@ -371,38 +376,15 @@ const LeaveManagement = () => {
         setFromDate('');
         setToDate('');
         setReason('');
-        setIsSubmitting(false);
-        return;
+      } else {
+        showToast('Failed to submit leave request to database.', 'error');
       }
     } catch (err) {
-      console.error("Backend post failed, using session storage fallback", err);
+      console.error("Backend post failed", err);
+      showToast('Error communicating with database.', 'error');
+    } finally {
+      setIsSubmitting(false);
     }
-
-    // Fallback save
-    const current = JSON.parse(sessionStorage.getItem('leaveRequests') || JSON.stringify(MOCK_LEAVES));
-    const newLeave = {
-      id: current.length + 1,
-      empName: payload.emp_name,
-      empId: payload.emp_id_code,
-      avatar: payload.avatar,
-      leaveType: payload.leave_type,
-      from: payload.from_date,
-      to: payload.to_date,
-      days: payload.days,
-      reason: payload.reason,
-      status: payload.status,
-      appliedOn: payload.applied_on
-    };
-    const updated = [newLeave, ...current];
-    sessionStorage.setItem('leaveRequests', JSON.stringify(updated));
-    setRequests(updated);
-    showToast('Leave application submitted! (Saved in browser session)', 'success');
-    
-    // Clear form
-    setFromDate('');
-    setToDate('');
-    setReason('');
-    setIsSubmitting(false);
   };
 
   // Perform actions on requests (Approve, Reject, Cancel)
@@ -417,23 +399,12 @@ const LeaveManagement = () => {
         if (selectedRequest && selectedRequest.id === requestId) {
           setSelectedRequest(prev => ({ ...prev, status: newStatus }));
         }
-        return;
+      } else {
+        showToast(`Failed to update request status in database.`, 'error');
       }
     } catch (err) {
-      console.error("Backend status change failed, using session storage fallback", err);
-    }
-
-    // Fallback status update
-    const current = JSON.parse(sessionStorage.getItem('leaveRequests') || JSON.stringify(MOCK_LEAVES));
-    const updated = current.map(r => r.id === requestId ? { ...r, status: newStatus } : r);
-    sessionStorage.setItem('leaveRequests', JSON.stringify(updated));
-    setRequests(updated);
-    showToast(`Request status updated to ${newStatus} (fallback)!`, 'success');
-    setActionMenuId(null);
-    
-    // Sync selected request if in drawer
-    if (selectedRequest && selectedRequest.id === requestId) {
-      setSelectedRequest(prev => ({ ...prev, status: newStatus }));
+      console.error("Backend status change failed", err);
+      showToast(`Error communicating with database.`, 'error');
     }
   };
 
@@ -441,10 +412,10 @@ const LeaveManagement = () => {
   const filteredRequests = useMemo(() => {
     return requests.filter(req => {
       const matchesTab = activeTab === 'All' || req.status === activeTab;
-      const matchesSearch = req.empName.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                            req.empId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            req.leaveType.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            req.reason.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesSearch = req.empName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        req.empId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        req.leaveType.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        req.reason.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesTab && matchesSearch;
     });
   }, [requests, activeTab, searchQuery]);
@@ -474,16 +445,16 @@ const LeaveManagement = () => {
 
   const cardVariants = {
     hidden: { opacity: 0, y: 15 },
-    show: { 
-      opacity: 1, 
+    show: {
+      opacity: 1,
       y: 0,
       transition: { type: "spring", damping: 18, stiffness: 120 }
     }
   };
 
   return (
-    <div className="p-4 lg:p-6 bg-gradient-to-br from-[#f8fafc] to-[#f1f5f9] min-h-screen text-slate-800 flex flex-col gap-6 select-none overflow-x-hidden relative">
-      
+    <div className="p-3 bg-gradient-to-br from-[#f8fafc] to-[#f1f5f9] h-[calc(100vh-4.2rem)] text-slate-800 flex flex-col gap-3 select-none overflow-y-auto overflow-x-hidden relative">
+
       {/* Premium Floating Toasts */}
       <div className="fixed top-6 right-6 z-50 flex flex-col gap-3 pointer-events-none w-full max-w-sm">
         <AnimatePresence>
@@ -493,41 +464,43 @@ const LeaveManagement = () => {
         </AnimatePresence>
       </div>
 
-      {/* Top Header Section */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight leading-tight">Leave Dashboard</h1>
-          <p className="text-xs font-semibold text-slate-400 mt-1">Manage, approve, and check employee leaves</p>
+      {/* Unified Header & Filter Section */}
+      <div className="bg-white px-5 py-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4 shrink-0">
+        {/* Left Side: Breadcrumbs */}
+        <div className="flex flex-col">
+          <h1 className="text-xl font-black text-slate-900 leading-tight">Leaves</h1>
+          <nav className="text-[10px] text-gray-400 font-bold flex items-center gap-1.5 mt-1">
+            <span className="cursor-pointer hover:text-blue-600 transition-colors" onClick={() => navigate('/')}>Dashboard</span>
+            <span>/</span>
+            <span className="text-gray-500">Leave Management</span>
+          </nav>
         </div>
 
-        {/* Global Search Bar */}
-        <div className="flex items-center gap-3">
-          <motion.div 
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="relative"
-          >
-            <input 
-              type="text" 
+        {/* Right Side: Filters */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 flex-1 lg:justify-end w-full">
+          {/* Search Bar */}
+          <div className="relative flex-1 max-w-xs w-full">
+            <Search size={14} className="text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
               placeholder="Search details..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="bg-white border border-slate-200/80 rounded-2xl pl-10 pr-4 py-2.5 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 w-64 shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:border-slate-300 transition-all duration-300"
+              className="w-full pl-9 pr-3 py-2 bg-slate-50/50 border border-slate-200/80 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all duration-200 font-semibold"
             />
-            <Search size={15} className="text-slate-450 absolute left-3.5 top-1/2 -translate-y-1/2" />
-          </motion.div>
+          </div>
         </div>
       </div>
 
       {/* Row 1: Stat Cards */}
-      <motion.div 
+      <motion.div
         variants={containerVariants}
         initial="hidden"
         animate="show"
         className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
       >
         {/* Total Leaves */}
-        <motion.div 
+        <motion.div
           variants={cardVariants}
           whileHover={{ y: -4, shadow: "0 12px 30px rgba(0,0,0,0.06)" }}
           className="bg-white/85 border border-white/60 p-5 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.025)] backdrop-blur-md flex items-center justify-between transition-all duration-300"
@@ -550,7 +523,7 @@ const LeaveManagement = () => {
         </motion.div>
 
         {/* Approved Leaves */}
-        <motion.div 
+        <motion.div
           variants={cardVariants}
           whileHover={{ y: -4, shadow: "0 12px 30px rgba(0,0,0,0.06)" }}
           className="bg-white/85 border border-white/60 p-5 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.025)] backdrop-blur-md flex items-center justify-between transition-all duration-300"
@@ -573,7 +546,7 @@ const LeaveManagement = () => {
         </motion.div>
 
         {/* Pending Leaves */}
-        <motion.div 
+        <motion.div
           variants={cardVariants}
           whileHover={{ y: -4, shadow: "0 12px 30px rgba(0,0,0,0.06)" }}
           className="bg-white/85 border border-white/60 p-5 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.025)] backdrop-blur-md flex items-center justify-between transition-all duration-300"
@@ -596,7 +569,7 @@ const LeaveManagement = () => {
         </motion.div>
 
         {/* Rejected Leaves */}
-        <motion.div 
+        <motion.div
           variants={cardVariants}
           whileHover={{ y: -4, shadow: "0 12px 30px rgba(0,0,0,0.06)" }}
           className="bg-white/85 border border-white/60 p-5 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.025)] backdrop-blur-md flex items-center justify-between transition-all duration-300"
@@ -621,9 +594,9 @@ const LeaveManagement = () => {
 
       {/* Row 2: Form & Balance */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-        
+
         {/* Form panel */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ type: "spring", damping: 20 }}
@@ -640,12 +613,12 @@ const LeaveManagement = () => {
 
             <form onSubmit={handleApplyLeave} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                
+
                 {/* Employee choice */}
                 <div className="flex flex-col">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Employee Selection</label>
                   <div className="relative">
-                    <select 
+                    <select
                       value={selectedEmpId}
                       onChange={(e) => setSelectedEmpId(e.target.value)}
                       className="w-full bg-white border border-slate-200/90 rounded-2xl px-3 py-2.5 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 cursor-pointer appearance-none"
@@ -670,7 +643,7 @@ const LeaveManagement = () => {
                 <div className="flex flex-col">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Leave Type</label>
                   <div className="relative">
-                    <select 
+                    <select
                       value={leaveType}
                       onChange={(e) => setLeaveType(e.target.value)}
                       className="w-full bg-white border border-slate-200/90 rounded-2xl px-3 py-2.5 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 cursor-pointer appearance-none"
@@ -688,7 +661,7 @@ const LeaveManagement = () => {
                 <div className="grid grid-cols-3 gap-2">
                   <div className="col-span-1 flex flex-col">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">From</label>
-                    <input 
+                    <input
                       type="date"
                       value={fromDate}
                       onChange={(e) => setFromDate(e.target.value)}
@@ -697,29 +670,28 @@ const LeaveManagement = () => {
                   </div>
                   <div className="col-span-1 flex flex-col">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">To</label>
-                    <input 
+                    <input
                       type="date"
                       value={toDate}
                       onChange={(e) => setToDate(e.target.value)}
                       className="w-full bg-white border border-slate-200/90 rounded-2xl px-2.5 py-2 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                     />
                   </div>
-                  
+
                   {/* Big animated calculated days tag */}
                   <div className="col-span-1 flex flex-col items-center justify-between">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 text-center block w-full">Days</label>
                     <AnimatePresence mode="popLayout">
-                      <motion.div 
+                      <motion.div
                         key={calculatedDays}
                         initial={{ scale: 0.7, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         exit={{ scale: 0.7, opacity: 0 }}
                         transition={{ type: "spring", damping: 10, stiffness: 200 }}
-                        className={`w-full text-center py-2 rounded-2xl text-xs font-black border transition-all duration-300 ${
-                          calculatedDays > 0 
-                            ? 'bg-blue-50/70 text-blue-600 border-blue-100 shadow-sm shadow-blue-500/5' 
+                        className={`w-full text-center py-2 rounded-2xl text-xs font-black border transition-all duration-300 ${calculatedDays > 0
+                            ? 'bg-blue-50/70 text-blue-600 border-blue-100 shadow-sm shadow-blue-500/5'
                             : 'bg-slate-50 text-slate-400 border-slate-100'
-                        }`}
+                          }`}
                       >
                         {calculatedDays}
                       </motion.div>
@@ -732,7 +704,7 @@ const LeaveManagement = () => {
               {/* Text reason */}
               <div className="flex flex-col">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Detailed Reason</label>
-                <textarea 
+                <textarea
                   placeholder="Explain details of requested time off..."
                   rows="3"
                   value={reason}
@@ -744,12 +716,12 @@ const LeaveManagement = () => {
           </div>
 
           <div className="flex justify-end pt-4 border-t border-slate-100 mt-5">
-            <motion.button 
+            <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={handleApplyLeave}
               disabled={isSubmitting}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-2xl text-xs font-black shadow-lg shadow-blue-500/10 hover:shadow-blue-500/20 flex items-center gap-2 transition-all duration-200 active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-2xl text-xs font-black shadow-lg shadow-blue-500/10 hover:shadow-blue-500/20 flex items-center gap-2 transition-all duration-200 active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed glossy-shine"
             >
               {isSubmitting ? (
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -762,7 +734,7 @@ const LeaveManagement = () => {
         </motion.div>
 
         {/* Balance cards */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ type: "spring", damping: 20 }}
@@ -789,8 +761,8 @@ const LeaveManagement = () => {
                 const bal = leaveBalances[key];
                 const percentage = Math.min(100, (bal.used / bal.max) * 100);
                 return (
-                  <motion.div 
-                    key={key} 
+                  <motion.div
+                    key={key}
                     className="space-y-2 p-1.5 hover:bg-slate-50/50 rounded-xl transition-all duration-200"
                   >
                     <div className="flex items-center justify-between text-xs">
@@ -801,7 +773,7 @@ const LeaveManagement = () => {
                     </div>
                     {/* Linear progressive bar */}
                     <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200/20">
-                      <motion.div 
+                      <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${percentage}%` }}
                         transition={{ duration: 1.2, ease: "easeOut" }}
@@ -814,7 +786,7 @@ const LeaveManagement = () => {
             </div>
           </div>
 
-          <motion.div 
+          <motion.div
             whileHover={{ scale: 1.01 }}
             className="flex items-center justify-between border-t border-slate-50 pt-4 mt-6 text-xs text-blue-600 font-black hover:text-blue-700 cursor-pointer transition-colors duration-150"
           >
@@ -826,27 +798,26 @@ const LeaveManagement = () => {
       </div>
 
       {/* Row 3: Request History */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: "spring", damping: 22 }}
         className="bg-white/80 border border-white/60 p-5 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.02)] backdrop-blur-md flex flex-col justify-between"
       >
-        
+
         {/* Table Title & Filter Actions */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-100 pb-4 mb-4">
-          
+
           {/* Tabs Filter */}
           <div className="flex gap-1.5 p-1 bg-slate-100/70 border border-slate-200/30 rounded-2xl overflow-x-auto whitespace-nowrap scrollbar-none max-w-max">
             {['All', 'Pending', 'Approved', 'Rejected', 'Cancelled'].map(tab => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`relative py-1.5 px-3.5 text-xs font-black rounded-xl transition duration-300 cursor-pointer ${
-                  activeTab === tab 
-                    ? 'text-blue-650' 
+                className={`relative py-1.5 px-3.5 text-xs font-black rounded-xl transition duration-300 cursor-pointer ${activeTab === tab
+                    ? 'text-blue-650'
                     : 'text-slate-500 hover:text-slate-750'
-                }`}
+                  }`}
               >
                 {/* layoutId creates a beautifully fluid sliding background pill */}
                 {activeTab === tab && (
@@ -893,7 +864,7 @@ const LeaveManagement = () => {
               <AnimatePresence mode="popLayout">
                 {currentTableData.length > 0 ? (
                   currentTableData.map((req, index) => (
-                    <motion.tr 
+                    <motion.tr
                       key={req.id}
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -905,10 +876,10 @@ const LeaveManagement = () => {
                       {/* Employee Profile */}
                       <td className="py-3.5 px-4">
                         <div className="flex items-center gap-3">
-                          <img 
+                          <img
                             src={req.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(req.empName)}&background=2563eb&color=fff&bold=true`}
-                            alt={req.empName} 
-                            className="w-8.5 h-8.5 rounded-full object-cover border border-slate-200 shadow-sm shrink-0" 
+                            alt={req.empName}
+                            className="w-8.5 h-8.5 rounded-full object-cover border border-slate-200 shadow-sm shrink-0"
                           />
                           <div className="leading-tight">
                             <span className="font-bold text-slate-900 block group-hover:text-blue-600 transition-colors duration-150">{req.empName}</span>
@@ -936,20 +907,18 @@ const LeaveManagement = () => {
 
                       {/* Status Badge */}
                       <td className="py-3.5 px-4">
-                        <span className={`px-2.5 py-0.5 rounded-full text-[9.5px] font-black inline-flex items-center gap-1.5 border ${
-                          req.status === 'Approved' 
-                            ? 'bg-emerald-50/70 text-emerald-600 border-emerald-100/50' 
-                            : req.status === 'Pending' 
-                            ? 'bg-amber-50/70 text-amber-600 border-amber-100/50' 
-                            : req.status === 'Rejected' 
-                            ? 'bg-rose-50/70 text-rose-600 border-rose-100/50' 
-                            : 'bg-slate-100/80 text-slate-500 border-slate-200/50'
-                        }`}>
-                          <span className={`w-1 h-1 rounded-full ${
-                            req.status === 'Approved' ? 'bg-emerald-500' :
-                            req.status === 'Pending' ? 'bg-amber-500' :
-                            req.status === 'Rejected' ? 'bg-rose-500' : 'bg-slate-400'
-                          }`} />
+                        <span className={`px-2.5 py-0.5 rounded-full text-[9.5px] font-black inline-flex items-center gap-1.5 border ${req.status === 'Approved'
+                            ? 'bg-emerald-50/70 text-emerald-600 border-emerald-100/50'
+                            : req.status === 'Pending'
+                              ? 'bg-amber-50/70 text-amber-600 border-amber-100/50'
+                              : req.status === 'Rejected'
+                                ? 'bg-rose-50/70 text-rose-600 border-rose-100/50'
+                                : 'bg-slate-100/80 text-slate-500 border-slate-200/50'
+                          }`}>
+                          <span className={`w-1 h-1 rounded-full ${req.status === 'Approved' ? 'bg-emerald-500' :
+                              req.status === 'Pending' ? 'bg-amber-500' :
+                                req.status === 'Rejected' ? 'bg-rose-500' : 'bg-slate-400'
+                            }`} />
                           {req.status}
                         </span>
                       </td>
@@ -959,7 +928,7 @@ const LeaveManagement = () => {
 
                       {/* Actions Menu */}
                       <td className="py-3.5 px-4 text-center relative" onClick={(e) => e.stopPropagation()}>
-                        <motion.button 
+                        <motion.button
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
                           onClick={() => setActionMenuId(actionMenuId === req.id ? null : req.id)}
@@ -971,7 +940,7 @@ const LeaveManagement = () => {
                         {/* Custom Dropdown Menu with Scale-Fade entrance */}
                         <AnimatePresence>
                           {actionMenuId === req.id && (
-                            <motion.div 
+                            <motion.div
                               initial={{ scale: 0.94, opacity: 0, y: -5 }}
                               animate={{ scale: 1, opacity: 1, y: 0 }}
                               exit={{ scale: 0.94, opacity: 0, y: -5 }}
@@ -980,13 +949,13 @@ const LeaveManagement = () => {
                             >
                               {req.status === 'Pending' && (
                                 <>
-                                  <button 
+                                  <button
                                     onClick={() => handleStatusChange(req.id, 'Approved')}
                                     className="w-full text-left px-3.5 py-2 text-xs font-bold text-emerald-600 hover:bg-emerald-50/50 transition-colors duration-150"
                                   >
                                     Approve
                                   </button>
-                                  <button 
+                                  <button
                                     onClick={() => handleStatusChange(req.id, 'Rejected')}
                                     className="w-full text-left px-3.5 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50/50 transition-colors duration-150"
                                   >
@@ -995,14 +964,14 @@ const LeaveManagement = () => {
                                 </>
                               )}
                               {(req.status === 'Pending' || req.status === 'Approved') && (
-                                <button 
+                                <button
                                   onClick={() => handleStatusChange(req.id, 'Cancelled')}
                                   className="w-full text-left px-3.5 py-2 text-xs font-bold text-slate-650 hover:bg-slate-50 transition-colors duration-150 border-t border-slate-50"
                                 >
                                   Cancel
                                 </button>
                               )}
-                              <button 
+                              <button
                                 onClick={() => setActionMenuId(null)}
                                 className="w-full text-left px-3.5 py-1.5 text-[9.5px] font-black text-slate-400 hover:bg-slate-50 transition-colors duration-150"
                               >
@@ -1040,7 +1009,7 @@ const LeaveManagement = () => {
 
             {/* Pagination Controls */}
             <div className="flex items-center gap-1">
-              <motion.button 
+              <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
@@ -1049,24 +1018,23 @@ const LeaveManagement = () => {
               >
                 <ChevronLeft size={14} />
               </motion.button>
-              
+
               {Array.from({ length: totalPages }).map((_, idx) => (
                 <motion.button
                   key={idx}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setCurrentPage(idx + 1)}
-                  className={`px-3 py-1 rounded-xl text-xs font-black transition-all duration-150 cursor-pointer ${
-                    currentPage === idx + 1 
-                      ? 'bg-blue-600 text-white shadow-md shadow-blue-500/10' 
+                  className={`px-3 py-1 rounded-xl text-xs font-black transition-all duration-150 cursor-pointer ${currentPage === idx + 1
+                      ? 'bg-blue-600 text-white shadow-md shadow-blue-500/10'
                       : 'border border-slate-200 text-slate-650 hover:bg-slate-50'
-                  }`}
+                    }`}
                 >
                   {idx + 1}
                 </motion.button>
               ))}
 
-              <motion.button 
+              <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
@@ -1109,7 +1077,7 @@ const LeaveManagement = () => {
                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Detailed View</span>
                     <h3 className="text-base font-bold text-slate-800 mt-1">Leave Request Details</h3>
                   </div>
-                  <motion.button 
+                  <motion.button
                     whileHover={{ scale: 1.08 }}
                     whileTap={{ scale: 0.92 }}
                     onClick={() => setSelectedRequest(null)}
@@ -1122,10 +1090,10 @@ const LeaveManagement = () => {
                 {/* Profile card */}
                 <div className="p-6 space-y-6">
                   <div className="flex items-center gap-4 bg-slate-50/50 border border-slate-100 p-4 rounded-2xl">
-                    <img 
+                    <img
                       src={selectedRequest.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedRequest.empName)}&background=2563eb&color=fff&bold=true`}
                       alt={selectedRequest.empName}
-                      className="w-14 h-14 rounded-2xl object-cover border-2 border-white shadow-md shrink-0" 
+                      className="w-14 h-14 rounded-2xl object-cover border-2 border-white shadow-md shrink-0"
                     />
                     <div className="leading-tight">
                       <h4 className="text-base font-black text-slate-900">{selectedRequest.empName}</h4>
@@ -1152,7 +1120,7 @@ const LeaveManagement = () => {
                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">From Date</span>
                         <span className="text-xs font-black text-slate-800">{selectedRequest.from}</span>
                       </div>
-                      
+
                       <div className="flex flex-col items-center">
                         <ChevronRight className="text-slate-350" size={16} />
                         <span className="bg-blue-100/60 text-blue-600 px-2.5 py-0.5 rounded-full text-[10px] font-black mt-1">
@@ -1177,7 +1145,7 @@ const LeaveManagement = () => {
                     {/* Audit Progress Timeline */}
                     <div className="space-y-3.5 pt-2">
                       <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block pl-1">Request Audit Timeline</span>
-                      
+
                       <div className="relative border-l-2 border-slate-100 pl-5 ml-2.5 space-y-5 py-1">
                         {/* Step 1: Requested */}
                         <div className="relative">
@@ -1188,23 +1156,21 @@ const LeaveManagement = () => {
 
                         {/* Step 2: Under Review */}
                         <div className="relative">
-                          <div className={`absolute -left-[27px] top-0.5 w-3 h-3 rounded-full border-2 border-white ring-4 ${
-                            selectedRequest.status === 'Pending' 
-                              ? 'bg-amber-500 ring-amber-50 animate-pulse' 
+                          <div className={`absolute -left-[27px] top-0.5 w-3 h-3 rounded-full border-2 border-white ring-4 ${selectedRequest.status === 'Pending'
+                              ? 'bg-amber-500 ring-amber-50 animate-pulse'
                               : 'bg-emerald-500 ring-emerald-50'
-                          }`} />
+                            }`} />
                           <span className="text-[10px] font-black text-slate-800">Manager Under Review</span>
                           <span className="text-[9.5px] text-slate-400 block font-semibold mt-0.5">Automatically routed for approvals</span>
                         </div>
 
                         {/* Step 3: Decision */}
                         <div className="relative">
-                          <div className={`absolute -left-[27px] top-0.5 w-3 h-3 rounded-full border-2 border-white ring-4 ${
-                            selectedRequest.status === 'Approved' ? 'bg-emerald-500 ring-emerald-50' :
-                            selectedRequest.status === 'Rejected' ? 'bg-rose-500 ring-rose-50' :
-                            selectedRequest.status === 'Cancelled' ? 'bg-slate-400 ring-slate-100' :
-                            'bg-slate-200 ring-slate-50'
-                          }`} />
+                          <div className={`absolute -left-[27px] top-0.5 w-3 h-3 rounded-full border-2 border-white ring-4 ${selectedRequest.status === 'Approved' ? 'bg-emerald-500 ring-emerald-50' :
+                              selectedRequest.status === 'Rejected' ? 'bg-rose-500 ring-rose-50' :
+                                selectedRequest.status === 'Cancelled' ? 'bg-slate-400 ring-slate-100' :
+                                  'bg-slate-200 ring-slate-50'
+                            }`} />
                           <span className="text-[10px] font-black text-slate-800">Decision Outcome</span>
                           <span className="text-[9.5px] text-slate-400 block font-semibold mt-0.5">
                             {selectedRequest.status === 'Pending' && 'Awaiting final decision from administration'}

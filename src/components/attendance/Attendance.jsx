@@ -20,9 +20,11 @@ import {
   Users
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 
 const Attendance = () => {
+  const navigate = useNavigate();
   const [employees, setEmployees] = useState([]);
   const [employeeCount, setEmployeeCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -118,19 +120,29 @@ const Attendance = () => {
   }, [overtimeTab]);
 
   return (
-    <div className="p-4 lg:p-6 bg-[#f5f7fc] min-h-screen text-slate-800 flex flex-col gap-6 animate-in fade-in duration-300">
+    <div className="p-3 bg-[#f5f7fc] h-[calc(100vh-4.2rem)] text-slate-800 flex flex-col gap-3 overflow-y-auto animate-in fade-in duration-300">
 
-      {/* Top Header section */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 leading-tight">Attendance Dashboard</h1>
-          <p className="text-xs text-slate-500 mt-1">Real-time attendance statistics, device tracking, and request updates.</p>
+      {/* Unified Header & Filter Section */}
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white px-5 py-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4 shrink-0"
+      >
+        {/* Left Side: Breadcrumbs */}
+        <div className="flex flex-col">
+          <h1 className="text-xl font-black text-slate-900 leading-tight">Attendance</h1>
+          <nav className="text-[10px] text-gray-400 font-bold flex items-center gap-1.5 mt-1">
+            <span className="cursor-pointer hover:text-blue-600 transition-colors" onClick={() => navigate('/')}>Dashboard</span>
+            <span>/</span>
+            <span className="text-gray-500">Attendance</span>
+          </nav>
         </div>
 
-        {/* Date Filter */}
-        <div className="flex items-center gap-2">
+        {/* Right Side: Filters */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 flex-1 lg:justify-end w-full">
+          {/* Date Filter */}
           <div className="relative">
-            <select className="bg-white border border-slate-200 rounded-xl pl-4 pr-9 py-2 text-xs font-bold text-slate-700 outline-none hover:bg-slate-50 focus:ring-2 focus:ring-blue-500 transition cursor-pointer appearance-none">
+            <select className="bg-slate-50 border border-slate-200/80 shadow-xs rounded-xl pl-4 pr-9 py-2.5 text-xs font-extrabold text-slate-700 outline-none hover:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition cursor-pointer appearance-none">
               <option>Today ({new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})</option>
               <option>Yesterday</option>
               <option>This Week</option>
@@ -138,7 +150,7 @@ const Attendance = () => {
             <ChevronDown size={14} className="text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Row 1: Statistics Donut & Attendance Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
@@ -353,8 +365,8 @@ const Attendance = () => {
               <button
                 onClick={() => setOvertimeTab('Hours')}
                 className={`px-3 py-1 rounded-lg text-[9px] font-bold transition duration-200 ${overtimeTab === 'Hours'
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'text-slate-500 hover:text-slate-700'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700'
                   }`}
               >
                 Hours
@@ -362,8 +374,8 @@ const Attendance = () => {
               <button
                 onClick={() => setOvertimeTab('Employees')}
                 className={`px-3 py-1 rounded-lg text-[9px] font-bold transition duration-200 ${overtimeTab === 'Employees'
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'text-slate-500 hover:text-slate-700'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700'
                   }`}
               >
                 Employees

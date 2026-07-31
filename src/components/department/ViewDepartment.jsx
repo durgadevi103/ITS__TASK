@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { BackButton } from '../button';
-import { 
-  Building2, 
-  Hash, 
-  CheckCircle, 
-  XCircle, 
-  Users, 
-  Mail, 
-  Phone, 
-  User 
+import {
+  Building2,
+  Hash,
+  CheckCircle,
+  XCircle,
+  Users,
+  Mail,
+  Phone,
+  User
 } from 'lucide-react';
 import api from '../../api/axios';
 
@@ -37,11 +37,11 @@ const ViewDepartment = ({ department, onBack }) => {
             languages: emp.emp_language,
             department: emp.emp_dept,
             designation: emp.emp_designation || emp.emp_desigation,
-            salary: emp.emp_slary || '',
+            salary: emp.emp_salary || '',
             status: 'Active',
             avatarUrl: emp.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(emp.emp_name)}&background=2563eb&color=fff&bold=true`
           }));
-          
+
           const filtered = mapped.filter(emp => {
             if (!emp.department || !department.name) return false;
             const ed = emp.department.toLowerCase().trim();
@@ -83,7 +83,7 @@ const ViewDepartment = ({ department, onBack }) => {
 
       {/* Main Details and Employee List */}
       <div className="flex-1 overflow-y-auto p-5 md:p-6 space-y-6 text-xs text-gray-600">
-        
+
         {/* Detail Panel */}
         <div className="bg-[#f8fafc] border border-gray-100 rounded-2xl p-5 grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="space-y-3">
@@ -91,7 +91,7 @@ const ViewDepartment = ({ department, onBack }) => {
               <span className="text-[10px] uppercase font-bold text-gray-400">Department Name</span>
               <h3 className="text-base font-extrabold text-gray-900 mt-0.5">{department.name}</h3>
             </div>
-            
+
             <div>
               <span className="text-[10px] uppercase font-bold text-gray-400">Department Code</span>
               <div className="flex items-center gap-1.5 text-indigo-650 font-bold mt-1 text-xs">
@@ -105,11 +105,10 @@ const ViewDepartment = ({ department, onBack }) => {
             <div>
               <span className="text-[10px] uppercase font-bold text-gray-400">Status</span>
               <div className="mt-1">
-                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
-                  isActive 
-                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${isActive
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                     : 'bg-rose-50 text-rose-700 border-rose-200'
-                }`}>
+                  }`}>
                   {isActive ? <CheckCircle size={10} /> : <XCircle size={10} />}
                   {department.status}
                 </span>
@@ -148,15 +147,15 @@ const ViewDepartment = ({ department, onBack }) => {
               {employees.map(emp => (
                 <div key={emp.id} className="flex items-center justify-between p-3 border border-gray-100 bg-white hover:border-indigo-100 hover:shadow-xs rounded-xl transition duration-150">
                   <div className="flex items-center gap-3">
-                    <img 
+                    <img
                       src={emp.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(emp.name)}&background=eef2ff&color=4f46e5&bold=true`}
-                      alt={emp.name} 
+                      alt={emp.name}
                       className="w-10 h-10 rounded-full object-cover border border-gray-100"
                     />
                     <div>
                       <h4 className="font-bold text-gray-900 text-xs">{emp.name}</h4>
                       <p className="text-[10px] text-gray-400 font-semibold">{emp.id} • {emp.designation}</p>
-                      
+
                       <div className="flex flex-col gap-0.5 mt-1 text-[9px] text-gray-500">
                         {emp.email && (
                           <span className="flex items-center gap-1">
@@ -173,14 +172,13 @@ const ViewDepartment = ({ department, onBack }) => {
                       </div>
                     </div>
                   </div>
-                  
-                  <span className={`px-2 py-0.5 rounded-full text-[8px] font-bold ${
-                    emp.status === 'Active' 
+
+                  <span className={`px-2 py-0.5 rounded-full text-[8px] font-bold ${emp.status === 'Active'
                       ? 'bg-emerald-50 text-emerald-600 border border-emerald-100'
                       : emp.status === 'On Leave'
-                      ? 'bg-orange-50 text-orange-600 border border-orange-100'
-                      : 'bg-gray-50 text-gray-500 border border-gray-100'
-                  }`}>
+                        ? 'bg-orange-50 text-orange-600 border border-orange-100'
+                        : 'bg-gray-50 text-gray-500 border border-gray-100'
+                    }`}>
                     {emp.status}
                   </span>
                 </div>

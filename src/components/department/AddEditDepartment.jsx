@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Button, BackButton } from '../button';
-import { 
-  Building2, 
-  Hash, 
-  AlignLeft, 
-  Activity, 
+import {
+  Building2,
+  Hash,
+  AlignLeft,
+  Activity,
   CheckCircle,
   AlertCircle
 } from 'lucide-react';
 
 const AddEditDepartment = ({ department, onSave, onCancel }) => {
   const isEdit = !!department;
-  
+
   const [form, setForm] = useState({
     dept_id_code: '',
     name: '',
@@ -49,7 +49,7 @@ const AddEditDepartment = ({ department, onSave, onCancel }) => {
       ...prev,
       [name]: value
     }));
-    
+
     // Clear error for field
     if (errors[name]) {
       setErrors(prev => ({
@@ -75,8 +75,8 @@ const AddEditDepartment = ({ department, onSave, onCancel }) => {
     e.preventDefault();
     if (!validateForm()) return;
 
-    const finalDescription = form.description.trim() 
-      ? form.description.trim() 
+    const finalDescription = form.description.trim()
+      ? form.description.trim()
       : `Handles the overall planning, execution, coordination, and operations relating to ${form.name}.`;
 
     const departmentData = {
@@ -102,7 +102,7 @@ const AddEditDepartment = ({ department, onSave, onCancel }) => {
               {isEdit ? 'Modify Department Details' : 'Register New Department'}
             </h2>
             <p className="text-[10px] text-blue-100 mt-0.5">
-              {isEdit 
+              {isEdit
                 ? `Update attributes for department code: ${department.dept_id_code}`
                 : 'Fill out department name and status details.'
               }
@@ -115,7 +115,7 @@ const AddEditDepartment = ({ department, onSave, onCancel }) => {
       <form onSubmit={handleSubmit} className="flex-1 min-h-0 flex flex-col overflow-hidden">
         {/* Scrollable Fields Section */}
         <div className="flex-1 overflow-y-auto p-5 md:p-6 space-y-6 text-xs text-gray-600">
-          
+
           <div className="space-y-4">
             <h3 className="text-xs font-bold text-gray-900 border-b border-gray-150 pb-2 flex items-center gap-1.5">
               <CheckCircle className="w-4 h-4 text-indigo-500" />
@@ -135,9 +135,8 @@ const AddEditDepartment = ({ department, onSave, onCancel }) => {
                     value={form.name}
                     onChange={handleChange}
                     placeholder="e.g. Quality Assurance, Public Relations"
-                    className={`w-full px-3 py-2 bg-gray-50/50 border rounded-lg text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition ${
-                      errors.name ? 'border-rose-450 focus:ring-rose-500' : 'border-gray-200'
-                    }`}
+                    className={`w-full px-3 py-2 bg-gray-50/50 border rounded-lg text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition ${errors.name ? 'border-rose-450 focus:ring-rose-500' : 'border-gray-200'
+                      }`}
                   />
                 </div>
                 {errors.name && (
@@ -161,13 +160,12 @@ const AddEditDepartment = ({ department, onSave, onCancel }) => {
                     onChange={handleChange}
                     disabled={isEdit}
                     placeholder="e.g. DEP001, IT_DEPT"
-                    className={`w-full px-3 py-2 border rounded-lg text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition font-bold ${
-                      isEdit 
-                        ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed font-bold' 
-                        : errors.dept_id_code 
-                        ? 'bg-gray-50/50 border-rose-450 focus:ring-rose-500' 
-                        : 'bg-gray-50/50 border-gray-200 focus:bg-white'
-                    }`}
+                    className={`w-full px-3 py-2 border rounded-lg text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition font-bold ${isEdit
+                        ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed font-bold'
+                        : errors.dept_id_code
+                          ? 'bg-gray-50/50 border-rose-450 focus:ring-rose-500'
+                          : 'bg-gray-50/50 border-gray-200 focus:bg-white'
+                      }`}
                   />
                   <div className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">
                     <Hash size={14} />
@@ -240,7 +238,7 @@ const AddEditDepartment = ({ department, onSave, onCancel }) => {
           <Button
             type="submit"
             variant="primary"
-            className="px-5 shadow-blue-500/10"
+            className="px-5 shadow-blue-500/10 glossy-shine"
           >
             {isEdit ? 'Save Changes' : 'Register Department'}
           </Button>
