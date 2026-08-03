@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { motion, AnimatePresence, useMotionValue, useTransform, useSpring } from 'framer-motion';
-import { 
-  Users, 
-  UserPlus, 
-  Building2, 
-  TrendingUp, 
-  TrendingDown, 
+import {
+  Users,
+  UserPlus,
+  Building2,
+  TrendingUp,
+  TrendingDown,
   Calendar,
   Edit,
   Trash,
@@ -29,6 +29,7 @@ import {
   Phone,
   Briefcase
 } from 'lucide-react';
+
 import api from '../../api/axios';
 
 // Animated Number Counter Component
@@ -134,6 +135,7 @@ const TiltSpotlightCard = ({ children, className = "", spotlightColor = "rgba(59
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { searchQuery } = useOutletContext() || {};
   const [employees, setEmployees] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [employeeCount, setEmployeeCount] = useState(0);
@@ -170,7 +172,7 @@ const Dashboard = () => {
             employeesList = empRes.data.list;
             setEmployees(employeesList);
             setEmployeeCount(employeesList.length);
-            
+
             const recentNum = Math.min(5, employeesList.length);
             setNewHiresCount(recentNum);
           }
@@ -215,7 +217,7 @@ const Dashboard = () => {
             email: emp.emp_email || `${emp.emp_name.toLowerCase().replace(/\s+/g, '')}@company.com`,
             phone: emp.emp_ph_no || '9876543210',
             department: emp.emp_dept || 'General',
-            position: emp.emp_desigation || 'Executive',
+            position: emp.emp_designation || emp.emp_desigation || 'Executive',
             date: new Date(today.getTime() - idx * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
             status: idx % 2 === 0 ? 'New Hire' : 'Promoted',
             avatar: emp.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(emp.emp_name)}&background=2563eb&color=fff&bold=true`
@@ -273,9 +275,47 @@ const Dashboard = () => {
 
   // Filtered Table Updates
   const filteredUpdates = useMemo(() => {
-    if (tableFilter === 'All') return recentUpdates;
-    return recentUpdates.filter(item => item.status === tableFilter);
-  }, [recentUpdates, tableFilter]);
+    const hasSearchQuery = searchQuery && searchQuery.trim();
+
+    // Map all employees to the update format for searching, or use recentUpdates if not searching
+    let baseList = [];
+    if (hasSearchQuery) {
+      if (employees.length > 0) {
+        const sorted = [...employees].sort((a, b) => b.employee_id - a.employee_id);
+        const today = new Date();
+        baseList = sorted.map((emp, idx) => ({
+          id: emp.employee_id,
+          name: emp.emp_name,
+          email: emp.emp_email || `${emp.emp_name.toLowerCase().replace(/\s+/g, '')}@company.com`,
+          phone: emp.emp_ph_no || '9876543210',
+          department: emp.emp_dept || 'General',
+          position: emp.emp_designation || emp.emp_desigation || 'Executive',
+          date: new Date(today.getTime() - idx * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+          status: idx % 2 === 0 ? 'New Hire' : 'Promoted',
+          avatar: emp.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(emp.emp_name)}&background=2563eb&color=fff&bold=true`
+        }));
+      } else {
+        baseList = recentUpdates;
+      }
+    } else {
+      baseList = recentUpdates;
+    }
+
+    let list = baseList;
+    if (tableFilter !== 'All') {
+      list = list.filter(item => item.status === tableFilter);
+    }
+    if (hasSearchQuery) {
+      const q = searchQuery.toLowerCase().trim();
+      list = list.filter(item =>
+        (item.name && item.name.toLowerCase().includes(q)) ||
+        (item.department && item.department.toLowerCase().includes(q)) ||
+        (item.position && item.position.toLowerCase().includes(q)) ||
+        (item.email && item.email.toLowerCase().includes(q))
+      );
+    }
+    return list;
+  }, [recentUpdates, employees, tableFilter, searchQuery]);
 
   // Framer Motion variants
   const containerVariants = {
@@ -292,11 +332,11 @@ const Dashboard = () => {
   };
 
   return (
-    <motion.div 
+    <motion.div
       initial="hidden"
       animate="visible"
       variants={containerVariants}
-      className="p-4 sm:p-6 bg-slate-50/60 min-h-screen space-y-6 text-slate-800"
+      className="p-3 bg-slate-50/60 h-[calc(100vh-4.2rem)] space-y-3 sm:space-y-4 text-slate-800 overflow-y-auto"
     >
       {/* Toast Notification */}
       <AnimatePresence>
@@ -316,15 +356,15 @@ const Dashboard = () => {
       {/* Top Banner Header with Dynamic Shimmer Gradient */}
       <motion.div variants={itemVariants} className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 p-6 sm:p-7 rounded-3xl text-white shadow-2xl relative overflow-hidden">
         {/* Decorative Motion Orbs */}
-        <motion.div 
+        <motion.div
           animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
           transition={{ repeat: Infinity, duration: 6, ease: "easeInOut" }}
-          className="absolute top-0 right-0 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl pointer-events-none" 
+          className="absolute top-0 right-0 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl pointer-events-none"
         />
-        <motion.div 
+        <motion.div
           animate={{ scale: [1, 1.3, 1], opacity: [0.2, 0.4, 0.2] }}
           transition={{ repeat: Infinity, duration: 8, ease: "easeInOut" }}
-          className="absolute -bottom-10 left-10 w-72 h-72 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" 
+          className="absolute -bottom-10 left-10 w-72 h-72 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none"
         />
 
         <div className="relative z-10 space-y-1.5">
@@ -332,7 +372,7 @@ const Dashboard = () => {
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-blue-100 to-blue-300">
               Executive Dashboard
             </h1>
-            <motion.span 
+            <motion.span
               animate={{ rotate: [0, 15, -15, 0] }}
               transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
               className="p-1 rounded-lg bg-blue-500/20 border border-blue-400/30 text-amber-300 inline-block shadow-xs"
@@ -344,10 +384,10 @@ const Dashboard = () => {
             Real-time workforce statistics, automated department ratios, and live attendance metrics.
           </p>
         </div>
-        
+
         {/* Quick Actions Floating Toolbar & Clock */}
         <div className="relative z-10 flex flex-wrap items-center gap-2.5">
-          <motion.button 
+          <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => navigate('/add-employee')}
@@ -357,7 +397,7 @@ const Dashboard = () => {
             <span>Add Staff</span>
           </motion.button>
 
-          <motion.button 
+          <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => showToast("Exporting Analytics Report PDF...")}
@@ -378,7 +418,7 @@ const Dashboard = () => {
 
       {/* Metrics Row - 3D Tilt Cards with Progress Rings */}
       <motion.div variants={containerVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
-        
+
         {/* Metric 1: Total Staff */}
         <motion.div variants={itemVariants}>
           <TiltSpotlightCard spotlightColor="rgba(59, 130, 246, 0.18)" className="p-5">
@@ -388,17 +428,17 @@ const Dashboard = () => {
                 {/* SVG Progress Circle */}
                 <svg className="w-full h-full transform -rotate-90">
                   <circle cx="22" cy="22" r="18" fill="none" stroke="#eff6ff" strokeWidth="3.5" />
-                  <motion.circle 
+                  <motion.circle
                     initial={{ strokeDasharray: "0 113" }}
                     animate={{ strokeDasharray: "90 113" }}
                     transition={{ duration: 1.5 }}
-                    cx="22" 
-                    cy="22" 
-                    r="18" 
-                    fill="none" 
-                    stroke="#3b82f6" 
-                    strokeWidth="3.5" 
-                    strokeLinecap="round" 
+                    cx="22"
+                    cy="22"
+                    r="18"
+                    fill="none"
+                    stroke="#3b82f6"
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
                   />
                 </svg>
                 <Users size={17} className="text-blue-600 absolute" />
@@ -427,17 +467,17 @@ const Dashboard = () => {
               <div className="relative w-11 h-11 flex items-center justify-center">
                 <svg className="w-full h-full transform -rotate-90">
                   <circle cx="22" cy="22" r="18" fill="none" stroke="#ecfdf5" strokeWidth="3.5" />
-                  <motion.circle 
+                  <motion.circle
                     initial={{ strokeDasharray: "0 113" }}
                     animate={{ strokeDasharray: "80 113" }}
                     transition={{ duration: 1.5 }}
-                    cx="22" 
-                    cy="22" 
-                    r="18" 
-                    fill="none" 
-                    stroke="#10b981" 
-                    strokeWidth="3.5" 
-                    strokeLinecap="round" 
+                    cx="22"
+                    cy="22"
+                    r="18"
+                    fill="none"
+                    stroke="#10b981"
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
                   />
                 </svg>
                 <UserPlus size={17} className="text-emerald-600 absolute" />
@@ -466,17 +506,17 @@ const Dashboard = () => {
               <div className="relative w-11 h-11 flex items-center justify-center">
                 <svg className="w-full h-full transform -rotate-90">
                   <circle cx="22" cy="22" r="18" fill="none" stroke="#faf5ff" strokeWidth="3.5" />
-                  <motion.circle 
+                  <motion.circle
                     initial={{ strokeDasharray: "0 113" }}
                     animate={{ strokeDasharray: "100 113" }}
                     transition={{ duration: 1.5 }}
-                    cx="22" 
-                    cy="22" 
-                    r="18" 
-                    fill="none" 
-                    stroke="#a855f7" 
-                    strokeWidth="3.5" 
-                    strokeLinecap="round" 
+                    cx="22"
+                    cy="22"
+                    r="18"
+                    fill="none"
+                    stroke="#a855f7"
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
                   />
                 </svg>
                 <Building2 size={17} className="text-purple-600 absolute" />
@@ -505,17 +545,17 @@ const Dashboard = () => {
               <div className="relative w-11 h-11 flex items-center justify-center">
                 <svg className="w-full h-full transform -rotate-90">
                   <circle cx="22" cy="22" r="18" fill="none" stroke="#fffbeb" strokeWidth="3.5" />
-                  <motion.circle 
+                  <motion.circle
                     initial={{ strokeDasharray: "0 113" }}
                     animate={{ strokeDasharray: "110 113" }}
                     transition={{ duration: 1.5 }}
-                    cx="22" 
-                    cy="22" 
-                    r="18" 
-                    fill="none" 
-                    stroke="#f59e0b" 
-                    strokeWidth="3.5" 
-                    strokeLinecap="round" 
+                    cx="22"
+                    cy="22"
+                    r="18"
+                    fill="none"
+                    stroke="#f59e0b"
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
                   />
                 </svg>
                 <Zap size={17} className="text-amber-600 absolute" />
@@ -540,9 +580,9 @@ const Dashboard = () => {
 
       {/* Charts Grid - With Mode Toggle (Line vs Bar) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
+
         {/* Interactive Chart Card */}
-        <motion.div 
+        <motion.div
           variants={itemVariants}
           className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-xs lg:col-span-2 flex flex-col justify-between relative overflow-hidden"
         >
@@ -560,18 +600,16 @@ const Dashboard = () => {
               <div className="flex items-center bg-slate-100/80 p-1 rounded-xl border border-slate-200/60">
                 <button
                   onClick={() => setChartType('line')}
-                  className={`p-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
-                    chartType === 'line' ? 'bg-white text-blue-600 shadow-xs' : 'text-slate-400 hover:text-slate-700'
-                  }`}
+                  className={`p-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${chartType === 'line' ? 'bg-white text-blue-600 shadow-xs' : 'text-slate-400 hover:text-slate-700'
+                    }`}
                   title="Line View"
                 >
                   <LineChartIcon size={15} />
                 </button>
                 <button
                   onClick={() => setChartType('bar')}
-                  className={`p-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
-                    chartType === 'bar' ? 'bg-white text-blue-600 shadow-xs' : 'text-slate-400 hover:text-slate-700'
-                  }`}
+                  className={`p-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${chartType === 'bar' ? 'bg-white text-blue-600 shadow-xs' : 'text-slate-400 hover:text-slate-700'
+                    }`}
                   title="Bar View"
                 >
                   <BarChart3 size={15} />
@@ -579,7 +617,7 @@ const Dashboard = () => {
               </div>
 
               <div className="relative hidden sm:block">
-                <select 
+                <select
                   value={timeframe}
                   onChange={(e) => setTimeframe(e.target.value)}
                   className="bg-slate-50 hover:bg-slate-100 text-[10px] font-extrabold text-slate-700 pl-3 pr-7 py-1.5 rounded-xl border border-slate-200 outline-none transition cursor-pointer appearance-none"
@@ -591,10 +629,10 @@ const Dashboard = () => {
               </div>
             </div>
           </div>
-          
+
           {/* Interactive Chart Container */}
           <div className="relative w-full h-64 pt-6 select-none">
-            
+
             {/* Tooltip Card */}
             <AnimatePresence>
               {hoveredDay && (
@@ -650,27 +688,26 @@ const Dashboard = () => {
 
               {/* Interactive Guideline */}
               {hoveredDay && (
-                <line 
-                  x1={hoveredDay.x} 
-                  y1="20" 
-                  x2={hoveredDay.x} 
-                  y2="210" 
-                  stroke="#3b82f6" 
-                  strokeWidth="1.5" 
+                <line
+                  x1={hoveredDay.x}
+                  y1="20"
+                  x2={hoveredDay.x}
+                  y2="210"
+                  stroke="#3b82f6"
+                  strokeWidth="1.5"
                   strokeDasharray="3 3"
                 />
               )}
 
               {/* X Axis Labels */}
               {chartDays.map((d) => (
-                <text 
-                  key={d.day} 
-                  x={d.x} 
-                  y="235" 
-                  textAnchor="middle" 
-                  className={`text-[11px] font-black cursor-pointer transition-colors duration-150 ${
-                    hoveredDay?.day === d.day ? 'fill-blue-600' : 'fill-slate-400'
-                  }`}
+                <text
+                  key={d.day}
+                  x={d.x}
+                  y="235"
+                  textAnchor="middle"
+                  className={`text-[11px] font-black cursor-pointer transition-colors duration-150 ${hoveredDay?.day === d.day ? 'fill-blue-600' : 'fill-slate-400'
+                    }`}
                 >
                   {d.day}
                 </text>
@@ -679,60 +716,60 @@ const Dashboard = () => {
               {/* Line View Rendering */}
               {chartType === 'line' ? (
                 <>
-                  <path 
-                    d="M 70 140 C 120 120, 150 180, 170 190 C 220 210, 250 140, 270 130 C 320 110, 350 70, 370 65 C 420 50, 450 70, 470 90 C 520 130, 550 160, 570 150 C 620 130, 640 180, 660 190 L 660 210 L 70 210 Z" 
-                    fill="url(#gradPresent)" 
+                  <path
+                    d="M 70 140 C 120 120, 150 180, 170 190 C 220 210, 250 140, 270 130 C 320 110, 350 70, 370 65 C 420 50, 450 70, 470 90 C 520 130, 550 160, 570 150 C 620 130, 640 180, 660 190 L 660 210 L 70 210 Z"
+                    fill="url(#gradPresent)"
                   />
-                  <path 
-                    d="M 70 130 C 120 110, 150 75, 170 70 C 220 65, 250 110, 270 130 C 320 160, 350 135, 370 130 C 420 120, 450 150, 470 150 C 520 150, 550 100, 570 85 C 620 50, 640 85, 660 110 L 660 210 L 70 210 Z" 
-                    fill="url(#gradAbsent)" 
+                  <path
+                    d="M 70 130 C 120 110, 150 75, 170 70 C 220 65, 250 110, 270 130 C 320 160, 350 135, 370 130 C 420 120, 450 150, 470 150 C 520 150, 550 100, 570 85 C 620 50, 640 85, 660 110 L 660 210 L 70 210 Z"
+                    fill="url(#gradAbsent)"
                   />
 
-                  <motion.path 
+                  <motion.path
                     initial={{ pathLength: 0 }}
                     animate={{ pathLength: 1 }}
                     transition={{ duration: 1.4, ease: "easeInOut" }}
-                    d="M 70 130 C 120 110, 150 75, 170 70 C 220 65, 250 110, 270 130 C 320 160, 350 135, 370 130 C 420 120, 450 150, 470 150 C 520 150, 550 100, 570 85 C 620 50, 640 85, 660 110" 
-                    fill="none" 
-                    stroke="#f43f5e" 
-                    strokeWidth="3.5" 
-                    strokeLinecap="round" 
+                    d="M 70 130 C 120 110, 150 75, 170 70 C 220 65, 250 110, 270 130 C 320 160, 350 135, 370 130 C 420 120, 450 150, 470 150 C 520 150, 550 100, 570 85 C 620 50, 640 85, 660 110"
+                    fill="none"
+                    stroke="#f43f5e"
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
                   />
-                  
-                  <motion.path 
+
+                  <motion.path
                     initial={{ pathLength: 0 }}
                     animate={{ pathLength: 1 }}
                     transition={{ duration: 1.4, ease: "easeInOut", delay: 0.2 }}
-                    d="M 70 140 C 120 120, 150 180, 170 190 C 220 210, 250 140, 270 130 C 320 110, 350 70, 370 65 C 420 50, 450 70, 470 90 C 520 130, 550 160, 570 150 C 620 130, 640 180, 660 190" 
-                    fill="none" 
-                    stroke="#10b981" 
-                    strokeWidth="3.5" 
-                    strokeLinecap="round" 
+                    d="M 70 140 C 120 120, 150 180, 170 190 C 220 210, 250 140, 270 130 C 320 110, 350 70, 370 65 C 420 50, 450 70, 470 90 C 520 130, 550 160, 570 150 C 620 130, 640 180, 660 190"
+                    fill="none"
+                    stroke="#10b981"
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
                   />
 
                   {chartDays.map((d) => (
-                    <g 
+                    <g
                       key={d.day}
                       onMouseEnter={() => setHoveredDay(d)}
                       onMouseLeave={() => setHoveredDay(null)}
                       className="cursor-pointer"
                     >
-                      <circle 
-                        cx={d.x} 
-                        cy={d.presentY} 
-                        r={hoveredDay?.day === d.day ? "8" : "5"} 
-                        fill="#10b981" 
-                        stroke="#ffffff" 
-                        strokeWidth="2.5" 
+                      <circle
+                        cx={d.x}
+                        cy={d.presentY}
+                        r={hoveredDay?.day === d.day ? "8" : "5"}
+                        fill="#10b981"
+                        stroke="#ffffff"
+                        strokeWidth="2.5"
                         className="transition-all duration-200"
                       />
-                      <circle 
-                        cx={d.x} 
-                        cy={d.absentY} 
-                        r={hoveredDay?.day === d.day ? "8" : "5"} 
-                        fill="#f43f5e" 
-                        stroke="#ffffff" 
-                        strokeWidth="2.5" 
+                      <circle
+                        cx={d.x}
+                        cy={d.absentY}
+                        r={hoveredDay?.day === d.day ? "8" : "5"}
+                        fill="#f43f5e"
+                        stroke="#ffffff"
+                        strokeWidth="2.5"
                         className="transition-all duration-200"
                       />
                     </g>
@@ -742,7 +779,7 @@ const Dashboard = () => {
                 /* Bar View Rendering */
                 <g>
                   {chartDays.map((d, idx) => (
-                    <g 
+                    <g
                       key={d.day}
                       onMouseEnter={() => setHoveredDay(d)}
                       onMouseLeave={() => setHoveredDay(null)}
@@ -763,11 +800,13 @@ const Dashboard = () => {
                 </g>
               )}
             </svg>
+
+
           </div>
         </motion.div>
 
         {/* Dynamic Department Donut Card */}
-        <motion.div 
+        <motion.div
           variants={itemVariants}
           className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col justify-between"
         >
@@ -777,12 +816,12 @@ const Dashboard = () => {
               <p className="text-[11px] font-semibold text-slate-400 mt-0.5">Staff distribution by division</p>
             </div>
           </div>
-          
+
           {/* Animated Donut SVG */}
           <div className="relative flex items-center justify-center h-48 select-none my-2">
             <svg viewBox="0 0 160 160" className="w-40 h-40 transform -rotate-90">
               <circle cx="80" cy="80" r="55" fill="none" stroke="#f1f5f9" strokeWidth="18" />
-              
+
               {(() => {
                 let accumulatedPercent = 0;
                 const colors = ['#3b82f6', '#06b6d4', '#eab308', '#a855f7', '#ec4899', '#10b981', '#f97316'];
@@ -814,7 +853,7 @@ const Dashboard = () => {
                 });
               })()}
             </svg>
-            
+
             {/* Center Stat */}
             <div className="absolute text-center">
               <AnimatePresence mode="wait">
@@ -857,13 +896,12 @@ const Dashboard = () => {
                 );
               }
               return deptStats.slice(0, 3).map((stat, idx) => (
-                <div 
-                  key={stat.name} 
+                <div
+                  key={stat.name}
                   onMouseEnter={() => setHoveredDept(stat)}
                   onMouseLeave={() => setHoveredDept(null)}
-                  className={`truncate p-1.5 rounded-xl border transition cursor-pointer ${
-                    hoveredDept?.name === stat.name ? 'bg-blue-50 border-blue-200' : 'bg-slate-50/50 border-slate-100'
-                  }`}
+                  className={`truncate p-1.5 rounded-xl border transition cursor-pointer ${hoveredDept?.name === stat.name ? 'bg-blue-50 border-blue-200' : 'bg-slate-50/50 border-slate-100'
+                    }`}
                 >
                   <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 truncate max-w-full" title={stat.name}>
                     <span className="w-2.5 h-2.5 rounded-full shrink-0 shadow-xs" style={{ backgroundColor: colors[idx % colors.length] }} />
@@ -879,7 +917,7 @@ const Dashboard = () => {
       </div>
 
       {/* Recent Activity Table Card with Expandable Rows & Gliding Filters */}
-      <motion.div 
+      <motion.div
         variants={itemVariants}
         className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col"
       >
@@ -934,23 +972,22 @@ const Dashboard = () => {
                   const isExpanded = expandedRow === item.id;
                   return (
                     <React.Fragment key={item.id || idx}>
-                      <motion.tr 
+                      <motion.tr
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: 10 }}
                         transition={{ delay: idx * 0.05 }}
                         onClick={() => setExpandedRow(isExpanded ? null : item.id)}
-                        className={`hover:bg-slate-50/80 transition-colors duration-150 cursor-pointer ${
-                          isExpanded ? 'bg-blue-50/30' : ''
-                        }`}
+                        className={`hover:bg-slate-50/80 transition-colors duration-150 cursor-pointer ${isExpanded ? 'bg-blue-50/30' : ''
+                          }`}
                       >
                         {/* Name */}
                         <td className="py-3.5 px-4">
                           <div className="flex items-center gap-3">
-                            <img 
-                              src={item.avatar} 
-                              alt={item.name} 
-                              className="w-9 h-9 rounded-full object-cover border border-slate-200/80 shadow-xs" 
+                            <img
+                              src={item.avatar}
+                              alt={item.name}
+                              className="w-9 h-9 rounded-full object-cover border border-slate-200/80 shadow-xs"
                             />
                             <div>
                               <span className="font-extrabold text-slate-900 block">{item.name}</span>
@@ -958,40 +995,39 @@ const Dashboard = () => {
                             </div>
                           </div>
                         </td>
-                        
+
                         {/* Department */}
                         <td className="py-3.5 px-4 text-slate-600 font-semibold">{item.department}</td>
-                        
+
                         {/* Position */}
                         <td className="py-3.5 px-4 text-slate-600 font-semibold">{item.position}</td>
-                        
+
                         {/* Date */}
                         <td className="py-3.5 px-4 text-slate-500 font-semibold">{item.date}</td>
-                        
+
                         {/* Status Badge */}
                         <td className="py-3.5 px-4">
-                          <span className={`px-3 py-1 rounded-full text-[10px] font-black tracking-wide ${
-                            item.status === 'New Hire' 
-                              ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/80 shadow-xs' 
+                          <span className={`px-3 py-1 rounded-full text-[10px] font-black tracking-wide ${item.status === 'New Hire'
+                              ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/80 shadow-xs'
                               : 'bg-blue-50 text-blue-600 border border-blue-200/80 shadow-xs'
-                          }`}>
+                            }`}>
                             {item.status}
                           </span>
                         </td>
-                        
+
                         {/* Actions */}
                         <td className="py-3.5 px-4 text-center" onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center justify-center gap-1">
-                            <motion.button 
+                            <motion.button
                               whileHover={{ scale: 1.15 }}
                               whileTap={{ scale: 0.9 }}
-                              onClick={() => navigate('/employees')} 
+                              onClick={() => navigate('/employees')}
                               className="p-1.5 hover:bg-blue-50 text-slate-400 hover:text-blue-600 rounded-lg transition cursor-pointer"
                               title="View Profile"
                             >
                               <Edit size={14} />
                             </motion.button>
-                            <motion.button 
+                            <motion.button
                               whileHover={{ scale: 1.15 }}
                               whileTap={{ scale: 0.9 }}
                               onClick={() => setExpandedRow(isExpanded ? null : item.id)}

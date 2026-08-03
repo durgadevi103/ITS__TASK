@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   UserPlus,
   ArrowLeft,
@@ -10,28 +10,31 @@ import api from '../../api/axios';
 
 const AddEmployee = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const editEmployee = location.state?.employee;
+  const isEditMode = !!editEmployee;
 
   const [form, setForm] = useState({
     name: '',
     email: '',
     phone: '',
     designation: '',
-    department: 'IT',
-    status: 'Active',
+    department: '',
+    status: '',
     joiningDate: new Date().toISOString().split('T')[0],
-    dob: '1999-01-01',
-    gender: 'Female',
+    dob: '',
+    gender: '',
     address: '',
     emergencyContact: '',
     emergencyPhone: '',
-    bloodGroup: 'O+',
-    maritalStatus: 'Single',
-    nationality: 'Indian',
-    languages: 'English, Hindi',
-    shift: 'Day Shift',
-    type: 'Full Time',
-    manager: 'Aravind Swamy',
-    desk: 'Bay 1 - Floor 1',
+    bloodGroup: '',
+    maritalStatus: '',
+    nationality: '',
+    languages: '',
+    shift: '',
+    type: '',
+    manager: '',
+    desk: '',
   });
 
   const [showToast, setShowToast] = useState(false);
@@ -40,7 +43,7 @@ const AddEmployee = () => {
   useEffect(() => {
     const fetchDepts = async () => {
       try {
-        const response = await api.get('/department/list/100/0');
+        const response = await api.get('/department/list/');
         const listData = response.data.data || response.data.list;
         if (response.data.success && listData && listData.length > 0) {
           const mapped = listData.map(d => ({
@@ -74,50 +77,127 @@ const AddEmployee = () => {
     fetchDepts();
   }, []);
 
+  useEffect(() => {
+    if (isEditMode && editEmployee) {
+      const parseDateForInput = (dateStr) => {
+        if (!dateStr) return '';
+        if (dateStr.includes('T')) {
+          return dateStr.split('T')[0];
+        }
+        const parts = dateStr.split('-');
+        if (parts.length === 3 && parts[0].length === 2 && parts[2].length === 4) {
+          return `${parts[2]}-${parts[1]}-${parts[0]}`;
+        }
+        return dateStr;
+      };
+
+      setForm({
+        name: editEmployee.name || '',
+        email: editEmployee.email || '',
+        phone: editEmployee.phone || '',
+        designation: editEmployee.designation || '',
+        department: editEmployee.department || '',
+        status: editEmployee.status || 'Active',
+        joiningDate: parseDateForInput(editEmployee.joiningDate),
+        dob: parseDateForInput(editEmployee.dob),
+        gender: editEmployee.gender || '',
+        address: editEmployee.address || '',
+        emergencyContact: editEmployee.emergencyContact || '',
+        emergencyPhone: editEmployee.emergencyPhone || '',
+        bloodGroup: editEmployee.bloodGroup || '',
+        maritalStatus: editEmployee.maritalStatus || '',
+        nationality: editEmployee.nationality || '',
+        languages: editEmployee.languages || '',
+        shift: editEmployee.shift || '',
+        type: editEmployee.type || '',
+        manager: editEmployee.manager || '',
+        desk: editEmployee.desk || '',
+      });
+    }
+  }, [isEditMode, editEmployee]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.name || !form.email || !form.designation) return;
 
     try {
-      // 1. Fetch current list to determine the next numeric ID
-      let nextNum = 1;
-      const responseList = await api.get('/employee/list');
-      if (responseList.data.success && responseList.data.list && responseList.data.list.length > 0) {
-        const ids = responseList.data.list.map(emp => parseInt(emp.employee_id));
-        const maxId = Math.max(...ids.filter(id => !isNaN(id)));
-        nextNum = maxId > 0 ? maxId + 1 : 1;
-      }
+      if (isEditMode) {
+        // Edit Mode
+        const payload = {
+          employee_id: editEmployee.employee_id,
+          emp_id: editEmployee.employee_id,
+          emp_name: form.name,
+          emp_email: form.email,
+          emp_dob: form.dob,
+          emp_gender: form.gender,
+          emp_ph_no: form.phone,
+          emp_address: form.address,
+          emp_emg_contact: form.emergencyContact,
+          emp_emg_phone: form.emergencyPhone,
+          emp_bld_grp: form.bloodGroup,
+          emp_merit: form.maritalStatus,
+          emp_nationality: form.nationality,
+          emp_language: form.languages,
+          emp_dept: form.department,
+          emp_salary: form.salary || '35000',
+          emp_desigation: form.designation,
+          emp_status: form.status
+        };
 
-      // 2. Prepare payload matching backend parameter names
-      const payload = {
-        employee_id: nextNum,
-        emp_name: form.name,
-        emp_email: form.email,
-        emp_dob: form.dob,
-        emp_gender: form.gender,
-        emp_ph_no: form.phone,
-        emp_address: form.address,
-        emp_emg_contact: form.emergencyContact,
-        emp_emg_phone: form.emergencyPhone,
-        emp_bld_grp: form.bloodGroup,
-        emp_merit: form.maritalStatus,
-        emp_nationality: form.nationality,
-        emp_language: form.languages,
-        emp_dept: form.department,
-        emp_slary: '35000',
-        emp_desigation: form.designation
-      };
-
-      // 3. Post to backend
-      const responseCreate = await api.post('/employee/create', payload);
-      if (responseCreate.data.success) {
-        setShowToast(true);
-        setTimeout(() => {
-          setShowToast(false);
-          navigate("/employees");
-        }, 2000);
+        const responseUpdate = await api.put('/employee/edit', payload);
+        if (responseUpdate.data.success) {
+          setShowToast(true);
+          setTimeout(() => {
+            setShowToast(false);
+            navigate("/employees");
+          }, 2000);
+        } else {
+          alert("Failed to update employee profile in database.");
+        }
       } else {
-        alert("Failed to save employee profile to database.");
+        // Create Mode
+        // 1. Fetch current list to determine the next numeric ID
+        let nextNum = 1;
+        const responseList = await api.get('/employee/list');
+        if (responseList.data.success && responseList.data.list && responseList.data.list.length > 0) {
+          const ids = responseList.data.list.map(emp => parseInt(emp.emp_id || emp.employee_id));
+          const maxId = Math.max(...ids.filter(id => !isNaN(id)));
+          nextNum = maxId > 0 ? maxId + 1 : 1;
+        }
+
+        // 2. Prepare payload matching backend parameter names
+        const payload = {
+          employee_id: nextNum,
+          emp_name: form.name,
+          emp_email: form.email,
+          emp_dob: form.dob,
+          emp_gender: form.gender,
+          emp_ph_no: form.phone,
+          emp_address: form.address,
+          emp_emg_contact: form.emergencyContact,
+          emp_emg_phone: form.emergencyPhone,
+          emp_bld_grp: form.bloodGroup,
+          emp_merit: form.maritalStatus,
+          emp_nationality: form.nationality,
+          emp_language: form.languages,
+          emp_dept: form.department,
+          emp_salary: '35000',
+          emp_desigation: form.designation,
+          emp_designation: form.designation,
+          emp_status: form.status || 'Active'
+        };
+
+        // 3. Post to backend
+        const responseCreate = await api.post('/employee/create', payload);
+        if (responseCreate.data.success) {
+          setShowToast(true);
+          setTimeout(() => {
+            setShowToast(false);
+            navigate("/employees");
+          }, 2000);
+        } else {
+          alert("Failed to save employee profile to database.");
+        }
       }
     } catch (err) {
       console.error(err);
@@ -126,7 +206,7 @@ const AddEmployee = () => {
   };
 
   return (
-    <div className="p-4 bg-[#f8fafc] h-[calc(100vh-4rem)] flex flex-col gap-4 text-gray-700 overflow-hidden">
+    <div className="p-3 bg-[#f8fafc] h-[calc(100vh-4.2rem)] flex flex-col gap-3 text-gray-700 overflow-hidden">
       {/* Toast Notification */}
       <AnimatePresence>
         {showToast && (
@@ -138,19 +218,19 @@ const AddEmployee = () => {
           >
             <CheckCircle className="w-5 h-5 text-emerald-500" />
             <div>
-              <p className="text-sm font-bold text-white">Employee Registered</p>
-              <p className="text-xs text-gray-400">Added new employee profile successfully.</p>
+              <p className="text-sm font-bold text-white">{isEditMode ? "Profile Updated" : "Employee Registered"}</p>
+              <p className="text-xs text-gray-400">{isEditMode ? "Updated employee details successfully." : "Added new employee profile successfully."}</p>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
       <div className="flex-1 w-full bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col overflow-hidden h-full">
-        
+
         {/* Header bar */}
         <div className="bg-gradient-to-r from-blue-600 to-indigo-700 px-5 py-4 text-white flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <button 
+            <button
               onClick={() => navigate('/employees')}
               className="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition text-white cursor-pointer"
               title="Back to Directory"
@@ -160,9 +240,9 @@ const AddEmployee = () => {
             <div>
               <h2 className="text-base font-bold flex items-center gap-2">
                 <UserPlus className="w-5 h-5" />
-                Register New Employee
+                {isEditMode ? "Edit Employee Profile" : "Register New Employee"}
               </h2>
-              <p className="text-[10px] text-blue-100 mt-0.5">Fill out personal, job, and account information.</p>
+              <p className="text-[10px] text-blue-100 mt-0.5">{isEditMode ? "Modify personal, job, and account information." : "Fill out personal, job, and account information."}</p>
             </div>
           </div>
         </div>
@@ -171,12 +251,12 @@ const AddEmployee = () => {
         <form onSubmit={handleSubmit} className="flex-1 min-h-0 flex flex-col overflow-hidden">
           {/* Scrollable Fields Section */}
           <div className="flex-1 overflow-y-auto p-5 md:p-6 space-y-6 text-xs text-gray-600">
-            
+
             {/* Section: Personal Info */}
             <div className="space-y-4">
               <h3 className="text-xs font-bold text-gray-900 border-b border-gray-50 pb-2">1. Personal Details</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                
+
                 {/* Full Name */}
                 <div className="space-y-1">
                   <label className="block font-semibold text-gray-700">Full Name</label>
@@ -334,7 +414,7 @@ const AddEmployee = () => {
             <div className="space-y-4 pt-4 border-t border-gray-50">
               <h3 className="text-xs font-bold text-gray-900 border-b border-gray-50 pb-2">2. Job & Position Details</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                
+
                 {/* Designation */}
                 <div className="space-y-1">
                   <label className="block font-semibold text-gray-700">Designation / Position</label>
@@ -458,9 +538,9 @@ const AddEmployee = () => {
             </button>
             <button
               type="submit"
-              className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md shadow-blue-600/10 transition active:scale-95 text-xs cursor-pointer"
+              className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md shadow-blue-600/10 transition active:scale-95 text-xs cursor-pointer glossy-shine"
             >
-              Save Employee
+              {isEditMode ? "Update Profile" : "Save Employee"}
             </button>
           </div>
 

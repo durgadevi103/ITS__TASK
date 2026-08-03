@@ -16,7 +16,7 @@ import api from './api/axios.js'
 
 // Simple elegant placeholder component for pages under development
 const Placeholder = ({ title }) => (
-  <motion.div 
+  <motion.div
     initial={{ opacity: 0, y: 12 }}
     animate={{ opacity: 1, y: 0 }}
     exit={{ opacity: 0, y: -12 }}
@@ -38,7 +38,7 @@ const Placeholder = ({ title }) => (
 );
 
 // Animated Outlet Wrapper for page transitions
-const AnimatedOutlet = () => {
+const AnimatedOutlet = ({ context }) => {
   const location = useLocation();
   return (
     <AnimatePresence mode="wait">
@@ -50,7 +50,7 @@ const AnimatedOutlet = () => {
         transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
         className="w-full h-full"
       >
-        <Outlet />
+        <Outlet context={context} />
       </motion.div>
     </AnimatePresence>
   );
@@ -60,18 +60,28 @@ const AnimatedOutlet = () => {
 const Layout = ({ currentUser, setCurrentUser }) => {
   const [useData, setData] = useState("Dashboard"); // Default title is Dashboard
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarHovered, setSidebarHovered] = useState(false);
+  const [sidebarPinned, setSidebarPinned] = useState(() => {
+    return localStorage.getItem("sidebarPinned") === "true";
+  });
+  const [searchQuery, setSearchQuery] = useState("");
 
   const handleGetdata = (value) => {
     setData(value);
     setSidebarOpen(false);
   };
 
+  const isExpanded = sidebarOpen || sidebarHovered || sidebarPinned;
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col overflow-x-hidden">
-      <Navbar 
-        usedata={useData} 
-        onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} 
+      <Navbar
+        usedata={useData}
+        onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
         isSidebarOpen={sidebarOpen}
+        isSidebarHovered={sidebarHovered || sidebarPinned}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
         currentUser={currentUser}
         setCurrentUser={setCurrentUser}
       />
@@ -83,10 +93,21 @@ const Layout = ({ currentUser, setCurrentUser }) => {
           onClose={() => setSidebarOpen(false)}
           currentUser={currentUser}
           setCurrentUser={setCurrentUser}
+          onMouseEnter={() => setSidebarHovered(true)}
+          onMouseLeave={() => setSidebarHovered(false)}
+          isPinned={sidebarPinned}
+          onTogglePin={() => {
+            const next = !sidebarPinned;
+            setSidebarPinned(next);
+            localStorage.setItem("sidebarPinned", next ? "true" : "false");
+          }}
         />
 
-        <main className="ml-0 md:ml-64 mt-16 w-full md:w-[calc(100%-16rem)] min-h-[calc(100vh-4rem)] overflow-x-hidden transition-all duration-300">
-          <AnimatedOutlet />
+        <main className={`ml-0 mt-16 w-full min-h-[calc(100vh-4rem)] overflow-x-hidden transition-all duration-300 ${isExpanded
+            ? "md:ml-64 md:w-[calc(100%-16rem)]"
+            : "md:ml-16 md:w-[calc(100%-4rem)]"
+          }`}>
+          <AnimatedOutlet context={{ searchQuery, setSearchQuery }} />
         </main>
       </div>
     </div>
@@ -105,11 +126,16 @@ function App() {
   useEffect(() => {
     const fetchSession = async () => {
       try {
-        const res = await api.get('/auth/current-user');
-        if (res.data.success && res.data.user) {
-          setCurrentUser(res.data.user);
+        const storedUser = sessionStorage.getItem('currentUser');
+        if (storedUser) {
+          setCurrentUser(JSON.parse(storedUser));
         } else {
-          setCurrentUser(null);
+          const res = await api.get('/auth/current-user');
+          if (res.data.success && res.data.user) {
+            setCurrentUser(res.data.user);
+          } else {
+            setCurrentUser(null);
+          }
         }
       } catch (err) {
         console.error("Session fetch failed", err);
@@ -148,7 +174,7 @@ function App() {
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="employees" element={<EmployeeList />} />
             <Route path="add-employee" element={<AddEmployee />} />
-            
+
             {/* Placeholders for other sidebar sections */}
             <Route path="departments" element={<Department />} />
             <Route path="attendance" element={<Attendance />} />

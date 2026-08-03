@@ -47,12 +47,13 @@ const Department = () => {
         // Sort by backend auto-increment ID ascending
         const sorted = listData.sort((a, b) => (a.dept_id || a.id) - (b.dept_id || b.id));
         const mapped = sorted.map((d, index) => ({
+          dept_id: d.dept_id,
           id: d.dept_id ? `DEP${String(d.dept_id).padStart(3, '0')}` : (typeof d.id === 'string' && d.id.startsWith('DEP') ? d.id : `DEP${String(d.id || index + 1).padStart(3, '0')}`),
           dept_id_code: d.dept_code || d.dept_id_code || `DEP${index + 1}`,
           name: d.dept_name || d.name,
           branch: d.branch || "Chennai",
           description: d.dept_desc || d.description,
-          status: d.dept_status || d.status || "Active",
+          status: (d.dept_status === 0 || d.dept_status === '0' || d.dept_status === 'Inactive') ? 'Inactive' : 'Active',
           createdAt: d.created_at || new Date().toISOString().split('T')[0]
         }));
         setDepartments(mapped);
@@ -102,9 +103,9 @@ const Department = () => {
     if (currentView === 'add') {
       const newDept = {
         dept_name: formData.name,
-        dept_desc: formData.dept_id_code.trim(),
-        dept_status: formData.description,
-        dept_code: formData.status,
+        dept_code: formData.dept_id_code.trim(),
+        dept_desc: formData.description,
+        dept_status: formData.status === 'Active' ? 1 : 0,
         name: formData.name,
         branch: formData.branch,
         description: formData.description,
@@ -143,10 +144,11 @@ const Department = () => {
     } else {
       // Editing
       const editPayload = {
-        dept_code: selectedDept.dept_id_code,
+        dept_id: selectedDept.dept_id,
+        dept_code: formData.dept_id_code,
         dept_name: formData.name,
         dept_desc: formData.description,
-        dept_status: formData.status
+        dept_status: formData.status === 'Active' ? 1 : 0
       };
 
       try {
@@ -186,8 +188,16 @@ const Department = () => {
     if (!target) return;
 
     const newStatus = target.status === 'Active' ? 'Inactive' : 'Active';
+    const editPayload = {
+      dept_id: target.dept_id,
+      dept_code: target.dept_id_code,
+      dept_name: target.name,
+      dept_desc: target.description,
+      dept_status: newStatus === 'Active' ? 1 : 0
+    };
+
     try {
-      const response = await api.put(`/department/toggle-status/${target.dept_id_code}`, { status: newStatus });
+      const response = await api.put('/department/edit', editPayload);
       if (response.data.success) {
         triggerToast(`Status for "${target.name}" set to ${newStatus}`, 'info');
         fetchDepartments();
@@ -218,22 +228,20 @@ const Department = () => {
             initial={{ opacity: 0, y: -20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            className={`fixed top-20 right-6 z-55 px-5 py-3.5 rounded-2xl shadow-xl flex items-center gap-3 border text-xs font-semibold ${
-              toast.type === 'success' 
-                ? 'bg-emerald-950 border-emerald-800 text-emerald-100' 
+            className={`fixed top-20 right-6 z-55 px-5 py-3.5 rounded-2xl shadow-xl flex items-center gap-3 border text-xs font-semibold ${toast.type === 'success'
+                ? 'bg-emerald-950 border-emerald-800 text-emerald-100'
                 : toast.type === 'info'
-                ? 'bg-blue-950 border-blue-800 text-blue-100'
-                : 'bg-rose-950 border-rose-800 text-rose-100'
-            }`}
+                  ? 'bg-blue-950 border-blue-800 text-blue-100'
+                  : 'bg-rose-950 border-rose-800 text-rose-100'
+              }`}
           >
-            <CheckCircle className={`w-5 h-5 ${
-              toast.type === 'success' ? 'text-emerald-450' : 'text-blue-400'
-            }`} />
+            <CheckCircle className={`w-5 h-5 ${toast.type === 'success' ? 'text-emerald-450' : 'text-blue-400'
+              }`} />
             <div className="flex-1 min-w-[180px]">
               <p className="font-extrabold text-white">System Notification</p>
               <p className="text-[10px] text-gray-300 mt-0.5">{toast.message}</p>
             </div>
-            <button 
+            <button
               onClick={() => setToast(prev => ({ ...prev, show: false }))}
               className="text-gray-400 hover:text-white p-0.5 transition rounded-lg"
             >
@@ -246,7 +254,7 @@ const Department = () => {
       {/* Primary Page Switcher with motion animations */}
       <div className="flex-1 min-h-0 overflow-hidden">
         {currentView === 'list' && (
-          <DepartmentList 
+          <DepartmentList
             departments={departments}
             onAddClick={handleAddClick}
             onEditClick={handleEditClick}
@@ -254,10 +262,10 @@ const Department = () => {
             onToggleStatus={handleToggleStatus}
           />
         )}
-        
+
         {currentView === 'view' && selectedDept && (
-          <div className="p-4 bg-[#f8fafc] h-[calc(100vh-4rem)] flex flex-col text-gray-700 overflow-hidden">
-            <ViewDepartment 
+          <div className="p-3 bg-[#f8fafc] h-[calc(100vh-4.2rem)] flex flex-col text-gray-700 overflow-hidden">
+            <ViewDepartment
               department={selectedDept}
               onBack={() => {
                 setCurrentView('list');
@@ -268,8 +276,8 @@ const Department = () => {
         )}
 
         {(currentView === 'add' || currentView === 'edit') && (
-          <div className="p-4 bg-[#f8fafc] h-[calc(100vh-4rem)] flex flex-col text-gray-700 overflow-hidden">
-            <AddEditDepartment 
+          <div className="p-3 bg-[#f8fafc] h-[calc(100vh-4.2rem)] flex flex-col text-gray-700 overflow-hidden">
+            <AddEditDepartment
               department={selectedDept}
               onSave={handleSaveDepartment}
               onCancel={() => {
