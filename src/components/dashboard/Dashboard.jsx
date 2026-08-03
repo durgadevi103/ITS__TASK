@@ -137,7 +137,6 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { searchQuery } = useOutletContext() || {};
   const [employees, setEmployees] = useState([]);
-  // <COde</COde>
   const [departments, setDepartments] = useState([]);
   const [employeeCount, setEmployeeCount] = useState(0);
   const [newHiresCount, setNewHiresCount] = useState(0);
