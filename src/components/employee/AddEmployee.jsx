@@ -46,12 +46,12 @@ const AddEmployee = () => {
   useEffect(() => {
     const fetchDepts = async () => {
       try {
-        const response = await api.get('/department/list');
+        const response = await api.get('/department/list/10/0');
         const listData = response.data.data || response.data.list;
         if (response.data.success && listData && listData.length > 0) {
           const mapped = listData.map((d, index) => ({
             name: d.dept_name || d.name,
-            dept_code: d.dept_id || d.dept_id_code || `DEP${index + 1}`
+            dept_code: d.dept_id || d.dept_id || `DEP${index + 1}`
           }));
           setDepartments(mapped);
           return;
