@@ -135,7 +135,6 @@ const TiltSpotlightCard = ({ children, className = "", spotlightColor = "rgba(59
 const Dashboard = () => {
   const navigate = useNavigate();
   const [employees, setEmployees] = useState([]);
-  // <COde</COde>
   const [departments, setDepartments] = useState([]);
   const [employeeCount, setEmployeeCount] = useState(0);
   const [newHiresCount, setNewHiresCount] = useState(0);
