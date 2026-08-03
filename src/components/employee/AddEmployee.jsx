@@ -20,7 +20,7 @@ const AddEmployee = () => {
     phone: '',
     designation: '',
     department: '',
-    status: 'Active',
+    status: '',
     joiningDate: new Date().toISOString().split('T')[0],
     dob: '',
     gender: '',
@@ -43,7 +43,7 @@ const AddEmployee = () => {
   useEffect(() => {
     const fetchDepts = async () => {
       try {
-        const response = await api.get('/department/list/100/0');
+        const response = await api.get('/department/list/');
         const listData = response.data.data || response.data.list;
         if (response.data.success && listData && listData.length > 0) {
           const mapped = listData.map(d => ({
@@ -140,12 +140,12 @@ const AddEmployee = () => {
           emp_language: form.languages,
           emp_dept: form.department,
           emp_salary: form.salary || '35000',
-          emp_desigation: form.designation
+          emp_desigation: form.designation,
+          emp_status: form.status
         };
 
         const responseUpdate = await api.put('/employee/edit', payload);
         if (responseUpdate.data.success) {
-          localStorage.setItem(`employee_status_${editEmployee.employee_id}`, form.status);
           setShowToast(true);
           setTimeout(() => {
             setShowToast(false);
@@ -183,13 +183,13 @@ const AddEmployee = () => {
           emp_dept: form.department,
           emp_salary: '35000',
           emp_desigation: form.designation,
-          emp_designation: form.designation
+          emp_designation: form.designation,
+          emp_status: form.status || 'Active'
         };
 
         // 3. Post to backend
         const responseCreate = await api.post('/employee/create', payload);
         if (responseCreate.data.success) {
-          localStorage.setItem(`employee_status_${nextNum}`, form.status || 'Active');
           setShowToast(true);
           setTimeout(() => {
             setShowToast(false);

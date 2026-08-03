@@ -103,9 +103,9 @@ const Department = () => {
     if (currentView === 'add') {
       const newDept = {
         dept_name: formData.name,
-        dept_desc: formData.dept_id_code.trim(),
-        dept_status: formData.description,
-        dept_code: formData.status === 'Active' ? 1 : 0,
+        dept_code: formData.dept_id_code.trim(),
+        dept_desc: formData.description,
+        dept_status: formData.status === 'Active' ? 1 : 0,
         name: formData.name,
         branch: formData.branch,
         description: formData.description,

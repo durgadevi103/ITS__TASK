@@ -127,6 +127,7 @@ const LeaveManagement = () => {
   const [employees, setEmployees] = useState([]);
   const [loadingEmployees, setLoadingEmployees] = useState(true);
   const [requests, setRequests] = useState([]);
+  console.log("requests", requests)
   const [toasts, setToasts] = useState([]);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -145,48 +146,6 @@ const LeaveManagement = () => {
   const [rowsPerPage] = useState(5);
   const [actionMenuId, setActionMenuId] = useState(null);
 
-  // // Mock leaves fallback
-  // const MOCK_LEAVES = [
-  //   {
-  //     id: 1,
-  //     empName: 'Pasupathi',
-  //     empId: 'EMP003',
-  //     avatar: 'https://ui-avatars.com/api/?name=Pasupathi&background=2563eb&color=fff&bold=true',
-  //     leaveType: 'Casual Leave (CL)',
-  //     from: '10/08/2026',
-  //     to: '12/08/2026',
-  //     days: 3,
-  //     reason: 'Family function at home town',
-  //     status: 'Approved',
-  //     appliedOn: '01/08/2026'
-  //   },
-  //   {
-  //     id: 2,
-  //     empName: 'kumarram',
-  //     empId: 'EMP001',
-  //     avatar: 'https://ui-avatars.com/api/?name=kumarram&background=2563eb&color=fff&bold=true',
-  //     leaveType: 'Sick Leave (SL)',
-  //     from: '15/08/2026',
-  //     to: '16/08/2026',
-  //     days: 2,
-  //     reason: 'Fever and cold',
-  //     status: 'Pending',
-  //     appliedOn: '05/08/2026'
-  //   },
-  //   {
-  //     id: 3,
-  //     empName: 'raghul',
-  //     empId: 'EMP016',
-  //     avatar: 'https://ui-avatars.com/api/?name=raghul&background=2563eb&color=fff&bold=true',
-  //     leaveType: 'Privilege Leave (PL)',
-  //     from: '20/08/2026',
-  //     to: '25/08/2026',
-  //     days: 6,
-  //     reason: 'Personal vacation',
-  //     status: 'Pending',
-  //     appliedOn: '06/08/2026'
-  //   }
-  // ];
 
   // Helper for adding toast alerts
   const showToast = (message, type = 'success') => {
@@ -197,29 +156,16 @@ const LeaveManagement = () => {
   // Fetch leave requests from backend
   const fetchLeaveRequests = async () => {
     try {
-      const response = await api.get('/leave/list');
-      if (response.data.success && response.data.list) {
-        const mapped = response.data.list.map(d => ({
-          id: d.id,
-          empName: d.emp_name,
-          empId: d.emp_id_code,
-          avatar: d.avatar,
-          leaveType: d.leave_type,
-          from: d.from_date,
-          to: d.to_date,
-          days: d.days,
-          reason: d.reason,
-          status: d.status,
-          appliedOn: d.applied_on
-        }));
-        setRequests(mapped);
+      const res = await api.get('/leave/get-list');
+      console.log("API RESPONSE:", res.data.leavelist);
+      if (res.data?.leavelist?.length) {
+        setRequests(res.data.leavelist || []);
       } else {
         setRequests([]);
       }
     } catch (err) {
-      console.error("Error fetching leave requests from DB", err);
+      console.error("Error fetching leave requests from database", err);
       setRequests([]);
-      showToast("Failed to fetch leave requests from database.", "error");
     }
   };
 
@@ -240,7 +186,7 @@ const LeaveManagement = () => {
         }
       }
     } catch (err) {
-      console.error("Error fetching employees in Leave Manager", err);
+      console.error("Error fetching employees in Leave Manage", err);
     } finally {
       setLoadingEmployees(false);
     }
@@ -254,17 +200,17 @@ const LeaveManagement = () => {
   // Leave Balances computed dynamically
   const leaveBalances = useMemo(() => {
     const clUsed = requests
-      .filter(r => r.status === 'Approved' && r.leaveType.includes('Casual'))
-      .reduce((sum, r) => sum + r.days, 0);
+      .filter(r => r.leave_status === 'Approved' && r.leave_type?.includes('Casual'))
+      .reduce((sum, r) => sum + (r.leave_days || 0), 0);
     const slUsed = requests
-      .filter(r => r.status === 'Approved' && r.leaveType.includes('Sick'))
-      .reduce((sum, r) => sum + r.days, 0);
+      .filter(r => r.leave_status === 'Approved' && r.leave_type?.includes('Sick'))
+      .reduce((sum, r) => sum + (r.leave_days || 0), 0);
     const plUsed = requests
-      .filter(r => r.status === 'Approved' && r.leaveType.includes('Privilege'))
-      .reduce((sum, r) => sum + r.days, 0);
+      .filter(r => r.leave_status === 'Approved' && r.leave_type?.includes('Privilege'))
+      .reduce((sum, r) => sum + (r.leave_days || 0), 0);
     const mlUsed = requests
-      .filter(r => r.status === 'Approved' && r.leaveType.includes('Maternity'))
-      .reduce((sum, r) => sum + r.days, 0);
+      .filter(r => r.leave_status === 'Approved' && r.leave_type?.includes('Maternity'))
+      .reduce((sum, r) => sum + (r.leave_days || 0), 0);
 
     return {
       CL: { label: 'Casual Leave (CL)', used: clUsed, max: 12, color: 'bg-blue-600', gradient: 'from-blue-500 to-indigo-600', stroke: 'rgb(59, 130, 246)' },
@@ -277,9 +223,9 @@ const LeaveManagement = () => {
   // Compute stats dynamically based on leaves list
   const stats = useMemo(() => {
     const total = requests.length;
-    const approved = requests.filter(r => r.status === 'Approved').length;
-    const pending = requests.filter(r => r.status === 'Pending').length;
-    const rejected = requests.filter(r => r.status === 'Rejected').length;
+    const approved = requests.filter(r => r.leave_status === 'Approved').length;
+    const pending = requests.filter(r => r.leave_status === 'Pending').length;
+    const rejected = requests.filter(r => r.leave_status === 'Rejected').length;
     const approvedPct = total > 0 ? ((approved / total) * 100).toFixed(1) : '0.0';
     const pendingPct = total > 0 ? ((pending / total) * 100).toFixed(1) : '0.0';
     const rejectedPct = total > 0 ? ((rejected / total) * 100).toFixed(1) : '0.0';
@@ -337,51 +283,32 @@ const LeaveManagement = () => {
     }
 
     const newEmpName = selectedEmp ? selectedEmp.emp_name : '';
-    const newEmpIdCode = selectedEmp ? `EMP${String(selectedEmp.employee_id).padStart(3, '0')}` : 'EMP001';
-    const newAvatar = selectedEmp?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(newEmpName)}&background=2563eb&color=fff&bold=true`;
-
-    const formatDatePickerDate = (dateStr) => {
-      if (!dateStr) return '';
-      if (dateStr instanceof Date) {
-        const day = String(dateStr.getDate()).padStart(2, '0');
-        const month = String(dateStr.getMonth() + 1).padStart(2, '0');
-        const year = dateStr.getFullYear();
-        return `${day}/${month}/${year}`;
-      }
-      const parts = dateStr.split('-');
-      if (parts.length === 3) {
-        return `${parts[2]}/${parts[1]}/${parts[0]}`;
-      }
-      return dateStr;
-    };
 
     const payload = {
+      emp_id: selectedEmpId,
       emp_name: newEmpName,
-      emp_id_code: newEmpIdCode,
-      avatar: newAvatar,
       leave_type: leaveType,
-      from_date: formatDatePickerDate(fromDate),
-      to_date: formatDatePickerDate(toDate),
-      days: calculatedDays,
-      reason,
-      status: 'Pending',
-      applied_on: formatDatePickerDate(new Date())
+      leave_from: fromDate,
+      leave_to: toDate,
+      leave_days: calculatedDays,
+      leave_reason: reason,
+      leave_status: 'Pending'
     };
 
     try {
-      const response = await api.post('/leave/create', payload);
-      if (response.data.success) {
+      const res = await api.post('/leave/create', payload);
+      if (res.data && res.data.success) {
         showToast('Leave request submitted successfully!', 'success');
-        fetchLeaveRequests();
         setFromDate('');
         setToDate('');
         setReason('');
+        fetchLeaveRequests();
       } else {
         showToast('Failed to submit leave request to database.', 'error');
       }
     } catch (err) {
-      console.error("Backend post failed", err);
-      showToast('Error communicating with database.', 'error');
+      console.error("Database save failed", err);
+      showToast('Error saving leave request to database.', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -390,32 +317,32 @@ const LeaveManagement = () => {
   // Perform actions on requests (Approve, Reject, Cancel)
   const handleStatusChange = async (requestId, newStatus) => {
     try {
-      const response = await api.put('/leave/update-status', { id: requestId, status: newStatus });
-      if (response.data.success) {
+      const res = await api.put('/leave/status', { id: requestId, status: newStatus });
+      if (res.data && res.data.success) {
         showToast(`Request ${newStatus.toLowerCase()} successfully!`, 'success');
-        fetchLeaveRequests();
         setActionMenuId(null);
+        fetchLeaveRequests();
         // Sync selected request if in drawer
-        if (selectedRequest && selectedRequest.id === requestId) {
-          setSelectedRequest(prev => ({ ...prev, status: newStatus }));
+        if (selectedRequest && selectedRequest.leave_id === requestId) {
+          setSelectedRequest(prev => ({ ...prev, leave_status: newStatus }));
         }
       } else {
-        showToast(`Failed to update request status in database.`, 'error');
+        showToast(`Failed to update status in database.`, 'error');
       }
     } catch (err) {
-      console.error("Backend status change failed", err);
-      showToast(`Error communicating with database.`, 'error');
+      console.error("Database status change failed", err);
+      showToast(`Error updating status in database.`, 'error');
     }
   };
 
   // Filtered requests based on search query and active tab
   const filteredRequests = useMemo(() => {
     return requests.filter(req => {
-      const matchesTab = activeTab === 'All' || req.status === activeTab;
-      const matchesSearch = req.empName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        req.empId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        req.leaveType.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        req.reason.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesTab = activeTab === 'All' || req.leave_status === activeTab;
+      const matchesSearch = req.emp_name?.toLowerCase().includes(searchQuery?.toLowerCase()) ||
+        req.emp_id?.toString().toLowerCase().includes(searchQuery?.toLowerCase()) ||
+        req.leave_type?.toLowerCase().includes(searchQuery?.toLowerCase()) ||
+        req.leave_reason?.toLowerCase().includes(searchQuery?.toLowerCase());
       return matchesTab && matchesSearch;
     });
   }, [requests, activeTab, searchQuery]);
@@ -865,7 +792,7 @@ const LeaveManagement = () => {
                 {currentTableData.length > 0 ? (
                   currentTableData.map((req, index) => (
                     <motion.tr
-                      key={req.id}
+                      key={req.leave_id}
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.98 }}
@@ -877,61 +804,61 @@ const LeaveManagement = () => {
                       <td className="py-3.5 px-4">
                         <div className="flex items-center gap-3">
                           <img
-                            src={req.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(req.empName)}&background=2563eb&color=fff&bold=true`}
-                            alt={req.empName}
+                            src={req.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(req.emp_name)}&background=2563eb&color=fff&bold=true`}
+                            alt={req.emp_name}
                             className="w-8.5 h-8.5 rounded-full object-cover border border-slate-200 shadow-sm shrink-0"
                           />
                           <div className="leading-tight">
-                            <span className="font-bold text-slate-900 block group-hover:text-blue-600 transition-colors duration-150">{req.empName}</span>
-                            <span className="text-[9.5px] text-slate-400 font-bold block mt-0.5">{req.empId}</span>
+                            <span className="font-bold text-slate-900 block group-hover:text-blue-600 transition-colors duration-150">{req.emp_name}</span>
+                            <span className="text-[9.5px] text-slate-400 font-bold block mt-0.5">{req.emp_id}</span>
                           </div>
                         </div>
                       </td>
 
                       {/* Leave Type */}
                       <td className="py-3.5 px-4 font-bold text-slate-800">
-                        {req.leaveType}
+                        {req.leave_type}
                       </td>
 
                       {/* Dates */}
-                      <td className="py-3.5 px-4 font-bold text-slate-600">{req.from}</td>
-                      <td className="py-3.5 px-4 font-bold text-slate-600">{req.to}</td>
+                      <td className="py-3.5 px-4 font-bold text-slate-600">{req.leave_from}</td>
+                      <td className="py-3.5 px-4 font-bold text-slate-600">{req.leave_to}</td>
 
                       {/* Total Days */}
-                      <td className="py-3.5 px-4 font-black text-slate-900 text-center">{req.days}</td>
+                      <td className="py-3.5 px-4 font-black text-slate-900 text-center">{req.leave_days}</td>
 
                       {/* Reason */}
                       <td className="py-3.5 px-4 max-w-[200px] truncate font-medium text-slate-500" title={req.reason}>
-                        {req.reason}
+                        {req.leave_reason}
                       </td>
 
                       {/* Status Badge */}
                       <td className="py-3.5 px-4">
-                        <span className={`px-2.5 py-0.5 rounded-full text-[9.5px] font-black inline-flex items-center gap-1.5 border ${req.status === 'Approved'
+                        <span className={`px-2.5 py-0.5 rounded-full text-[9.5px] font-black inline-flex items-center gap-1.5 border ${req.leave_status === 'Approved'
                             ? 'bg-emerald-50/70 text-emerald-600 border-emerald-100/50'
-                            : req.status === 'Pending'
+                            : req.leave_status === 'Pending'
                               ? 'bg-amber-50/70 text-amber-600 border-amber-100/50'
-                              : req.status === 'Rejected'
+                              : req.leave_status === 'Rejected'
                                 ? 'bg-rose-50/70 text-rose-600 border-rose-100/50'
                                 : 'bg-slate-100/80 text-slate-500 border-slate-200/50'
                           }`}>
-                          <span className={`w-1 h-1 rounded-full ${req.status === 'Approved' ? 'bg-emerald-500' :
-                              req.status === 'Pending' ? 'bg-amber-500' :
-                                req.status === 'Rejected' ? 'bg-rose-500' : 'bg-slate-400'
+                          <span className={`w-1 h-1 rounded-full ${req.leave_status === 'Approved' ? 'bg-emerald-500' :
+                              req.leave_status === 'Pending' ? 'bg-amber-500' :
+                                req.leave_status === 'Rejected' ? 'bg-rose-500' : 'bg-slate-400'
                             }`} />
-                          {req.status}
+                          {req.leave_status}
                         </span>
                       </td>
 
                       {/* Applied date */}
-                      <td className="py-3.5 px-4 font-bold text-slate-400">{req.appliedOn}</td>
+                      <td className="py-3.5 px-4 font-bold text-slate-400">{req.applied_date}</td>
 
                       {/* Actions Menu */}
                       <td className="py-3.5 px-4 text-center relative" onClick={(e) => e.stopPropagation()}>
                         <motion.button
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
-                          onClick={() => setActionMenuId(actionMenuId === req.id ? null : req.id)}
+                          onClick={() => setActionMenuId(actionMenuId === req.leave_id ? null : req.leave_id)}
                           className="p-1.5 hover:bg-slate-100/70 text-slate-400 hover:text-slate-700 rounded-xl transition-all duration-150"
                         >
                           <MoreVertical size={14} />
@@ -939,7 +866,7 @@ const LeaveManagement = () => {
 
                         {/* Custom Dropdown Menu with Scale-Fade entrance */}
                         <AnimatePresence>
-                          {actionMenuId === req.id && (
+                          {actionMenuId === req.leave_id && (
                             <motion.div
                               initial={{ scale: 0.94, opacity: 0, y: -5 }}
                               animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -947,25 +874,25 @@ const LeaveManagement = () => {
                               transition={{ duration: 0.15 }}
                               className="absolute right-6 mt-1.5 w-32 bg-white/95 border border-slate-100 rounded-2xl shadow-xl py-1.5 z-40 text-left backdrop-blur-md"
                             >
-                              {req.status === 'Pending' && (
+                              {req.leave_status === 'Pending' && (
                                 <>
                                   <button
-                                    onClick={() => handleStatusChange(req.id, 'Approved')}
+                                    onClick={() => handleStatusChange(req.leave_id, 'Approved')}
                                     className="w-full text-left px-3.5 py-2 text-xs font-bold text-emerald-600 hover:bg-emerald-50/50 transition-colors duration-150"
                                   >
                                     Approve
                                   </button>
                                   <button
-                                    onClick={() => handleStatusChange(req.id, 'Rejected')}
+                                    onClick={() => handleStatusChange(req.leave_id, 'Rejected')}
                                     className="w-full text-left px-3.5 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50/50 transition-colors duration-150"
                                   >
                                     Reject
                                   </button>
                                 </>
                               )}
-                              {(req.status === 'Pending' || req.status === 'Approved') && (
+                              {(req.leave_status === 'Pending' || req.leave_status === 'Approved') && (
                                 <button
-                                  onClick={() => handleStatusChange(req.id, 'Cancelled')}
+                                  onClick={() => handleStatusChange(req.leave_id, 'Cancelled')}
                                   className="w-full text-left px-3.5 py-2 text-xs font-bold text-slate-650 hover:bg-slate-50 transition-colors duration-150 border-t border-slate-50"
                                 >
                                   Cancel
@@ -1091,13 +1018,13 @@ const LeaveManagement = () => {
                 <div className="p-6 space-y-6">
                   <div className="flex items-center gap-4 bg-slate-50/50 border border-slate-100 p-4 rounded-2xl">
                     <img
-                      src={selectedRequest.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedRequest.empName)}&background=2563eb&color=fff&bold=true`}
-                      alt={selectedRequest.empName}
+                      src={selectedRequest.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedRequest.emp_name)}&background=2563eb&color=fff&bold=true`}
+                      alt={selectedRequest.emp_name}
                       className="w-14 h-14 rounded-2xl object-cover border-2 border-white shadow-md shrink-0"
                     />
                     <div className="leading-tight">
-                      <h4 className="text-base font-black text-slate-900">{selectedRequest.empName}</h4>
-                      <span className="text-xs font-bold text-slate-400 block mt-1">Employee ID: {selectedRequest.empId}</span>
+                      <h4 className="text-base font-black text-slate-900">{selectedRequest.emp_name}</h4>
+                      <span className="text-xs font-bold text-slate-400 block mt-1">Employee ID: {selectedRequest.emp_id}</span>
                     </div>
                   </div>
 
@@ -1106,11 +1033,11 @@ const LeaveManagement = () => {
                     <div className="grid grid-cols-2 gap-4">
                       <div className="bg-slate-50/40 p-3 rounded-2xl border border-slate-100">
                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">Leave Category</span>
-                        <span className="text-xs font-bold text-blue-650 block mt-1.5">{selectedRequest.leaveType}</span>
+                        <span className="text-xs font-bold text-blue-650 block mt-1.5">{selectedRequest.leave_type}</span>
                       </div>
                       <div className="bg-slate-50/40 p-3 rounded-2xl border border-slate-100">
                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">Applied Date</span>
-                        <span className="text-xs font-bold text-slate-650 block mt-1.5">{selectedRequest.appliedOn}</span>
+                        <span className="text-xs font-bold text-slate-650 block mt-1.5">{selectedRequest.applied_date}</span>
                       </div>
                     </div>
 
@@ -1118,19 +1045,19 @@ const LeaveManagement = () => {
                     <div className="bg-slate-50/40 p-4 rounded-2xl border border-slate-100 flex items-center justify-between">
                       <div className="space-y-1">
                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">From Date</span>
-                        <span className="text-xs font-black text-slate-800">{selectedRequest.from}</span>
+                        <span className="text-xs font-black text-slate-800">{selectedRequest.leave_from}</span>
                       </div>
 
                       <div className="flex flex-col items-center">
                         <ChevronRight className="text-slate-350" size={16} />
                         <span className="bg-blue-100/60 text-blue-600 px-2.5 py-0.5 rounded-full text-[10px] font-black mt-1">
-                          {selectedRequest.days} {selectedRequest.days === 1 ? 'day' : 'days'}
+                          {selectedRequest.leave_days} {selectedRequest.leave_days === 1 ? 'day' : 'days'}
                         </span>
                       </div>
 
                       <div className="space-y-1 text-right">
                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">To Date</span>
-                        <span className="text-xs font-black text-slate-800">{selectedRequest.to}</span>
+                        <span className="text-xs font-black text-slate-800">{selectedRequest.leave_to}</span>
                       </div>
                     </div>
 
@@ -1138,7 +1065,7 @@ const LeaveManagement = () => {
                     <div className="space-y-2">
                       <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block pl-1">Leave Reason</span>
                       <div className="bg-slate-50 border-l-4 border-blue-500 p-4 rounded-r-2xl text-xs font-bold italic text-slate-650 leading-relaxed shadow-sm">
-                        "{selectedRequest.reason}"
+                        "{selectedRequest.leave_reason}"
                       </div>
                     </div>
 
@@ -1151,12 +1078,12 @@ const LeaveManagement = () => {
                         <div className="relative">
                           <div className="absolute -left-[27px] top-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white ring-4 ring-emerald-50" />
                           <span className="text-[10px] font-black text-slate-800">Submitted</span>
-                          <span className="text-[9.5px] text-slate-400 block font-semibold mt-0.5">Requested on {selectedRequest.appliedOn} by employee</span>
+                          <span className="text-[9.5px] text-slate-400 block font-semibold mt-0.5">Requested on {selectedRequest.applied_date} by employee</span>
                         </div>
 
                         {/* Step 2: Under Review */}
                         <div className="relative">
-                          <div className={`absolute -left-[27px] top-0.5 w-3 h-3 rounded-full border-2 border-white ring-4 ${selectedRequest.status === 'Pending'
+                          <div className={`absolute -left-[27px] top-0.5 w-3 h-3 rounded-full border-2 border-white ring-4 ${selectedRequest.leave_status === 'Pending'
                               ? 'bg-amber-500 ring-amber-50 animate-pulse'
                               : 'bg-emerald-500 ring-emerald-50'
                             }`} />
@@ -1166,17 +1093,17 @@ const LeaveManagement = () => {
 
                         {/* Step 3: Decision */}
                         <div className="relative">
-                          <div className={`absolute -left-[27px] top-0.5 w-3 h-3 rounded-full border-2 border-white ring-4 ${selectedRequest.status === 'Approved' ? 'bg-emerald-500 ring-emerald-50' :
-                              selectedRequest.status === 'Rejected' ? 'bg-rose-500 ring-rose-50' :
-                                selectedRequest.status === 'Cancelled' ? 'bg-slate-400 ring-slate-100' :
+                          <div className={`absolute -left-[27px] top-0.5 w-3 h-3 rounded-full border-2 border-white ring-4 ${selectedRequest.leave_status === 'Approved' ? 'bg-emerald-500 ring-emerald-50' :
+                              selectedRequest.leave_status === 'Rejected' ? 'bg-rose-500 ring-rose-50' :
+                                selectedRequest.leave_status === 'Cancelled' ? 'bg-slate-400 ring-slate-100' :
                                   'bg-slate-200 ring-slate-50'
                             }`} />
                           <span className="text-[10px] font-black text-slate-800">Decision Outcome</span>
                           <span className="text-[9.5px] text-slate-400 block font-semibold mt-0.5">
-                            {selectedRequest.status === 'Pending' && 'Awaiting final decision from administration'}
-                            {selectedRequest.status === 'Approved' && 'Approved by administrator'}
-                            {selectedRequest.status === 'Rejected' && 'Rejected by administrator'}
-                            {selectedRequest.status === 'Cancelled' && 'Request retracted/cancelled'}
+                            {selectedRequest.leave_status === 'Pending' && 'Awaiting final decision from administration'}
+                            {selectedRequest.leave_status === 'Approved' && 'Approved by administrator'}
+                            {selectedRequest.leave_status === 'Rejected' && 'Rejected by administrator'}
+                            {selectedRequest.leave_status === 'Cancelled' && 'Request retracted/cancelled'}
                           </span>
                         </div>
                       </div>
@@ -1188,12 +1115,12 @@ const LeaveManagement = () => {
               {/* Bottom Actions inside Drawer */}
               <div className="p-6 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between gap-3">
                 <div className="flex gap-2">
-                  {selectedRequest.status === 'Pending' && (
+                  {selectedRequest.leave_status === 'Pending' && (
                     <>
                       <motion.button
                         whileHover={{ scale: 1.03 }}
                         whileTap={{ scale: 0.97 }}
-                        onClick={() => handleStatusChange(selectedRequest.id, 'Approved')}
+                        onClick={() => handleStatusChange(selectedRequest.leave_id, 'Approved')}
                         className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-xs font-black shadow-md shadow-emerald-500/10 cursor-pointer flex items-center gap-1.5"
                       >
                         <Check size={14} /> Approve
@@ -1201,18 +1128,18 @@ const LeaveManagement = () => {
                       <motion.button
                         whileHover={{ scale: 1.03 }}
                         whileTap={{ scale: 0.97 }}
-                        onClick={() => handleStatusChange(selectedRequest.id, 'Rejected')}
+                        onClick={() => handleStatusChange(selectedRequest.leave_id, 'Rejected')}
                         className="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2.5 rounded-xl text-xs font-black shadow-md shadow-rose-500/10 cursor-pointer flex items-center gap-1.5"
                       >
                         <X size={14} /> Reject
                       </motion.button>
                     </>
                   )}
-                  {(selectedRequest.status === 'Pending' || selectedRequest.status === 'Approved') && (
+                  {(selectedRequest.leave_status === 'Pending' || selectedRequest.leave_status === 'Approved') && (
                     <motion.button
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.97 }}
-                      onClick={() => handleStatusChange(selectedRequest.id, 'Cancelled')}
+                      onClick={() => handleStatusChange(selectedRequest.leave_id, 'Cancelled')}
                       className="border border-slate-200 hover:bg-slate-100 text-slate-650 px-4 py-2.5 rounded-xl text-xs font-black cursor-pointer"
                     >
                       Cancel Request

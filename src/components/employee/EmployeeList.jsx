@@ -65,11 +65,47 @@ const EmployeeList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
 
-  const handleUpdateEmployeeStatus = (employeeId, newStatus) => {
-    localStorage.setItem(`employee_status_${employeeId}`, newStatus);
-    setEmployees(prev =>
-      prev.map(emp => emp.employee_id === employeeId ? { ...emp, status: newStatus } : emp)
-    );
+  const handleUpdateEmployeeStatus = async (employeeId, newStatus) => {
+    const emp = employees.find(e => e.employee_id === employeeId);
+    if (!emp) return;
+
+    const payload = {
+      employee_id: emp.employee_id,
+      emp_id: emp.employee_id,
+      emp_name: emp.name,
+      emp_email: emp.email,
+      emp_dob: emp.dob,
+      emp_gender: emp.gender,
+      emp_ph_no: emp.phone,
+      emp_address: emp.address,
+      emp_emg_contact: emp.emergencyContact,
+      emp_emg_phone: emp.emergencyPhone,
+      emp_bld_grp: emp.bloodGroup,
+      emp_merit: emp.maritalStatus,
+      emp_nationality: emp.nationality,
+      emp_language: emp.languages,
+      emp_dept: emp.department,
+      emp_salary: emp.salary || '35000',
+      emp_desigation: emp.designation,
+      emp_designation: emp.designation,
+      emp_status: newStatus
+    };
+
+    try {
+      const response = await api.put('/employee/edit', payload);
+      if (response.data.success) {
+        setEmployees(prev =>
+          prev.map(item => item.employee_id === employeeId ? { ...item, status: newStatus } : item)
+        );
+        setToastMsg(`Status updated to "${newStatus}" in database.`);
+        setTimeout(() => setToastMsg(""), 3000);
+      } else {
+        alert("Failed to update status in database.");
+      }
+    } catch (err) {
+      console.error("Error updating status", err);
+      alert("Error updating status in database.");
+    }
   };
 
   useEffect(() => {
@@ -117,7 +153,7 @@ const EmployeeList = () => {
             department: emp.emp_dept,
             designation: emp.emp_designation || emp.emp_desigation,
             salary: emp.emp_salary || '',
-            status: localStorage.getItem(`employee_status_${actualEmpId}`) || 'Active',
+            status: emp.emp_status || 'Active',
             avatarUrl: emp.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(emp.emp_name)}&background=2563eb&color=fff&bold=true`,
             isNewHire: isNewHire
           };
