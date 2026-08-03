@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   UserPlus,
@@ -39,22 +39,21 @@ const AddEmployee = () => {
 
   const [showToast, setShowToast] = useState(false);
   const [departments, setDepartments] = useState([]);
+  const [deptSearch, setDeptSearch] = useState('');
+  const [showDeptDropdown, setShowDeptDropdown] = useState(false);
+  const deptRef = useRef(null);
 
   useEffect(() => {
     const fetchDepts = async () => {
       try {
-        const response = await api.get('/department/list/');
+        const response = await api.get('/department/list/100/0');
         const listData = response.data.data || response.data.list;
         if (response.data.success && listData && listData.length > 0) {
-          const mapped = listData.map(d => ({
+          const mapped = listData.map((d, index) => ({
             name: d.dept_name || d.name,
-            dept_code: d.dept_code || d.dept_id_code
+            dept_code: d.dept_code || d.dept_id_code || `DEP${index + 1}`
           }));
           setDepartments(mapped);
-          const names = mapped.map(d => d.name);
-          if (!names.includes('IT')) {
-            setForm(prev => ({ ...prev, department: names[0] }));
-          }
           return;
         }
       } catch (err) {
@@ -65,17 +64,22 @@ const AddEmployee = () => {
       const local = sessionStorage.getItem('departmentsData');
       if (local) {
         const parsed = JSON.parse(local);
-        setDepartments(parsed);
-        if (parsed.length > 0) {
-          setForm(prev => ({ ...prev, department: parsed[0].name }));
-        }
+        const mapped = parsed.map((d, index) => ({
+          name: d.name || d.dept_name,
+          dept_code: d.dept_id_code || d.dept_code || `DEP${index + 1}`
+        }));
+        setDepartments(mapped);
       } else {
-        const fallback = [{ name: 'Information Technology' }, { name: 'Human Resources' }, { name: 'Finance' }];
+        const fallback = [
+          { name: 'Information Technology', dept_code: 'IT' },
+          { name: 'Human Resources', dept_code: 'HR' },
+          { name: 'Finance', dept_code: 'FIN' }
+        ];
         setDepartments(fallback);
       }
     };
     fetchDepts();
-  }, []);
+  }, [isEditMode]);
 
   useEffect(() => {
     if (isEditMode && editEmployee) {
@@ -113,12 +117,24 @@ const AddEmployee = () => {
         manager: editEmployee.manager || '',
         desk: editEmployee.desk || '',
       });
+      setDeptSearch(editEmployee.department || '');
     }
   }, [isEditMode, editEmployee]);
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (deptRef.current && !deptRef.current.contains(event.target)) {
+        setShowDeptDropdown(false);
+        setDeptSearch(form.department || '');
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [form.department]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.name || !form.email || !form.designation) return;
+    if (!form.name || !form.email || !form.phone || !form.designation || !form.department || !form.joiningDate) return;
 
     try {
       if (isEditMode) {
@@ -259,7 +275,7 @@ const AddEmployee = () => {
 
                 {/* Full Name */}
                 <div className="space-y-1">
-                  <label className="block font-semibold text-gray-700">Full Name</label>
+                  <label className="block font-semibold text-gray-700">Full Name <span className="text-red-500">*</span></label>
                   <input
                     type="text"
                     required
@@ -272,7 +288,7 @@ const AddEmployee = () => {
 
                 {/* Email Address */}
                 <div className="space-y-1">
-                  <label className="block font-semibold text-gray-700">Email Address</label>
+                  <label className="block font-semibold text-gray-700">Email Address <span className="text-red-500">*</span></label>
                   <input
                     type="email"
                     required
@@ -285,7 +301,7 @@ const AddEmployee = () => {
 
                 {/* Phone Number */}
                 <div className="space-y-1">
-                  <label className="block font-semibold text-gray-700">Phone Number</label>
+                  <label className="block font-semibold text-gray-700">Phone Number <span className="text-red-500">*</span></label>
                   <input
                     type="text"
                     required
@@ -417,7 +433,7 @@ const AddEmployee = () => {
 
                 {/* Designation */}
                 <div className="space-y-1">
-                  <label className="block font-semibold text-gray-700">Designation / Position</label>
+                  <label className="block font-semibold text-gray-700">Designation / Position <span className="text-red-500">*</span></label>
                   <input
                     type="text"
                     required
@@ -428,24 +444,79 @@ const AddEmployee = () => {
                   />
                 </div>
 
-                {/* Department */}
-                <div className="space-y-1">
-                  <label className="block font-semibold text-gray-700">Department</label>
-                  <select
-                    value={form.department}
-                    onChange={(e) => setForm({ ...form, department: e.target.value })}
-                    className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-gray-800 font-medium cursor-pointer"
-                  >
-                    {departments.length === 0 ? (
-                      <option value="">No Departments Available</option>
-                    ) : (
-                      departments.map((dept) => (
-                        <option key={dept.dept_id_code} value={dept.name}>
-                          {dept.name}
-                        </option>
-                      ))
+                {/* Department Search Select */}
+                <div className="space-y-1 relative" ref={deptRef}>
+                  <label className="block font-semibold text-gray-700">Department <span className="text-red-500">*</span></label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      required
+                      placeholder="Search and select department..."
+                      value={deptSearch}
+                      onFocus={() => setShowDeptDropdown(true)}
+                      onChange={(e) => {
+                        setDeptSearch(e.target.value);
+                        setShowDeptDropdown(true);
+                        if (!e.target.value.trim()) {
+                          setForm(prev => ({ ...prev, department: '' }));
+                        }
+                      }}
+                      className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-gray-800 font-medium"
+                    />
+                    {deptSearch && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDeptSearch('');
+                          setForm(prev => ({ ...prev, department: '' }));
+                          setShowDeptDropdown(true);
+                        }}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-650 cursor-pointer text-sm font-bold"
+                      >
+                        &times;
+                      </button>
                     )}
-                  </select>
+                  </div>
+
+                  <AnimatePresence>
+                    {showDeptDropdown && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -5 }}
+                        className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto"
+                      >
+                        {departments.filter(d => 
+                          (d.name || '').toLowerCase().includes(deptSearch.toLowerCase()) || 
+                          (d.dept_code || '').toLowerCase().includes(deptSearch.toLowerCase())
+                        ).length === 0 ? (
+                          <div className="px-3.5 py-2 text-xs text-gray-400 font-medium">
+                            No Departments Found
+                          </div>
+                        ) : (
+                          departments.filter(d => 
+                            (d.name || '').toLowerCase().includes(deptSearch.toLowerCase()) || 
+                            (d.dept_code || '').toLowerCase().includes(deptSearch.toLowerCase())
+                          ).map((dept) => (
+                            <button
+                              key={dept.dept_code || dept.name}
+                              type="button"
+                              onClick={() => {
+                                setForm(prev => ({ ...prev, department: dept.name }));
+                                setDeptSearch(dept.name);
+                                setShowDeptDropdown(false);
+                              }}
+                              className={`w-full text-left px-3.5 py-2 text-xs transition duration-100 hover:bg-blue-50 hover:text-blue-600 font-medium cursor-pointer ${
+                                form.department === dept.name ? 'bg-blue-50/50 text-blue-600 font-bold' : 'text-gray-700'
+                              }`}
+                            >
+                              {dept.name} ({dept.dept_code})
+                            </button>
+                          ))
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
 
                 {/* Status */}
@@ -464,7 +535,7 @@ const AddEmployee = () => {
 
                 {/* Joining Date */}
                 <div className="space-y-1">
-                  <label className="block font-semibold text-gray-700">Joining Date</label>
+                  <label className="block font-semibold text-gray-700">Joining Date <span className="text-red-500">*</span></label>
                   <input
                     type="date"
                     required
