@@ -173,7 +173,7 @@ const LeaveManagement = () => {
   const fetchEmployees = async () => {
     try {
       setLoadingEmployees(true);
-      const res = await api.get('/employee/list');
+      const res = await api.get('/employee/list/10/0');
       if (res.data.success && res.data.list) {
         const mapped = res.data.list.map(emp => ({
           ...emp,

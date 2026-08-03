@@ -51,7 +51,8 @@ const AddEmployee = () => {
         if (response.data.success && listData && listData.length > 0) {
           const mapped = listData.map((d, index) => ({
             name: d.dept_name || d.name,
-            dept_code: d.dept_id || d.dept_id || `DEP${index + 1}`
+            dept_id: d.dept_id,
+            dept_code: d.dept_code || d.dept_id_code || `DEP${index + 1}`
           }));
           setDepartments(mapped);
           return;
@@ -66,14 +67,15 @@ const AddEmployee = () => {
         const parsed = JSON.parse(local);
         const mapped = parsed.map((d, index) => ({
           name: d.name || d.dept_name,
+          dept_id: d.dept_id || d.id || index + 1,
           dept_code: d.dept_id_code || d.dept_code || `DEP${index + 1}`
         }));
         setDepartments(mapped);
       } else {
         const fallback = [
-          { name: 'Information Technology', dept_code: 'IT' },
-          { name: 'Human Resources', dept_code: 'HR' },
-          { name: 'Finance', dept_code: 'FIN' }
+          { name: 'Information Technology', dept_id: 1, dept_code: 'IT' },
+          { name: 'Human Resources', dept_id: 2, dept_code: 'HR' },
+          { name: 'Finance', dept_id: 3, dept_code: 'FIN' }
         ];
         setDepartments(fallback);
       }
@@ -509,15 +511,15 @@ const AddEmployee = () => {
                             (d.dept_code || '').toLowerCase().includes(deptSearch.toLowerCase())
                           ).map((dept) => (
                             <button
-                              key={dept.dept_code || dept.name}
+                              key={dept.dept_id || dept.name}
                               type="button"
                               onClick={() => {
-                                setForm(prev => ({ ...prev, department: dept.dept_code }));
+                                setForm(prev => ({ ...prev, department: dept.dept_id }));
                                 setDeptSearch(dept.name);
                                 setShowDeptDropdown(false);
                               }}
                               className={`w-full text-left px-3.5 py-2 text-xs transition duration-100 hover:bg-blue-50 hover:text-blue-600 font-medium cursor-pointer ${
-                                form.department === dept.dept_code ? 'bg-blue-50/50 text-blue-600 font-bold' : 'text-gray-700'
+                                String(form.department) === String(dept.dept_id) ? 'bg-blue-50/50 text-blue-600 font-bold' : 'text-gray-700'
                               }`}
                             >
                               {dept.name} ({dept.dept_code})

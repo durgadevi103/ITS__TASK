@@ -168,11 +168,12 @@ const EmployeeList = () => {
 
   const fetchDepartments = async () => {
     try {
-      const response = await api.get('/department/list/100/0');
+      const response = await api.get('/department/list/5/0');
       const listData = response.data.data || response.data.list;
       if (response.data.success && listData) {
         const mapped = listData.map(d => ({
           name: d.dept_name || d.name,
+          dept_id: d.dept_id,
           dept_code: d.dept_code || d.dept_id_code
         }));
         setDepartments(mapped);
@@ -185,9 +186,19 @@ const EmployeeList = () => {
     // Fallback
     const local = sessionStorage.getItem('departmentsData');
     if (local) {
-      setDepartments(JSON.parse(local));
+      const parsed = JSON.parse(local);
+      const mapped = parsed.map((d, index) => ({
+        name: d.name || d.dept_name,
+        dept_id: d.dept_id || d.id || index + 1,
+        dept_code: d.dept_id_code || d.dept_code
+      }));
+      setDepartments(mapped);
     } else {
-      setDepartments([{ name: 'Information Technology' }, { name: 'Human Resources' }, { name: 'Finance' }]);
+      setDepartments([
+        { name: 'Information Technology', dept_id: 1, dept_code: 'IT' },
+        { name: 'Human Resources', dept_id: 2, dept_code: 'HR' },
+        { name: 'Finance', dept_id: 3, dept_code: 'FIN' }
+      ]);
     }
   };
 
@@ -208,7 +219,13 @@ const EmployeeList = () => {
       idStr.includes(searchTerm.toLowerCase()) ||
       dbIdStr.includes(searchTerm.toLowerCase());
 
-    const matchesDept = selectedDept === "All Departments" || emp.department === selectedDept;
+    const matchesDept = selectedDept === "All Departments" || 
+      String(emp.department) === String(selectedDept) ||
+      (() => {
+        const matchedEmpDept = departments.find(d => String(d.dept_id) === String(emp.department) || d.dept_code === emp.department || d.name === emp.department);
+        const matchedSelDept = departments.find(d => String(d.dept_id) === String(selectedDept) || d.dept_code === selectedDept || d.name === selectedDept);
+        return matchedEmpDept && matchedSelDept && matchedEmpDept.dept_id === matchedSelDept.dept_id;
+      })();
     const matchesStatus = selectedStatus === "All Status" || emp.status === selectedStatus;
 
     return matchesSearch && matchesDept && matchesStatus;
@@ -216,8 +233,10 @@ const EmployeeList = () => {
 
   const displayedEmployees = filteredEmployees.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
-  const getDeptColor = (dept) => {
-    switch (dept) {
+  const getDeptColor = (deptIdOrCode) => {
+    const dept = departments.find(d => String(d.dept_id) === String(deptIdOrCode) || d.dept_code === deptIdOrCode);
+    const code = dept ? dept.dept_code : deptIdOrCode;
+    switch (code) {
       case "IT": return "bg-[#eff6ff] text-[#2563eb] border border-blue-100";
       case "HR": return "bg-[#faf5ff] text-[#9333ea] border border-purple-100";
       case "Finance": return "bg-[#fffbeb] text-[#d97706] border border-amber-100";
@@ -403,7 +422,7 @@ const EmployeeList = () => {
                             <div className="mt-1">
                               <span className={`px-2 py-0.5 rounded-full text-[9px] font-black tracking-wide inline-block ${getDeptColor(emp.department)}`}>
                                 {(() => {
-                                  const matched = departments.find(d => d.dept_code === emp.department);
+                                  const matched = departments.find(d => String(d.dept_id) === String(emp.department) || d.dept_code === emp.department);
                                   return matched ? matched.name : emp.department;
                                 })()}
                               </span>
@@ -589,7 +608,7 @@ const EmployeeList = () => {
                   {/* Department pill at the top */}
                   <span className={`mt-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-black tracking-wide inline-block ${getDeptColor(selectedEmployee.department)}`}>
                     {(() => {
-                      const matched = departments.find(d => d.dept_code === selectedEmployee.department);
+                      const matched = departments.find(d => String(d.dept_id) === String(selectedEmployee.department) || d.dept_code === selectedEmployee.department);
                       return matched ? matched.name : selectedEmployee.department;
                     })()}
                   </span>
@@ -736,7 +755,7 @@ const EmployeeList = () => {
                               <span className="text-[9px] text-slate-400 font-bold block">Department</span>
                               <span className="text-slate-800">
                                 {(() => {
-                                  const matched = departments.find(d => d.dept_code === selectedEmployee.department);
+                                  const matched = departments.find(d => String(d.dept_id) === String(selectedEmployee.department) || d.dept_code === selectedEmployee.department);
                                   return matched ? matched.name : selectedEmployee.department;
                                 })()}
                               </span>
