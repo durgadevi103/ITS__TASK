@@ -46,12 +46,12 @@ const AddEmployee = () => {
   useEffect(() => {
     const fetchDepts = async () => {
       try {
-        const response = await api.get('/department/list/100/0');
+        const response = await api.get('/department/list');
         const listData = response.data.data || response.data.list;
         if (response.data.success && listData && listData.length > 0) {
           const mapped = listData.map((d, index) => ({
             name: d.dept_name || d.name,
-            dept_code: d.dept_code || d.dept_id_code || `DEP${index + 1}`
+            dept_code: d.dept_id || d.dept_id_code || `DEP${index + 1}`
           }));
           setDepartments(mapped);
           return;
@@ -125,12 +125,22 @@ const AddEmployee = () => {
     const handleClickOutside = (event) => {
       if (deptRef.current && !deptRef.current.contains(event.target)) {
         setShowDeptDropdown(false);
-        setDeptSearch(form.department || '');
+        const matched = departments.find(d => d.dept_id === form.department);
+        setDeptSearch(matched ? matched.name : form.department || '');
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [form.department]);
+  }, [form.department, departments]);
+
+  useEffect(() => {
+    if (departments.length > 0 && form.department) {
+      const matched = departments.find(d => d.dept_id === form.department);
+      if (matched) {
+        setDeptSearch(matched.name);
+      }
+    }
+  }, [departments, form.department]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -174,7 +184,7 @@ const AddEmployee = () => {
         // Create Mode
         // 1. Fetch current list to determine the next numeric ID
         let nextNum = 1;
-        const responseList = await api.get('/employee/list');
+        const responseList = await api.get('/employee/list/10/0');
         if (responseList.data.success && responseList.data.list && responseList.data.list.length > 0) {
           const ids = responseList.data.list.map(emp => parseInt(emp.emp_id || emp.employee_id));
           const maxId = Math.max(...ids.filter(id => !isNaN(id)));
@@ -502,12 +512,12 @@ const AddEmployee = () => {
                               key={dept.dept_code || dept.name}
                               type="button"
                               onClick={() => {
-                                setForm(prev => ({ ...prev, department: dept.name }));
+                                setForm(prev => ({ ...prev, department: dept.dept_code }));
                                 setDeptSearch(dept.name);
                                 setShowDeptDropdown(false);
                               }}
                               className={`w-full text-left px-3.5 py-2 text-xs transition duration-100 hover:bg-blue-50 hover:text-blue-600 font-medium cursor-pointer ${
-                                form.department === dept.name ? 'bg-blue-50/50 text-blue-600 font-bold' : 'text-gray-700'
+                                form.department === dept.dept_code ? 'bg-blue-50/50 text-blue-600 font-bold' : 'text-gray-700'
                               }`}
                             >
                               {dept.name} ({dept.dept_code})

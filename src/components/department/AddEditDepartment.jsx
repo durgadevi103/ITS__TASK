@@ -119,7 +119,7 @@ const AddEditDepartment = ({ department, onSave, onCancel }) => {
           <div className="space-y-4">
             <h3 className="text-xs font-bold text-gray-900 border-b border-gray-150 pb-2 flex items-center gap-1.5">
               <CheckCircle className="w-4 h-4 text-indigo-500" />
-              Department Specifications
+              Department ID
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

@@ -127,7 +127,7 @@ const EmployeeList = () => {
 
   const fetchEmployees = async () => {
     try {
-      const response = await api.get('/employee/list');
+      const response = await api.get('/employee/list/10/0');
       if (response.data.success) {
         const sorted = response.data.list.sort((a, b) => (a.emp_id || a.employee_id) - (b.emp_id || b.employee_id));
         const maxId = Math.max(...sorted.map(e => parseInt(e.emp_id || e.employee_id)).filter(id => !isNaN(id)), 0);
@@ -291,7 +291,7 @@ const EmployeeList = () => {
                 >
                   <option value="All Departments">All Departments</option>
                   {departments.map((dept) => (
-                    <option key={dept.dept_code || dept.name} value={dept.name}>
+                    <option key={dept.dept_code || dept.name} value={dept.dept_code || dept.name}>
                       {dept.name}
                     </option>
                   ))}
@@ -402,7 +402,10 @@ const EmployeeList = () => {
                             <div className="font-bold text-slate-800 leading-tight">{emp.designation}</div>
                             <div className="mt-1">
                               <span className={`px-2 py-0.5 rounded-full text-[9px] font-black tracking-wide inline-block ${getDeptColor(emp.department)}`}>
-                                {emp.department}
+                                {(() => {
+                                  const matched = departments.find(d => d.dept_code === emp.department);
+                                  return matched ? matched.name : emp.department;
+                                })()}
                               </span>
                             </div>
                           </td>
@@ -585,7 +588,10 @@ const EmployeeList = () => {
 
                   {/* Department pill at the top */}
                   <span className={`mt-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-black tracking-wide inline-block ${getDeptColor(selectedEmployee.department)}`}>
-                    {selectedEmployee.department}
+                    {(() => {
+                      const matched = departments.find(d => d.dept_code === selectedEmployee.department);
+                      return matched ? matched.name : selectedEmployee.department;
+                    })()}
                   </span>
 
                   <div className="mt-2.5 flex items-center gap-2">
@@ -728,7 +734,12 @@ const EmployeeList = () => {
                           <div className="grid grid-cols-2 gap-2 border-b border-slate-50 pb-2.5">
                             <div>
                               <span className="text-[9px] text-slate-400 font-bold block">Department</span>
-                              <span className="text-slate-800">{selectedEmployee.department}</span>
+                              <span className="text-slate-800">
+                                {(() => {
+                                  const matched = departments.find(d => d.dept_code === selectedEmployee.department);
+                                  return matched ? matched.name : selectedEmployee.department;
+                                })()}
+                              </span>
                             </div>
                             <div>
                               <span className="text-[9px] text-slate-400 font-bold block">Employment Type</span>

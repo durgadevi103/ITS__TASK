@@ -212,17 +212,21 @@ const Dashboard = () => {
         if (employeesList.length > 0) {
           const sorted = [...employeesList].sort((a, b) => b.employee_id - a.employee_id);
           const today = new Date();
-          const mappedUpdates = sorted.slice(0, 5).map((emp, idx) => ({
-            id: emp.employee_id,
-            name: emp.emp_name,
-            email: emp.emp_email || `${emp.emp_name.toLowerCase().replace(/\s+/g, '')}@company.com`,
-            phone: emp.emp_ph_no || '9876543210',
-            department: emp.emp_dept || 'General',
-            position: emp.emp_designation || emp.emp_desigation || 'Executive',
-            date: new Date(today.getTime() - idx * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-            status: idx % 2 === 0 ? 'New Hire' : 'Promoted',
-            avatar: emp.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(emp.emp_name)}&background=2563eb&color=fff&bold=true`
-          }));
+          const mappedUpdates = sorted.slice(0, 5).map((emp, idx) => {
+            const matched = departments.find(d => (d.dept_code || d.dept_id_code) === emp.emp_dept || (d.dept_name || d.name) === emp.emp_dept);
+            const deptDisplayName = matched ? (matched.dept_name || matched.name) : (emp.emp_dept || 'General');
+            return {
+              id: emp.employee_id,
+              name: emp.emp_name,
+              email: emp.emp_email || `${emp.emp_name.toLowerCase().replace(/\s+/g, '')}@company.com`,
+              phone: emp.emp_ph_no || '9876543210',
+              department: deptDisplayName,
+              position: emp.emp_designation || emp.emp_desigation || 'Executive',
+              date: new Date(today.getTime() - idx * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+              status: idx % 2 === 0 ? 'New Hire' : 'Promoted',
+              avatar: emp.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(emp.emp_name)}&background=2563eb&color=fff&bold=true`
+            };
+          });
           setRecentUpdates(mappedUpdates);
         } else {
           setRecentUpdates([
@@ -252,7 +256,8 @@ const Dashboard = () => {
     if (employees.length === 0) return [];
     const counts = {};
     employees.forEach(emp => {
-      const dName = emp.emp_dept || 'General';
+      const matched = departments.find(d => (d.dept_code || d.dept_id_code) === emp.emp_dept || (d.dept_name || d.name) === emp.emp_dept);
+      const dName = matched ? (matched.dept_name || matched.name) : (emp.emp_dept || 'General');
       counts[dName] = (counts[dName] || 0) + 1;
     });
 
@@ -261,7 +266,7 @@ const Dashboard = () => {
       count: counts[name],
       percentage: Math.round((counts[name] / employees.length) * 100)
     })).sort((a, b) => b.count - a.count);
-  }, [employees]);
+  }, [employees, departments]);
 
   // Attendance chart points
   const chartDays = [
@@ -284,17 +289,21 @@ const Dashboard = () => {
       if (employees.length > 0) {
         const sorted = [...employees].sort((a, b) => b.employee_id - a.employee_id);
         const today = new Date();
-        baseList = sorted.map((emp, idx) => ({
-          id: emp.employee_id,
-          name: emp.emp_name,
-          email: emp.emp_email || `${emp.emp_name.toLowerCase().replace(/\s+/g, '')}@company.com`,
-          phone: emp.emp_ph_no || '9876543210',
-          department: emp.emp_dept || 'General',
-          position: emp.emp_designation || emp.emp_desigation || 'Executive',
-          date: new Date(today.getTime() - idx * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-          status: idx % 2 === 0 ? 'New Hire' : 'Promoted',
-          avatar: emp.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(emp.emp_name)}&background=2563eb&color=fff&bold=true`
-        }));
+        baseList = sorted.map((emp, idx) => {
+          const matched = departments.find(d => (d.dept_code || d.dept_id_code) === emp.emp_dept || (d.dept_name || d.name) === emp.emp_dept);
+          const deptDisplayName = matched ? (matched.dept_name || matched.name) : (emp.emp_dept || 'General');
+          return {
+            id: emp.employee_id,
+            name: emp.emp_name,
+            email: emp.emp_email || `${emp.emp_name.toLowerCase().replace(/\s+/g, '')}@company.com`,
+            phone: emp.emp_ph_no || '9876543210',
+            department: deptDisplayName,
+            position: emp.emp_designation || emp.emp_desigation || 'Executive',
+            date: new Date(today.getTime() - idx * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+            status: idx % 2 === 0 ? 'New Hire' : 'Promoted',
+            avatar: emp.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(emp.emp_name)}&background=2563eb&color=fff&bold=true`
+          };
+        });
       } else {
         baseList = recentUpdates;
       }
