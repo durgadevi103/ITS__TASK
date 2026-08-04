@@ -43,10 +43,20 @@ const AddEmployee = () => {
   const [showDeptDropdown, setShowDeptDropdown] = useState(false);
   const deptRef = useRef(null);
 
+  const AVAILABLE_LANGUAGES = [
+    'English', 'Tamil', 'Hindi', 'Telugu', 'Malayalam', 'Kannada', 
+    'Bengali', 'Marathi', 'Gujarati', 'Punjabi', 'Odia', 'Assamese',
+    'Urdu', 'Sanskrit', 'French', 'German', 'Spanish', 'Japanese', 
+    'Mandarin', 'Korean'
+  ];
+  const [showLangDropdown, setShowLangDropdown] = useState(false);
+  const [langSearch, setLangSearch] = useState('');
+  const langRef = useRef(null);
+
   useEffect(() => {
     const fetchDepts = async () => {
       try {
-        const response = await api.get('/department/list/10/0');
+        const response = await api.get('/department/list/1000/0');
         const listData = response.data.data || response.data.list;
         if (response.data.success && listData && listData.length > 0) {
           const mapped = listData.map((d, index) => ({
@@ -136,6 +146,30 @@ const AddEmployee = () => {
   }, [form.department, departments]);
 
   useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (langRef.current && !langRef.current.contains(event.target)) {
+        setShowLangDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleToggleLanguage = (lang) => {
+    const selectedLangs = form.languages
+      ? form.languages.split(',').map(l => l.trim()).filter(Boolean)
+      : [];
+    
+    let newLangs;
+    if (selectedLangs.includes(lang)) {
+      newLangs = selectedLangs.filter(l => l !== lang);
+    } else {
+      newLangs = [...selectedLangs, lang];
+    }
+    setForm(prev => ({ ...prev, languages: newLangs.join(', ') }));
+  };
+
+  useEffect(() => {
     if (departments.length > 0 && form.department) {
       const matched = departments.find(d => d.dept_id === form.department);
       if (matched) {
@@ -186,7 +220,7 @@ const AddEmployee = () => {
         // Create Mode
         // 1. Fetch current list to determine the next numeric ID
         let nextNum = 1;
-        const responseList = await api.get('/employee/list/10/0');
+        const responseList = await api.get('/employee/list/1000/0');
         if (responseList.data.success && responseList.data.list && responseList.data.list.length > 0) {
           const ids = responseList.data.list.map(emp => parseInt(emp.emp_id || emp.employee_id));
           const maxId = Math.max(...ids.filter(id => !isNaN(id)));
@@ -352,13 +386,21 @@ const AddEmployee = () => {
                 {/* Blood Group */}
                 <div className="space-y-1">
                   <label className="block font-semibold text-gray-700">Blood Group</label>
-                  <input
-                    type="text"
+                  <select
                     value={form.bloodGroup}
                     onChange={(e) => setForm({ ...form, bloodGroup: e.target.value })}
-                    placeholder="O+"
-                    className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-gray-800 font-medium"
-                  />
+                    className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-gray-800 font-medium cursor-pointer"
+                  >
+                    <option value="">Select Blood Group</option>
+                    <option value="A+">A+</option>
+                    <option value="A-">A-</option>
+                    <option value="B+">B+</option>
+                    <option value="B-">B-</option>
+                    <option value="AB+">AB+</option>
+                    <option value="AB-">AB-</option>
+                    <option value="O+">O+</option>
+                    <option value="O-">O-</option>
+                  </select>
                 </div>
 
                 {/* Marital Status */}
@@ -378,25 +420,118 @@ const AddEmployee = () => {
                 {/* Nationality */}
                 <div className="space-y-1">
                   <label className="block font-semibold text-gray-700">Nationality</label>
-                  <input
-                    type="text"
+                  <select
                     value={form.nationality}
                     onChange={(e) => setForm({ ...form, nationality: e.target.value })}
-                    placeholder="Indian"
-                    className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-gray-800 font-medium"
-                  />
+                    className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-gray-800 font-medium cursor-pointer"
+                  >
+                    <option value="">Select Nationality</option>
+                    <option value="Indian">Indian</option>
+                    <option value="American">American</option>
+                    <option value="British">British</option>
+                    <option value="Canadian">Canadian</option>
+                    <option value="Australian">Australian</option>
+                    <option value="Singaporean">Singaporean</option>
+                    <option value="German">German</option>
+                    <option value="French">French</option>
+                    <option value="Japanese">Japanese</option>
+                    <option value="Other">Other</option>
+                  </select>
                 </div>
 
                 {/* Languages */}
-                <div className="space-y-1">
+                <div className="space-y-1 relative" ref={langRef}>
                   <label className="block font-semibold text-gray-700">Languages Known</label>
-                  <input
-                    type="text"
-                    value={form.languages}
-                    onChange={(e) => setForm({ ...form, languages: e.target.value })}
-                    placeholder="Tamil, English, Hindi"
-                    className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-gray-800 font-medium"
-                  />
+                  <div
+                    onClick={() => setShowLangDropdown(prev => !prev)}
+                    className="w-full min-h-[38px] px-2 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus-within:ring-2 focus-within:ring-blue-500 focus-within:bg-white transition text-gray-800 font-medium cursor-pointer flex flex-wrap gap-1.5 items-center pr-8 relative"
+                  >
+                    {(() => {
+                      const selectedLangs = form.languages
+                        ? form.languages.split(',').map(l => l.trim()).filter(Boolean)
+                        : [];
+                      return selectedLangs.length === 0 ? (
+                        <span className="text-gray-400 pl-1.5">Select languages...</span>
+                      ) : (
+                        selectedLangs.map(lang => (
+                          <span
+                            key={lang}
+                            className="inline-flex items-center gap-1 bg-blue-50 text-blue-600 px-2 py-0.5 rounded-md font-bold text-[10px]"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleToggleLanguage(lang);
+                            }}
+                          >
+                            {lang}
+                            <span className="hover:text-blue-800 font-black cursor-pointer text-[11px]">&times;</span>
+                          </span>
+                        ))
+                      );
+                    })()}
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-[8px]">
+                      ▼
+                    </span>
+                  </div>
+
+                  <AnimatePresence>
+                    {showLangDropdown && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -5 }}
+                        className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-2.5 flex flex-col gap-2 max-h-56 overflow-hidden"
+                      >
+                        <input
+                          type="text"
+                          placeholder="Search languages..."
+                          value={langSearch}
+                          onChange={(e) => setLangSearch(e.target.value)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-100 rounded-md text-[11px] outline-none focus:ring-1 focus:ring-blue-500 font-semibold"
+                        />
+
+                        <div className="overflow-y-auto max-h-36 flex flex-col gap-1.5 scrollbar-thin">
+                          {(() => {
+                            const selectedLangs = form.languages
+                              ? form.languages.split(',').map(l => l.trim()).filter(Boolean)
+                              : [];
+                            const filtered = AVAILABLE_LANGUAGES.filter(lang => 
+                              lang.toLowerCase().includes(langSearch.toLowerCase())
+                            );
+                            return filtered.length === 0 ? (
+                              <div className="px-2 py-1.5 text-[10px] text-gray-400 text-center font-semibold">
+                                No languages found
+                              </div>
+                            ) : (
+                              filtered.map(lang => {
+                                const isChecked = selectedLangs.includes(lang);
+                                return (
+                                  <button
+                                    key={lang}
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleToggleLanguage(lang);
+                                    }}
+                                    className={`w-full text-left px-2.5 py-1.5 text-[11px] rounded-md transition flex items-center justify-between font-semibold cursor-pointer ${
+                                      isChecked 
+                                        ? 'bg-blue-50 text-blue-600 font-bold' 
+                                        : 'text-gray-700 hover:bg-slate-50'
+                                    }`}
+                                  >
+                                    <span>{lang}</span>
+                                    {isChecked && (
+                                      <span className="text-blue-500 font-bold">✓</span>
+                                    )}
+                                  </button>
+                                );
+                              })
+                            );
+                          })()}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
 
                 {/* Emergency Contact Name */}
@@ -560,25 +695,35 @@ const AddEmployee = () => {
                 {/* Shift */}
                 <div className="space-y-1">
                   <label className="block font-semibold text-gray-700">Work Shift</label>
-                  <input
-                    type="text"
+                  <select
                     value={form.shift}
                     onChange={(e) => setForm({ ...form, shift: e.target.value })}
-                    placeholder="Day Shift"
-                    className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-gray-800 font-medium"
-                  />
+                    className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-gray-800 font-medium cursor-pointer"
+                  >
+                    <option value="">Select Work Shift</option>
+                    <option value="Day Shift">Day Shift</option>
+                    <option value="Night Shift">Night Shift</option>
+                    <option value="Morning Shift">Morning Shift</option>
+                    <option value="Evening Shift">Evening Shift</option>
+                    <option value="Flexible Shift">Flexible Shift</option>
+                  </select>
                 </div>
 
                 {/* Type */}
                 <div className="space-y-1">
                   <label className="block font-semibold text-gray-700">Employee Type</label>
-                  <input
-                    type="text"
+                  <select
                     value={form.type}
                     onChange={(e) => setForm({ ...form, type: e.target.value })}
-                    placeholder="Full Time"
-                    className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-gray-800 font-medium"
-                  />
+                    className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-gray-800 font-medium cursor-pointer"
+                  >
+                    <option value="">Select Employee Type</option>
+                    <option value="Full Time">Full Time</option>
+                    <option value="Part Time">Part Time</option>
+                    <option value="Contract">Contract</option>
+                    <option value="Internship">Internship</option>
+                    <option value="Temporary">Temporary</option>
+                  </select>
                 </div>
 
                 {/* Manager */}

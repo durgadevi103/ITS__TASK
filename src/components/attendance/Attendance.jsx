@@ -35,7 +35,7 @@ const Attendance = () => {
     const fetchAttendanceData = async () => {
       try {
         setLoading(true);
-        const empRes = await api.get('/employee/list/10/0');
+        const empRes = await api.get('/employee/list/1000/0');
         if (empRes.data.success && empRes.data.list) {
           setEmployees(empRes.data.list);
           setEmployeeCount(empRes.data.list.length);

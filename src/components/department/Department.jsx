@@ -41,7 +41,7 @@ const Department = () => {
   // Load departments from backend
   const fetchDepartments = async () => {
     try {
-      const response = await api.get('/department/list/20/0');
+      const response = await api.get('/department/list/1000/0');
       const listData = response.data.data || response.data.list;
       if (response.data.success && listData) {
         // Sort by backend auto-increment ID ascending
@@ -119,27 +119,13 @@ const Department = () => {
           fetchDepartments();
           setCurrentView('list');
           setSelectedDept(null);
-          return;
+        } else {
+          triggerToast("Failed to register department in database.", 'error');
         }
       } catch (err) {
         console.error(err);
+        triggerToast("Error contacting backend server.", 'error');
       }
-
-      // Fallback local save
-      const current = JSON.parse(sessionStorage.getItem('departmentsData') || JSON.stringify(MOCK_DEPTS));
-      const added = {
-        id: `DEP${String(current.length + 1).padStart(3, '0')}`,
-        dept_id_code: formData.dept_id_code.trim(),
-        name: formData.name,
-        branch: formData.branch || "Chennai",
-        description: formData.description,
-        status: formData.status,
-        createdAt: new Date().toISOString().split('T')[0]
-      };
-      const updated = [...current, added];
-      sessionStorage.setItem('departmentsData', JSON.stringify(updated));
-      setDepartments(updated);
-      triggerToast(`Department "${formData.name}" registered successfully! (Temporary)`, 'success');
 
     } else {
       // Editing
@@ -158,28 +144,14 @@ const Department = () => {
           fetchDepartments();
           setCurrentView('list');
           setSelectedDept(null);
-          return;
+        } else {
+          triggerToast("Failed to update department in database.", 'error');
         }
       } catch (err) {
         console.error(err);
+        triggerToast("Error contacting backend server.", 'error');
       }
-
-      // Fallback local edit
-      const current = JSON.parse(sessionStorage.getItem('departmentsData') || JSON.stringify(MOCK_DEPTS));
-      const updated = current.map(d => d.dept_id_code === selectedDept.dept_id_code ? {
-        ...d,
-        name: formData.name,
-        branch: formData.branch || d.branch,
-        description: formData.description,
-        status: formData.status
-      } : d);
-      sessionStorage.setItem('departmentsData', JSON.stringify(updated));
-      setDepartments(updated);
-      triggerToast(`Department "${formData.name}" details updated successfully! (Temporary)`, 'success');
     }
-
-    setCurrentView('list');
-    setSelectedDept(null);
   };
 
   // Toggle status (Active / Inactive) - Lock/Unlock Button logic
@@ -201,20 +173,12 @@ const Department = () => {
       if (response.data.success) {
         triggerToast(`Status for "${target.name}" set to ${newStatus}`, 'info');
         fetchDepartments();
-        return;
+      } else {
+        triggerToast("Failed to update status in database.", 'error');
       }
     } catch (err) {
       console.error(err);
-    }
-
-    // Fallback local update
-    const current = [...departments];
-    const targetIdx = current.findIndex(d => d.id === id);
-    if (targetIdx !== -1) {
-      current[targetIdx].status = newStatus;
-      setDepartments(current);
-      sessionStorage.setItem('departmentsData', JSON.stringify(current));
-      triggerToast(`Status for "${target.name}" set to ${newStatus} (temporary)`, 'info');
+      triggerToast("Error contacting backend server.", 'error');
     }
   };
 

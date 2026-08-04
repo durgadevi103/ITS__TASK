@@ -163,53 +163,54 @@ const DepartmentList = ({
     <div className="p-3 bg-[#f8fafc] h-[calc(100vh-4.2rem)] flex flex-col gap-3 text-gray-700 overflow-hidden">
 
       {/* Unified Header & Filter Section */}
-      <div className="bg-white px-4 py-3 rounded-2xl border border-slate-100 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-3 shrink-0">
+      <div className="bg-white px-4 py-3 rounded-2xl border border-slate-100 shadow-sm flex flex-col gap-3 shrink-0">
 
-        {/* Left Side: Breadcrumbs */}
-        <div className="flex flex-col">
-          <h1 className="text-xl font-black text-slate-900 leading-tight">Departments</h1>
-          <nav className="text-[10px] text-gray-400 font-bold flex items-center gap-1.5 mt-0.5">
-            <span className="cursor-pointer hover:text-blue-600 transition-colors" onClick={() => navigate('/')}>Dashboard</span>
-            <span>/</span>
-            <span className="text-gray-450">HR Management</span>
-            <span>/</span>
-            <span className="text-gray-500">Departments</span>
-          </nav>
-        </div>
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          {/* Left Side: Breadcrumbs */}
+          <div className="flex flex-col">
+            <h1 className="text-xl font-black text-slate-900 leading-tight">Departments</h1>
+            <nav className="text-[10px] text-gray-400 font-bold flex items-center gap-1.5 mt-0.5">
+              <span className="cursor-pointer hover:text-blue-600 transition-colors" onClick={() => navigate('/')}>Dashboard</span>
+              <span>/</span>
+              <span className="text-gray-450">HR Management</span>
+              <span>/</span>
+              <span className="text-gray-500">Departments</span>
+            </nav>
+          </div>
 
-        {/* Right Side: Filters */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 flex-1 lg:justify-end w-full">
-          {/* Search + Filter buttons group */}
-          <form onSubmit={handleSearchSubmit} className="flex items-center gap-2 flex-1 max-w-lg w-full">
-            <div className="relative flex-1">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={handleSearchChange}
-                placeholder="Search..."
-                className="w-full pl-3 pr-3 py-1.5 bg-slate-50/50 border border-slate-200/80 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition font-semibold"
-              />
-            </div>
+          {/* Right Side: Filters */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 flex-1 lg:justify-end w-full">
+            {/* Search + Filter buttons group */}
+            <form onSubmit={handleSearchSubmit} className="flex items-center gap-2 flex-1 max-w-lg w-full">
+              <div className="relative flex-1">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  placeholder="Search..."
+                  className="w-full pl-3 pr-3 py-1.5 bg-slate-50/50 border border-slate-200/80 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition font-semibold"
+                />
+              </div>
 
-            {/* Search Button */}
-            <SearchBtn type="submit" />
+              {/* Search Button */}
+              <SearchBtn type="submit" />
 
-            {/* Filter Toggle Button */}
-            <FilterBtn onClick={() => setShowFilters(!showFilters)} />
+              {/* Filter Toggle Button */}
+              <FilterBtn onClick={() => setShowFilters(!showFilters)} />
 
-            {/* Clear Button if filtered */}
-            {(activeSearch || filterStatus !== 'All') && (
-              <button
-                type="button"
-                onClick={handleResetFilters}
-                className="p-1.5 text-gray-450 hover:text-blue-600 hover:bg-slate-100 rounded-xl transition cursor-pointer"
-                title="Reset filters"
-              >
-                <RotateCcw size={14} />
-              </button>
-            )}
-          </form>
-
+              {/* Clear Button if filtered */}
+              {(activeSearch || filterStatus !== 'All') && (
+                <button
+                  type="button"
+                  onClick={handleResetFilters}
+                  className="p-1.5 text-gray-450 hover:text-blue-600 hover:bg-slate-100 rounded-xl transition cursor-pointer"
+                  title="Reset filters"
+                >
+                  <RotateCcw size={14} />
+                </button>
+              )}
+            </form>
+          </div>
         </div>
 
         {/* Expandable Filter drawer */}

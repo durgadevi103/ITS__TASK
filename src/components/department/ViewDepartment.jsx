@@ -18,7 +18,7 @@ const ViewDepartment = ({ department, onBack }) => {
   useEffect(() => {
     const fetchEmployees = async () => {
       try {
-        const response = await api.get('/employee/list');
+        const response = await api.get('/employee/list/1000/0');
         if (response.data.success && response.data.list) {
           const mapped = response.data.list.map(emp => ({
             id: `EMP${String(emp.employee_id).padStart(3, '0')}`,
@@ -43,16 +43,17 @@ const ViewDepartment = ({ department, onBack }) => {
           }));
 
           const filtered = mapped.filter(emp => {
-            if (!emp.department || !department.name) return false;
-            const ed = emp.department.toLowerCase().trim();
-            const dn = department.name.toLowerCase().trim();
-            if (ed === dn) return true;
-            if (ed === 'it' && dn.includes('information technology')) return true;
-            if (ed === 'hr' && dn.includes('human resources')) return true;
-            if (ed === 'finance' && dn.includes('finance')) return true;
-            if (ed === 'marketing' && dn.includes('marketing')) return true;
-            if (ed === 'operations' && dn.includes('operations')) return true;
-            return dn.includes(ed) || ed.includes(dn);
+            if (!emp.department) return false;
+            const empDeptStr = String(emp.department).toLowerCase().trim();
+            const deptIdStr = String(department.dept_id).toLowerCase().trim();
+            const deptNameStr = String(department.name || "").toLowerCase().trim();
+            const deptCodeStr = String(department.dept_id_code || "").toLowerCase().trim();
+
+            return (
+              empDeptStr === deptIdStr ||
+              empDeptStr === deptNameStr ||
+              empDeptStr === deptCodeStr
+            );
           });
           setEmployees(filtered);
         }

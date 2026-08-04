@@ -167,7 +167,7 @@ const Dashboard = () => {
 
         // Fetch employees
         try {
-          const empRes = await api.get('/employee/list');
+          const empRes = await api.get('/employee/list/1000/0');
           if (empRes.data.success && empRes.data.list) {
             employeesList = empRes.data.list;
             setEmployees(employeesList);
@@ -182,13 +182,13 @@ const Dashboard = () => {
 
         // Fetch departments
         try {
-          const deptRes = await api.get('/department/list/100/0');
+          const deptRes = await api.get('/department/list/1000/0');
           const listData = deptRes.data.data || deptRes.data.list;
           if (deptRes.data.success && listData) {
             setDepartments(listData);
             setDeptCount(listData.length);
           } else {
-            const deptResAlt = await api.get('/department/list');
+            const deptResAlt = await api.get('/department/list/1000/0');
             const listDataAlt = deptResAlt.data.list || deptResAlt.data.data;
             if (deptResAlt.data.success && listDataAlt) {
               setDepartments(listDataAlt);

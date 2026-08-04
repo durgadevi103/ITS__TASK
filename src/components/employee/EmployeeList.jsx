@@ -64,6 +64,23 @@ const EmployeeList = () => {
   const [departments, setDepartments] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
+  const [totalEmployees, setTotalEmployees] = useState(0);
+  const [employeeDocs, setEmployeeDocs] = useState({});
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showAdvFilterModal, setShowAdvFilterModal] = useState(false);
+  const [advName, setAdvName] = useState("");
+  const [advEmail, setAdvEmail] = useState("");
+  const [advGender, setAdvGender] = useState("All Genders");
+  const [advPhone, setAdvPhone] = useState("");
+  const [advBloodGroup, setAdvBloodGroup] = useState("All");
+  const [advMaritalStatus, setAdvMaritalStatus] = useState("All");
+  const [advMinSalary, setAdvMinSalary] = useState("");
+  const [advMaxSalary, setAdvMaxSalary] = useState("");
+  const [advDesignation, setAdvDesignation] = useState("");
+  const [advStatus, setAdvStatus] = useState("All Status");
+  const [advDept, setAdvDept] = useState("All Departments");
+  const [advDeptSearch, setAdvDeptSearch] = useState("");
+  const [showAdvDeptDropdown, setShowAdvDeptDropdown] = useState(false);
 
   const handleUpdateEmployeeStatus = async (employeeId, newStatus) => {
     const emp = employees.find(e => e.employee_id === employeeId);
@@ -108,9 +125,81 @@ const EmployeeList = () => {
     }
   };
 
+  const handleResetFilters = () => {
+    setSearchTerm('');
+    setAdvName('');
+    setAdvEmail('');
+    setAdvGender('All Genders');
+    setAdvPhone('');
+    setAdvBloodGroup('All');
+    setAdvMaritalStatus('All');
+    setAdvMinSalary('');
+    setAdvMaxSalary('');
+    setAdvDesignation('');
+    setAdvStatus('All Status');
+    setAdvDept('All Departments');
+    setAdvDeptSearch('');
+    setCurrentPage(1);
+  };
+
+  const formatFileSize = (bytes) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  };
+
+  const getDocType = (fileName) => {
+    const ext = fileName.split('.').pop().toLowerCase();
+    if (['pdf'].includes(ext)) return 'PDF';
+    if (['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(ext)) return 'Image';
+    if (['doc', 'docx', 'txt', 'rtf', 'odt'].includes(ext)) return 'Document';
+    return 'File';
+  };
+
+  const handleFile = (file) => {
+    const empId = selectedEmployee.employee_id;
+    const newDoc = {
+      name: file.name,
+      size: formatFileSize(file.size),
+      type: getDocType(file.name)
+    };
+
+    setEmployeeDocs(prev => {
+      const currentList = prev[empId] || [
+        { name: "Resume_CV.pdf", size: "1.2 MB", type: "PDF" },
+        { name: "Offer_Letter.pdf", size: "850 KB", type: "PDF" },
+        { name: "Aadhaar_ID_Card.png", size: "2.4 MB", type: "Image" }
+      ];
+      return {
+        ...prev,
+        [empId]: [...currentList, newDoc]
+      };
+    });
+
+    setShowUploadModal(false);
+    setToastMsg(`Document "${file.name}" uploaded successfully.`);
+    setTimeout(() => setToastMsg(""), 3000);
+  };
+
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, selectedDept, selectedStatus, pageSize]);
+  }, [
+    searchTerm, 
+    advName, 
+    advEmail, 
+    advGender, 
+    advPhone, 
+    advBloodGroup, 
+    advMaritalStatus, 
+    advMinSalary, 
+    advMaxSalary, 
+    advDesignation, 
+    advStatus, 
+    advDept, 
+    pageSize
+  ]);
 
   const pageVariants = {
     hidden: { opacity: 0, y: 15 },
@@ -127,16 +216,32 @@ const EmployeeList = () => {
 
   const fetchEmployees = async () => {
     try {
-      const response = await api.get('/employee/list/10/0');
+      const isFilterActive = searchTerm !== "" || 
+        advName !== "" ||
+        advEmail !== "" ||
+        advGender !== "All Genders" ||
+        advPhone !== "" ||
+        advBloodGroup !== "All" ||
+        advMaritalStatus !== "All" ||
+        advMinSalary !== "" ||
+        advMaxSalary !== "" ||
+        advDesignation !== "" ||
+        advStatus !== "All Status" ||
+        advDept !== "All Departments";
+      const limit = isFilterActive ? 1000 : pageSize;
+      const offset = isFilterActive ? 0 : (currentPage - 1) * pageSize;
+
+      const response = await api.get(`/employee/list/${limit}/${offset}`);
       if (response.data.success) {
         const sorted = response.data.list.sort((a, b) => (a.emp_id || a.employee_id) - (b.emp_id || b.employee_id));
         const maxId = Math.max(...sorted.map(e => parseInt(e.emp_id || e.employee_id)).filter(id => !isNaN(id)), 0);
         const mapped = sorted.map((emp, index) => {
           const empNumId = parseInt(emp.emp_id || emp.employee_id);
+          const displayIdx = offset + index + 1;
           const isNewHire = sorted.length <= 3 || (empNumId >= maxId - 2);
           const actualEmpId = emp.emp_id || emp.employee_id;
           return {
-            id: `EMP${String(index + 1).padStart(3, '0')}`,
+            id: `EMP${String(displayIdx).padStart(3, '0')}`,
             employee_id: actualEmpId,
             name: emp.emp_name,
             email: emp.emp_email,
@@ -159,6 +264,7 @@ const EmployeeList = () => {
           };
         });
         setEmployees(mapped);
+        setTotalEmployees(response.data.count || mapped.length);
       }
     } catch (err) {
       console.error("Error loading employees from backend", err);
@@ -168,7 +274,7 @@ const EmployeeList = () => {
 
   const fetchDepartments = async () => {
     try {
-      const response = await api.get('/department/list/5/0');
+      const response = await api.get('/department/list/1000/0');
       const listData = response.data.data || response.data.list;
       if (response.data.success && listData) {
         const mapped = listData.map(d => ({
@@ -204,6 +310,24 @@ const EmployeeList = () => {
 
   useEffect(() => {
     fetchEmployees();
+  }, [
+    currentPage, 
+    pageSize, 
+    searchTerm, 
+    advName, 
+    advEmail, 
+    advGender, 
+    advPhone, 
+    advBloodGroup, 
+    advMaritalStatus, 
+    advMinSalary, 
+    advMaxSalary, 
+    advDesignation, 
+    advStatus, 
+    advDept
+  ]);
+
+  useEffect(() => {
     fetchDepartments();
   }, []);
 
@@ -219,19 +343,74 @@ const EmployeeList = () => {
       idStr.includes(searchTerm.toLowerCase()) ||
       dbIdStr.includes(searchTerm.toLowerCase());
 
-    const matchesDept = selectedDept === "All Departments" || 
-      String(emp.department) === String(selectedDept) ||
+    const matchesAdvName = !advName.trim() || 
+      nameStr.includes(advName.toLowerCase().trim());
+
+    const matchesAdvEmail = !advEmail.trim() || 
+      emailStr.includes(advEmail.toLowerCase().trim());
+
+    const matchesAdvGender = advGender === "All Genders" || 
+      (emp.gender && emp.gender.toLowerCase() === advGender.toLowerCase());
+
+    const phoneStr = emp.phone ? String(emp.phone).toLowerCase() : "";
+    const matchesAdvPhone = !advPhone.trim() || 
+      phoneStr.includes(advPhone.trim());
+
+    const matchesAdvBlood = advBloodGroup === "All" || 
+      (emp.bloodGroup && emp.bloodGroup.toLowerCase() === advBloodGroup.toLowerCase());
+
+    const matchesAdvMarital = advMaritalStatus === "All" || 
+      (emp.maritalStatus && emp.maritalStatus.toLowerCase() === advMaritalStatus.toLowerCase());
+
+    const empSalary = parseFloat(emp.salary) || 0;
+    const minSal = advMinSalary ? parseFloat(advMinSalary) : 0;
+    const maxSal = advMaxSalary ? parseFloat(advMaxSalary) : Infinity;
+    const matchesAdvSalary = empSalary >= minSal && empSalary <= maxSal;
+
+    const desigStr = emp.designation ? emp.designation.toLowerCase() : "";
+    const matchesAdvDesignation = !advDesignation.trim() || 
+      desigStr.includes(advDesignation.toLowerCase().trim());
+
+    const matchesAdvStatus = advStatus === "All Status" || 
+      emp.status === advStatus;
+
+    const matchesAdvDept = advDept === "All Departments" || 
+      String(emp.department) === String(advDept) ||
       (() => {
         const matchedEmpDept = departments.find(d => String(d.dept_id) === String(emp.department) || d.dept_code === emp.department || d.name === emp.department);
-        const matchedSelDept = departments.find(d => String(d.dept_id) === String(selectedDept) || d.dept_code === selectedDept || d.name === selectedDept);
+        const matchedSelDept = departments.find(d => String(d.dept_id) === String(advDept) || d.dept_code === advDept || d.name === advDept);
         return matchedEmpDept && matchedSelDept && matchedEmpDept.dept_id === matchedSelDept.dept_id;
       })();
-    const matchesStatus = selectedStatus === "All Status" || emp.status === selectedStatus;
 
-    return matchesSearch && matchesDept && matchesStatus;
+    return matchesSearch && 
+      matchesAdvName && 
+      matchesAdvEmail && 
+      matchesAdvGender && 
+      matchesAdvPhone && 
+      matchesAdvBlood && 
+      matchesAdvMarital && 
+      matchesAdvSalary && 
+      matchesAdvDesignation && 
+      matchesAdvStatus && 
+      matchesAdvDept;
   });
 
-  const displayedEmployees = filteredEmployees.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const isFilterActive = searchTerm !== "" || 
+    advName !== "" ||
+    advEmail !== "" ||
+    advGender !== "All Genders" ||
+    advPhone !== "" ||
+    advBloodGroup !== "All" ||
+    advMaritalStatus !== "All" ||
+    advMinSalary !== "" ||
+    advMaxSalary !== "" ||
+    advDesignation !== "" ||
+    advStatus !== "All Status" ||
+    advDept !== "All Departments";
+  const displayedEmployees = isFilterActive
+    ? filteredEmployees.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+    : filteredEmployees;
+  const totalCount = isFilterActive ? filteredEmployees.length : totalEmployees;
 
   const getDeptColor = (deptIdOrCode) => {
     const dept = departments.find(d => String(d.dept_id) === String(deptIdOrCode) || d.dept_code === deptIdOrCode);
@@ -273,64 +452,60 @@ const EmployeeList = () => {
 
       {/* Unified Header & Filter Section */}
       {!selectedEmployee && (
-        <div className="bg-white px-4 py-3 rounded-2xl border border-slate-100 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-3 shrink-0">
+        <div className="bg-white px-4 py-3 rounded-2xl border border-slate-100 shadow-sm flex flex-col gap-3 shrink-0">
 
-          {/* Left Side: Breadcrumbs */}
-          <div className="flex flex-col">
-            <h1 className="text-xl font-black text-slate-900 leading-tight">Employees</h1>
-            <nav className="text-[10px] text-gray-400 font-bold flex items-center gap-1.5">
-              <span className="cursor-pointer hover:text-blue-600 transition-colors" onClick={() => navigate('/')}>Dashboard</span>
-              <span>/</span>
-              <span className="text-gray-500">Employees</span>
-            </nav>
-          </div>
-
-          {/* Right Side: Filters */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 flex-1 lg:justify-end w-full">
-
-            {/* Search Field */}
-            <div className="relative flex-1 max-w-xs w-full">
-              <Search size={14} className="text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search details..."
-                className="w-full pl-9 pr-3 py-2 bg-slate-50/50 border border-slate-200/80 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all duration-200 font-semibold"
-              />
+          {/* Top Row: Breadcrumbs and Search/Filter toggler */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+            {/* Left Side: Breadcrumbs */}
+            <div className="flex flex-col">
+              <h1 className="text-xl font-black text-slate-900 leading-tight">Employees</h1>
+              <nav className="text-[10px] text-gray-400 font-bold flex items-center gap-1.5">
+                <span className="cursor-pointer hover:text-blue-600 transition-colors" onClick={() => navigate('/')}>Dashboard</span>
+                <span>/</span>
+                <span className="text-gray-500">Employees</span>
+              </nav>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-              {/* Department Select */}
-              <div className="relative flex-1 sm:flex-initial">
-                <select
-                  value={selectedDept}
-                  onChange={(e) => setSelectedDept(e.target.value)}
-                  className="w-full sm:w-auto bg-white border border-slate-200 rounded-xl pl-3 pr-8 py-2 text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 cursor-pointer appearance-none min-w-[130px]"
-                >
-                  <option value="All Departments">All Departments</option>
-                  {departments.map((dept) => (
-                    <option key={dept.dept_code || dept.name} value={dept.dept_code || dept.name}>
-                      {dept.name}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown size={13} className="text-gray-450 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            {/* Right Side: Search and Toggler */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 flex-1 lg:justify-end w-full">
+              {/* Search Field */}
+              <div className="relative flex-1 max-w-xs w-full">
+                <Search size={14} className="text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search details..."
+                  className="w-full pl-9 pr-3 py-2 bg-slate-50/50 border border-slate-200/80 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all duration-200 font-semibold"
+                />
               </div>
 
-              {/* Status Select */}
-              <div className="relative flex-1 sm:flex-initial">
-                <select
-                  value={selectedStatus}
-                  onChange={(e) => setSelectedStatus(e.target.value)}
-                  className="w-full sm:w-auto bg-white border border-slate-200 rounded-xl pl-3 pr-8 py-2 text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 cursor-pointer appearance-none min-w-[110px]"
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowAdvFilterModal(true)}
+                  className={`flex items-center gap-1.5 px-3 py-2 bg-slate-50 border rounded-xl text-xs font-bold transition duration-200 cursor-pointer ${
+                    isFilterActive 
+                      ? 'border-blue-500 text-blue-600 bg-blue-50/20' 
+                      : 'border-slate-200 text-slate-650 hover:bg-slate-100'
+                  }`}
                 >
-                  <option value="All Status">All Status</option>
-                  <option value="Active">Active</option>
-                  <option value="On Leave">On Leave</option>
-                  <option value="Inactive">Inactive</option>
-                </select>
-                <ChevronDown size={13} className="text-gray-450 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 8.293A1 1 0 013 7.586V4z" />
+                  </svg>
+                  <span>Advanced Filters</span>
+                </button>
+
+                {isFilterActive && (
+                  <button
+                    onClick={handleResetFilters}
+                    className="p-2 text-gray-450 hover:text-blue-600 hover:bg-slate-100 rounded-xl transition cursor-pointer"
+                    title="Reset filters"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18" />
+                    </svg>
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -351,7 +526,7 @@ const EmployeeList = () => {
               <div className="font-extrabold text-sm text-slate-800 tracking-tight flex items-center gap-2">
                 <span>Employee List</span>
                 <span className="bg-blue-50 text-blue-600 text-[10px] px-2 py-0.5 rounded-full font-black">
-                  {filteredEmployees.length}
+                  {totalCount}
                 </span>
               </div>
 
@@ -498,7 +673,7 @@ const EmployeeList = () => {
             {/* Pagination bar */}
             <div className="p-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 shrink-0 bg-slate-50/30 font-medium select-none">
               <div>
-                Showing <span className="font-bold text-slate-700">{filteredEmployees.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}</span> to <span className="font-bold text-slate-700">{Math.min(currentPage * pageSize, filteredEmployees.length)}</span> of <span className="font-bold text-slate-700">{filteredEmployees.length}</span> employees
+                Showing <span className="font-bold text-slate-700">{totalCount > 0 ? (currentPage - 1) * pageSize + 1 : 0}</span> to <span className="font-bold text-slate-700">{Math.min(currentPage * pageSize, totalCount)}</span> of <span className="font-bold text-slate-700">{totalCount}</span> employees
               </div>
 
               {/* Next/Prev Page navigation controls */}
@@ -514,14 +689,14 @@ const EmployeeList = () => {
                   Prev
                 </button>
                 <span className="text-[10px] text-slate-400 font-extrabold uppercase px-1.5">
-                  Page {currentPage} of {Math.ceil(filteredEmployees.length / pageSize) || 1}
+                  Page {currentPage} of {Math.ceil(totalCount / pageSize) || 1}
                 </span>
                 <button
                   type="button"
-                  disabled={currentPage === (Math.ceil(filteredEmployees.length / pageSize) || 1)}
-                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(filteredEmployees.length / pageSize) || 1))}
+                  disabled={currentPage === (Math.ceil(totalCount / pageSize) || 1)}
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(totalCount / pageSize) || 1))}
                   className={`px-2.5 py-1.5 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-100 transition cursor-pointer text-[10px] font-black ${
-                    currentPage === (Math.ceil(filteredEmployees.length / pageSize) || 1) ? 'opacity-40 pointer-events-none' : ''
+                    currentPage === (Math.ceil(totalCount / pageSize) || 1) ? 'opacity-40 pointer-events-none' : ''
                   }`}
                 >
                   Next
@@ -644,10 +819,9 @@ const EmployeeList = () => {
 
                 {/* Tab Header */}
                 <div className="flex items-center gap-4.5 border-b border-slate-100 pb-2 text-xs font-black shrink-0 overflow-x-auto whitespace-nowrap scrollbar-none">
-                  {["Personal Information", "Job Information", "Account Information", "Documents"].map((tab) => {
+                  {["Personal Information", "Job Information", "Documents"].map((tab) => {
                     const label = tab === "Personal Information" ? "Personal" :
-                      tab === "Job Information" ? "Job" :
-                        tab === "Account Information" ? "Account" : "Docs";
+                      tab === "Job Information" ? "Job" : "Docs";
                     const isTabActive = activeTab === tab;
                     return (
                       <button
@@ -782,44 +956,16 @@ const EmployeeList = () => {
                         </>
                       )}
 
-                      {/* Account Information Tab */}
-                      {activeTab === "Account Information" && (
-                        <>
-                          <div className="grid grid-cols-2 gap-2 border-b border-slate-50 pb-2.5">
-                            <div>
-                              <span className="text-[9px] text-slate-400 font-bold block">Employee ID</span>
-                              <span className="text-slate-800">{selectedEmployee.id}</span>
-                            </div>
-                            <div>
-                              <span className="text-[9px] text-slate-400 font-bold block">Username</span>
-                              <span className="text-slate-800">{selectedEmployee.username || selectedEmployee.name.toLowerCase().replace(" ", ".")}</span>
-                            </div>
-                          </div>
-                          <div className="grid grid-cols-2 gap-2 border-b border-slate-50 pb-2.5">
-                            <div>
-                              <span className="text-[9px] text-slate-400 font-bold block">System Role</span>
-                              <span className="text-slate-800">{selectedEmployee.role || "Employee"}</span>
-                            </div>
-                            <div>
-                              <span className="text-[9px] text-slate-400 font-bold block">Work Email</span>
-                              <span className="text-slate-800 truncate block">{selectedEmployee.email}</span>
-                            </div>
-                          </div>
-                          <div>
-                            <span className="text-[9px] text-slate-400 font-bold block">Last Login Timestamp</span>
-                            <span className="text-slate-800">{selectedEmployee.lastLogin || "29-07-2026 09:30 AM"}</span>
-                          </div>
-                        </>
-                      )}
+
 
                       {/* Documents Tab */}
                       {activeTab === "Documents" && (
                         <div className="space-y-2">
-                          {[
+                          {(employeeDocs[selectedEmployee.employee_id] || [
                             { name: "Resume_CV.pdf", size: "1.2 MB", type: "PDF" },
                             { name: "Offer_Letter.pdf", size: "850 KB", type: "PDF" },
                             { name: "Aadhaar_ID_Card.png", size: "2.4 MB", type: "Image" }
-                          ].map((doc, idx) => (
+                          ]).map((doc, idx) => (
                             <motion.div
                               key={idx}
                               whileHover={{ scale: 1.015, backgroundColor: "#f8fafc", borderColor: "rgba(37,99,235,0.15)" }}
@@ -843,6 +989,15 @@ const EmployeeList = () => {
                               </motion.button>
                             </motion.div>
                           ))}
+                          <div className="pt-2">
+                            <button
+                              onClick={() => setShowUploadModal(true)}
+                              className="flex items-center justify-center gap-2 p-3 mt-1 w-full border-2 border-dashed border-slate-200 hover:border-blue-500 hover:bg-blue-50/20 text-xs font-bold text-slate-500 hover:text-blue-600 rounded-xl cursor-pointer transition-all duration-150"
+                            >
+                              <Plus size={14} />
+                              <span>Upload New Document</span>
+                            </button>
+                          </div>
                         </div>
                       )}
                     </motion.div>
@@ -854,6 +1009,411 @@ const EmployeeList = () => {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Premium Upload Document Modal */}
+      <AnimatePresence>
+        {showUploadModal && (
+          <>
+            {/* Dark Backdrop Overlay */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.55 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowUploadModal(false)}
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 pointer-events-auto"
+            />
+
+            {/* Modal Container */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: -20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: -20 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-2rem)] max-w-[500px] bg-white rounded-3xl shadow-2xl z-50 overflow-hidden pointer-events-auto p-6 flex flex-col gap-5 border border-slate-100 text-slate-800"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-bold text-slate-800">Upload document</h3>
+                <button
+                  onClick={() => setShowUploadModal(false)}
+                  className="p-1.5 hover:bg-slate-100 rounded-xl transition text-slate-400 hover:text-slate-700 cursor-pointer"
+                >
+                  <X size={15} />
+                </button>
+              </div>
+
+              {/* Drag & Drop Area */}
+              <div
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.currentTarget.classList.add('border-blue-500', 'bg-blue-50/10');
+                }}
+                onDragLeave={(e) => {
+                  e.preventDefault();
+                  e.currentTarget.classList.remove('border-blue-500', 'bg-blue-50/10');
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.currentTarget.classList.remove('border-blue-500', 'bg-blue-50/10');
+                  const files = e.dataTransfer.files;
+                  if (files && files.length > 0) {
+                    handleFile(files[0]);
+                  }
+                }}
+                className="border-2 border-dashed border-blue-400/70 hover:border-blue-500 rounded-2xl p-8 flex flex-col items-center justify-center text-center transition-all duration-200 bg-slate-50/30 group"
+              >
+                {/* Cloud Upload Icon */}
+                <div className="w-12 h-12 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center shadow-inner mb-3">
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+                </div>
+
+                <span className="text-xs font-bold text-slate-700">Drag and drop files here</span>
+                <span className="text-[10px] text-slate-450 font-semibold my-1.5 uppercase">or</span>
+
+                <input
+                  type="file"
+                  id="employee-modal-file-upload"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) handleFile(file);
+                  }}
+                />
+                <label
+                  htmlFor="employee-modal-file-upload"
+                  className="px-4 py-1.5 border border-blue-500 text-blue-500 rounded-xl hover:bg-blue-50 text-[11px] font-bold transition cursor-pointer active:scale-95 hover:text-white hover:bg-blue-500 shadow-sm"
+                >
+                  Click here to upload
+                </label>
+
+                <span className="text-[9px] text-slate-450 font-semibold mt-4 leading-normal">
+                  Supported: JPG, JPEG, PNG, TIFF, PDF, TIF, XLSX, XLS | File size should be maximum 25mb and it shouldn't be password protected
+                </span>
+              </div>
+
+              {/* Auto Import Section */}
+              <div className="space-y-3.5">
+                <div className="flex items-center gap-3 text-slate-300">
+                  <div className="h-px bg-slate-100 flex-1" />
+                  <span className="text-[9px] font-bold whitespace-nowrap text-slate-400">or auto import documents via</span>
+                  <div className="h-px bg-slate-100 flex-1" />
+                </div>
+
+                <div className="grid grid-cols-3 gap-3">
+                  <button className="flex items-center justify-center gap-1.5 p-2 bg-[#f8fafc] hover:bg-slate-100 border border-slate-200/50 rounded-xl text-[11px] font-bold text-slate-650 transition cursor-pointer active:scale-98">
+                    <Mail size={12} className="text-red-500" />
+                    <span>Email</span>
+                  </button>
+                  <button className="flex items-center justify-center gap-1.5 p-2 bg-[#f8fafc] hover:bg-slate-100 border border-slate-200/50 rounded-xl text-[11px] font-bold text-slate-650 transition cursor-pointer active:scale-98">
+                    <svg className="w-3.5 h-3.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                    </svg>
+                    <span>API</span>
+                  </button>
+                  <button className="flex items-center justify-center gap-1.5 p-2 bg-[#f8fafc] hover:bg-slate-150 border border-slate-200/50 rounded-xl text-[11px] font-bold text-slate-650 transition cursor-pointer active:scale-98">
+                    <svg className="w-3.5 h-3.5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    <span>Zapier</span>
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Premium Advanced Filter Modal */}
+      <AnimatePresence>
+        {showAdvFilterModal && (
+          <>
+            {/* Dark Backdrop Overlay */}
+            <div
+              onClick={() => setShowAdvFilterModal(false)}
+              className="fixed inset-0 bg-slate-900/65 backdrop-blur-xs z-50 pointer-events-auto"
+            />
+
+            {/* Modal Container */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: -20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: -20 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-2rem)] max-w-[620px] max-h-[85vh] overflow-y-auto bg-white rounded-3xl shadow-2xl z-50 pointer-events-auto p-6 flex flex-col gap-5 border border-slate-100 text-slate-800 scrollbar-thin"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3.5">
+                <div className="flex items-center gap-2">
+                  <svg className="w-4.5 h-4.5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 8.293A1 1 0 013 7.586V4z" />
+                  </svg>
+                  <h3 className="text-base font-bold text-slate-800">Advanced Filters</h3>
+                </div>
+                <button
+                  onClick={() => setShowAdvFilterModal(false)}
+                  className="p-1.5 hover:bg-slate-100 rounded-xl transition text-slate-400 hover:text-slate-700 cursor-pointer"
+                >
+                  <X size={15} />
+                </button>
+              </div>
+
+              {/* Grid Form Fields */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-bold">
+                {/* 1. Employee Name */}
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-slate-400">Employee Name:</span>
+                  <input
+                    type="text"
+                    value={advName}
+                    onChange={(e) => setAdvName(e.target.value)}
+                    placeholder="Search by name..."
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-slate-800 font-semibold"
+                  />
+                </div>
+
+                {/* 2. Email */}
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-slate-400">Email Address:</span>
+                  <input
+                    type="text"
+                    value={advEmail}
+                    onChange={(e) => setAdvEmail(e.target.value)}
+                    placeholder="Search by email..."
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-slate-800 font-semibold"
+                  />
+                </div>
+
+                {/* 3. Gender */}
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-slate-400">Gender:</span>
+                  <div className="relative">
+                    <select
+                      value={advGender}
+                      onChange={(e) => setAdvGender(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-3 pr-8 py-2 text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500 transition cursor-pointer appearance-none"
+                    >
+                      <option value="All Genders">All Genders</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Other">Other</option>
+                    </select>
+                    <ChevronDown size={13} className="text-gray-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  </div>
+                </div>
+
+                {/* 4. Phone Number */}
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-slate-400">Phone Number:</span>
+                  <input
+                    type="text"
+                    value={advPhone}
+                    onChange={(e) => setAdvPhone(e.target.value)}
+                    placeholder="Search by phone..."
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-slate-800 font-semibold"
+                  />
+                </div>
+
+                {/* 5. Blood Group */}
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-slate-400">Blood Group:</span>
+                  <div className="relative">
+                    <select
+                      value={advBloodGroup}
+                      onChange={(e) => setAdvBloodGroup(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-3 pr-8 py-2 text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500 transition cursor-pointer appearance-none"
+                    >
+                      <option value="All">All</option>
+                      <option value="A+">A+</option>
+                      <option value="A-">A-</option>
+                      <option value="B+">B+</option>
+                      <option value="B-">B-</option>
+                      <option value="AB+">AB+</option>
+                      <option value="AB-">AB-</option>
+                      <option value="O+">O+</option>
+                      <option value="O-">O-</option>
+                    </select>
+                    <ChevronDown size={13} className="text-gray-450 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  </div>
+                </div>
+
+                {/* 6. Marital Status (Merit) */}
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-slate-400">Marital Status:</span>
+                  <div className="relative">
+                    <select
+                      value={advMaritalStatus}
+                      onChange={(e) => setAdvMaritalStatus(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-3 pr-8 py-2 text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500 transition cursor-pointer appearance-none"
+                    >
+                      <option value="All">All</option>
+                      <option value="Single">Single</option>
+                      <option value="Married">Married</option>
+                      <option value="Divorced">Divorced</option>
+                      <option value="Widowed">Widowed</option>
+                    </select>
+                    <ChevronDown size={13} className="text-gray-450 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  </div>
+                </div>
+
+                {/* 7. Salary Range */}
+                <div className="flex flex-col gap-1.5 sm:col-span-2">
+                  <span className="text-slate-400">Salary Range:</span>
+                  <div className="grid grid-cols-2 gap-3">
+                    <input
+                      type="number"
+                      value={advMinSalary}
+                      onChange={(e) => setAdvMinSalary(e.target.value)}
+                      placeholder="Min Salary"
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-slate-800 font-semibold"
+                    />
+                    <input
+                      type="number"
+                      value={advMaxSalary}
+                      onChange={(e) => setAdvMaxSalary(e.target.value)}
+                      placeholder="Max Salary"
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-slate-800 font-semibold"
+                    />
+                  </div>
+                </div>
+
+                {/* 8. Designation */}
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-slate-400">Designation:</span>
+                  <input
+                    type="text"
+                    value={advDesignation}
+                    onChange={(e) => setAdvDesignation(e.target.value)}
+                    placeholder="Search by designation..."
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-slate-800 font-semibold"
+                  />
+                </div>
+
+                {/* 9. Status */}
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-slate-400">Status:</span>
+                  <div className="relative">
+                    <select
+                      value={advStatus}
+                      onChange={(e) => setAdvStatus(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-3 pr-8 py-2 text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500 transition cursor-pointer appearance-none"
+                    >
+                      <option value="All Status">All Status</option>
+                      <option value="Active">Active</option>
+                      <option value="On Leave">On Leave</option>
+                      <option value="Inactive">Inactive</option>
+                    </select>
+                    <ChevronDown size={13} className="text-gray-450 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  </div>
+                </div>
+
+                {/* 10. Department */}
+                <div className="flex flex-col gap-1.5 relative sm:col-span-2">
+                  <span className="text-slate-400">Department:</span>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Search department..."
+                      value={advDeptSearch}
+                      onChange={(e) => {
+                        setAdvDeptSearch(e.target.value);
+                        setShowAdvDeptDropdown(true);
+                        if (e.target.value === "") {
+                          setAdvDept("All Departments");
+                        }
+                      }}
+                      onFocus={() => setShowAdvDeptDropdown(true)}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-slate-800 font-semibold pr-8"
+                    />
+                    {advDeptSearch ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAdvDept("All Departments");
+                          setAdvDeptSearch("");
+                          setShowAdvDeptDropdown(false);
+                        }}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                      >
+                        <X size={13} />
+                      </button>
+                    ) : (
+                      <ChevronDown size={13} className="text-gray-450 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    )}
+                  </div>
+
+                  <AnimatePresence>
+                    {showAdvDeptDropdown && (
+                      <>
+                        <div 
+                          className="fixed inset-0 z-10" 
+                          onClick={() => setShowAdvDeptDropdown(false)} 
+                        />
+                        <motion.div
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -5 }}
+                          className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-36 overflow-y-auto z-20"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAdvDept("All Departments");
+                              setAdvDeptSearch("");
+                              setShowAdvDeptDropdown(false);
+                            }}
+                            className="w-full text-left px-3.5 py-2 text-xs text-slate-700 hover:bg-blue-50 hover:text-blue-600 font-medium cursor-pointer"
+                          >
+                            All Departments
+                          </button>
+                          {departments.filter(d => 
+                            (d.name || '').toLowerCase().includes(advDeptSearch.toLowerCase()) || 
+                            (d.dept_code || '').toLowerCase().includes(advDeptSearch.toLowerCase())
+                          ).map((dept) => (
+                            <button
+                              key={dept.dept_code || dept.name}
+                              type="button"
+                              onClick={() => {
+                                setAdvDept(dept.dept_code || dept.name);
+                                setAdvDeptSearch(dept.name);
+                                setShowAdvDeptDropdown(false);
+                              }}
+                              className="w-full text-left px-3.5 py-2 text-xs text-slate-700 hover:bg-blue-50 hover:text-blue-600 font-medium cursor-pointer"
+                            >
+                              {dept.name} ({dept.dept_code})
+                            </button>
+                          ))}
+                        </motion.div>
+                      </>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center justify-end gap-3 border-t border-slate-100 pt-4 mt-2">
+                <button
+                  onClick={() => {
+                    handleResetFilters();
+                    setShowAdvFilterModal(false);
+                  }}
+                  className="px-4 py-2 bg-slate-50 border border-slate-200 hover:bg-slate-100 rounded-xl text-[11px] font-bold text-slate-650 transition cursor-pointer"
+                >
+                  Reset All
+                </button>
+                <button
+                  onClick={() => setShowAdvFilterModal(false)}
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[11px] font-bold transition shadow-md shadow-blue-500/10 cursor-pointer"
+                >
+                  Apply Filters
+                </button>
+              </div>
+
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
     </motion.div>
   );

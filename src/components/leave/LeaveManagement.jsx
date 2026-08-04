@@ -6,19 +6,16 @@ import {
   XCircle,
   Send,
   Search,
-  SlidersHorizontal,
   Download,
   MoreVertical,
   ChevronLeft,
   ChevronRight,
   ChevronDown,
   User,
-  Info,
   CalendarDays,
   FileText,
   Check,
   X,
-  Filter,
   RefreshCw,
   TrendingUp,
   AlertCircle
@@ -173,7 +170,7 @@ const LeaveManagement = () => {
   const fetchEmployees = async () => {
     try {
       setLoadingEmployees(true);
-      const res = await api.get('/employee/list/10/0');
+      const res = await api.get('/employee/list/1000/0');
       if (res.data.success && res.data.list) {
         const mapped = res.data.list.map(emp => ({
           ...emp,
@@ -713,13 +710,7 @@ const LeaveManagement = () => {
             </div>
           </div>
 
-          <motion.div
-            whileHover={{ scale: 1.01 }}
-            className="flex items-center justify-between border-t border-slate-50 pt-4 mt-6 text-xs text-blue-600 font-black hover:text-blue-700 cursor-pointer transition-colors duration-150"
-          >
-            <span className="flex items-center gap-1.5"><Info size={13} className="text-blue-500" /> View Leave Policy</span>
-            <ChevronRight size={14} />
-          </motion.div>
+
         </motion.div>
 
       </div>
@@ -761,9 +752,7 @@ const LeaveManagement = () => {
 
           {/* Table Actions (Export) */}
           <div className="flex items-center gap-2 self-end">
-            <button className="flex items-center gap-1.5 bg-slate-50 border border-slate-200/75 hover:bg-slate-100 text-[10px] font-black text-slate-650 px-3.5 py-2 rounded-xl transition-all duration-200 cursor-pointer shadow-sm">
-              <SlidersHorizontal size={12} /> Filters
-            </button>
+
             <button className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-black px-3.5 py-2 rounded-xl transition-all duration-200 shadow-lg shadow-blue-500/10 cursor-pointer hover:scale-102">
               <Download size={12} /> Export
             </button>
