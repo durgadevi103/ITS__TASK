@@ -157,9 +157,10 @@ const LeaveManagement = () => {
   const fetchLeaveRequests = async () => {
     try {
       const res = await api.get('/leave/get-list');
-      console.log("API RESPONSE:", res.data.leavelist);
-      if (res.data?.leavelist?.length) {
-        setRequests(res.data.leavelist || []);
+      const listData = res.data?.data || res.data?.leave_manage || res.data?.leavelist || res.data?.list;
+      console.log("API RESPONSE:", listData);
+      if (listData && listData.length) {
+        setRequests(listData);
       } else {
         setRequests([]);
       }
@@ -1085,13 +1086,13 @@ const LeaveManagement = () => {
                 <div className="p-6 space-y-6">
                   <div className="flex items-center gap-4 bg-slate-50/50 border border-slate-100 p-4 rounded-2xl">
                     <img
-                      src={selectedRequest.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedRequest.emp_name)}&background=2563eb&color=fff&bold=true`}
+                      src={selectedRequest.emp_name || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedRequest.emp_name)}&background=2563eb&color=fff&bold=true`}
                       alt={selectedRequest.emp_name}
                       className="w-14 h-14 rounded-2xl object-cover border-2 border-white shadow-md shrink-0"
                     />
                     <div className="leading-tight">
                       <h4 className="text-base font-black text-slate-900">{selectedRequest.emp_name}</h4>
-                      <span className="text-xs font-bold text-slate-400 block mt-1">Employee ID: {selectedRequest.emp_id}</span>
+                      <span className="text-xs font-bold text-slate-400 block mt-1">Employee ID: {selectedRequest.emp_name}</span>
                     </div>
                   </div>
 
