@@ -9,6 +9,11 @@ import api from '../../api/axios';
 const Department = () => {
   // 1. Core State
   const [departments, setDepartments] = useState([]);
+  const [totalDepartments, setTotalDepartments] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage] = useState(5);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterStatus, setFilterStatus] = useState('All');
 
   // 2. View switching state: 'list' | 'add' | 'edit' | 'view'
   const [currentView, setCurrentView] = useState('list');
@@ -31,52 +36,60 @@ const Department = () => {
     }
   }, [toast.show]);
 
-  // Fallback departments in case backend is empty or failing
-  const MOCK_DEPTS = [
-    { id: 'DEP001', dept_id_code: 'IT', name: 'Information Technology', branch: 'Chennai', description: 'Technical and systems support', status: 'Active', createdAt: '2026-07-28' },
-    { id: 'DEP002', dept_id_code: 'HR', name: 'Human Resources', branch: 'Chennai', description: 'Recruitment and employee relations', status: 'Active', createdAt: '2026-07-28' },
-    { id: 'DEP003', dept_id_code: 'FIN', name: 'Finance', branch: 'Chennai', description: 'Accounting and financial planning', status: 'Active', createdAt: '2026-07-28' }
-  ];
-
   // Load departments from backend
   const fetchDepartments = async () => {
     try {
-      const response = await api.get('/department/list/1000/0');
-      const listData = response.data.data || response.data.list;
-      if (response.data.success && listData) {
-        // Sort by backend auto-increment ID ascending
-        const sorted = listData.sort((a, b) => (a.dept_id || a.id) - (b.dept_id || b.id));
-        const mapped = sorted.map((d, index) => ({
-          dept_id: d.dept_id,
-          id: d.dept_id ? `DEP${String(d.dept_id).padStart(3, '0')}` : (typeof d.id === 'string' && d.id.startsWith('DEP') ? d.id : `DEP${String(d.id || index + 1).padStart(3, '0')}`),
-          dept_id_code: d.dept_code || d.dept_id_code || `DEP${index + 1}`,
-          name: d.dept_name || d.name,
-          branch: d.branch || "Chennai",
-          description: d.dept_desc || d.description,
-          status: (d.dept_status === 0 || d.dept_status === '0' || d.dept_status === 'Inactive') ? 'Inactive' : 'Active',
-          createdAt: d.created_at || new Date().toISOString().split('T')[0]
-        }));
-        setDepartments(mapped);
-        // sessionStorage.setItem('departmentsData', JSON.stringify(mapped));
-        return;
+      const isSearchActive = searchQuery.trim() !== '' || filterStatus !== 'All';
+      let listData = [];
+      let totalCount = 0;
+
+      if (isSearchActive) {
+        const payload = {
+          search: searchQuery,
+          dept_status: filterStatus === 'All' ? 'ALL' : (filterStatus === 'Active' ? '1' : '0'),
+          limit: perPage,
+          offset: (currentPage - 1) * perPage
+        };
+        const response = await api.post('/department/search', payload);
+        if (response.data.success && response.data.result) {
+          listData = response.data.result || [];
+          totalCount = listData[0]?.total || 0;
+        }
+      } else {
+        const limit = perPage;
+        const offset = (currentPage - 1) * perPage;
+        const response = await api.get(`/department/list/${limit}/${offset}`);
+        const data = response.data.data || response.data.list;
+        if (response.data.success && data) {
+          listData = data || [];
+          totalCount = response.data.count || listData.length;
+        }
       }
+
+      // Sort by backend auto-increment ID ascending
+      const sorted = listData.sort((a, b) => (a.dept_id || a.id) - (b.dept_id || b.id));
+      const mapped = sorted.map((d, index) => ({
+        dept_id: d.dept_id,
+        id: d.dept_id ? `DEP${String(d.dept_id).padStart(3, '0')}` : (typeof d.id === 'string' && d.id.startsWith('DEP') ? d.id : `DEP${String(d.id || index + 1).padStart(3, '0')}`),
+        dept_id_code: d.dept_code || d.dept_id_code || `DEP${index + 1}`,
+        name: d.dept_name || d.name,
+        branch: d.branch || "Chennai",
+        description: d.dept_desc || d.description,
+        status: (d.dept_status === 0 || d.dept_status === '0' || d.dept_status === 'Inactive') ? 'Inactive' : 'Active',
+        createdAt: d.created_at || new Date().toISOString().split('T')[0]
+      }));
+      setDepartments(mapped);
+      setTotalDepartments(totalCount);
     } catch (err) {
       console.error("Error loading departments from backend", err);
+      setDepartments([]);
+      setTotalDepartments(0);
     }
-
-    // Fallback
-    // const local = sessionStorage.getItem('departmentsData');
-    // if (local) {
-    //   setDepartments(JSON.parse(local));
-    // } else {
-    //   setDepartments(MOCK_DEPTS);
-    //   sessionStorage.setItem('departmentsData', JSON.stringify(MOCK_DEPTS));
-    // }
   };
 
   useEffect(() => {
     fetchDepartments();
-  }, []);
+  }, [currentPage, perPage, searchQuery, filterStatus]);
 
   // 5. Action Handlers
 
@@ -220,6 +233,15 @@ const Department = () => {
         {currentView === 'list' && (
           <DepartmentList
             departments={departments}
+            totalDepartments={totalDepartments}
+            currentPage={currentPage}
+            setCurrentPage={setCurrentPage}
+            perPage={perPage}
+            setPerPage={setPerPage}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            filterStatus={filterStatus}
+            setFilterStatus={setFilterStatus}
             onAddClick={handleAddClick}
             onEditClick={handleEditClick}
             onViewClick={handleViewDetails}

@@ -220,7 +220,7 @@ const AddEmployee = () => {
         // Create Mode
         // 1. Fetch current list to determine the next numeric ID
         let nextNum = 1;
-        const responseList = await api.get('/employee/list/1000/0');
+        const responseList = await api.get('/employee/list/10/0');
         if (responseList.data.success && responseList.data.list && responseList.data.list.length > 0) {
           const ids = responseList.data.list.map(emp => parseInt(emp.emp_id || emp.employee_id));
           const maxId = Math.max(...ids.filter(id => !isNaN(id)));

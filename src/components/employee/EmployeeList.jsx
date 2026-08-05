@@ -233,32 +233,16 @@ const EmployeeList = () => {
       let totalFetchedCount = 0;
 
       if (isFilterActive) {
-        // Fetch department ID if possible
-        let deptVal = "%";
-        if (advDept !== "All Departments") {
-          const matchedDept = departments.find(d => 
-            String(d.dept_id) === String(advDept) || 
-            d.dept_code === advDept || 
-            d.name === advDept
-          );
-          deptVal = matchedDept ? matchedDept.dept_id : advDept;
-        }
-
-        const payload = {
-          emp_dept: deptVal === "%" ? "%" : deptVal,
-          emp_designation: advDesignation.trim() === "" ? "%" : `%${advDesignation.trim()}%`,
-          emp_status: advStatus === "All Status" ? "%" : advStatus
-        };
-
-        const response = await api.post('/employee/filter', payload);
+        // Fetch all employees so we can filter them in-memory
+        const response = await api.get('/employee/list/10/0');
         if (response.data.success) {
-          rawEmployeesList = response.data.data || [];
-          totalFetchedCount = rawEmployeesList.length;
+          rawEmployeesList = response.data.list || [];
+          totalFetchedCount = response.data.count || rawEmployeesList.length;
         }
       } else {
         const limit = pageSize;
         const offset = (currentPage - 1) * pageSize;
-        const response = await api.get(`/employee/list/100/0`);
+        const response = await api.get(`/employee/list/${limit}/${offset}`);
         if (response.data.success) {
           rawEmployeesList = response.data.list || [];
           totalFetchedCount = response.data.count || rawEmployeesList.length;
@@ -308,7 +292,7 @@ const EmployeeList = () => {
 
   const fetchDepartments = async () => {
     try {
-      const response = await api.get('/department/list/100/0');
+      const response = await api.get('/department/list/10/0');
       const listData = response.data.data || response.data.list;
       if (response.data.success && listData) {
         const mapped = listData.map(d => ({

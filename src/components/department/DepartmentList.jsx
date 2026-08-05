@@ -23,6 +23,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const DepartmentList = ({
   departments,
+  totalDepartments,
+  currentPage,
+  setCurrentPage,
+  perPage,
+  setPerPage,
+  searchQuery,
+  setSearchQuery,
+  filterStatus,
+  setFilterStatus,
   onAddClick,
   onEditClick,
   onViewClick,
@@ -30,40 +39,29 @@ const DepartmentList = ({
 }) => {
   const navigate = useNavigate();
   // Search & Filter state
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeSearch, setActiveSearch] = useState('');
   const [showFilters, setShowFilters] = useState(false);
-  const [filterStatus, setFilterStatus] = useState('All');
 
   // Sorting state
   const [sortField, setSortField] = useState('id'); // name, createdAt, id
   const [sortDirection, setSortDirection] = useState('asc'); // asc, desc
-
-  // Pagination state
-  const [perPage, setPerPage] = useState(5);
-  const [currentPage, setCurrentPage] = useState(1);
 
   const statuses = ['All', 'Active', 'Inactive'];
 
   // Handle Search Trigger
   const handleSearchSubmit = (e) => {
     if (e) e.preventDefault();
-    setActiveSearch(searchQuery);
     setCurrentPage(1);
   };
 
   // Real-time search + search button submit
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
-    // Real-time search update for convenience
-    setActiveSearch(e.target.value);
     setCurrentPage(1);
   };
 
   // Reset Filters
   const handleResetFilters = () => {
     setSearchQuery('');
-    setActiveSearch('');
     setFilterStatus('All');
     setCurrentPage(1);
   };
@@ -79,62 +77,14 @@ const DepartmentList = ({
     setCurrentPage(1);
   };
 
-  // Filtered & Sorted departments
-  const processedDepartments = useMemo(() => {
-    let result = [...departments];
-
-    // 1. Search Query filter
-    if (activeSearch.trim()) {
-      const q = activeSearch.toLowerCase().trim();
-      result = result.filter(dept =>
-        dept.name.toLowerCase().includes(q) ||
-        dept.dept_id_code.toLowerCase().includes(q) ||
-        dept.description.toLowerCase().includes(q) ||
-        dept.id.toLowerCase().includes(q)
-      );
-    }
-
-    // 2. Status filter
-    if (filterStatus !== 'All') {
-      result = result.filter(dept => dept.status === filterStatus);
-    }
-
-    // 4. Sort
-    result.sort((a, b) => {
-      let aVal = a[sortField] || '';
-      let bVal = b[sortField] || '';
-
-      if (sortField === 'id') {
-        // Numeric sorting for ID (DEP001 -> 1)
-        const aNum = parseInt(aVal.replace('DEP', '')) || 0;
-        const bNum = parseInt(bVal.replace('DEP', '')) || 0;
-        return sortDirection === 'asc' ? aNum - bNum : bNum - aNum;
-      }
-
-      aVal = aVal.toString().toLowerCase();
-      bVal = bVal.toString().toLowerCase();
-
-      if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
-      if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
-      return 0;
-    });
-
-    return result;
-  }, [departments, activeSearch, filterStatus, sortField, sortDirection]);
-
   // Paginated departments
-  const totalItems = processedDepartments.length;
+  const totalItems = totalDepartments;
   const totalPages = Math.ceil(totalItems / perPage) || 1;
 
-  // Safe page constraint
-  const activePage = Math.min(currentPage, totalPages);
+  const fromIndex = totalItems === 0 ? 0 : (currentPage - 1) * perPage;
+  const toIndex = Math.min(fromIndex + departments.length, totalItems);
 
-  const fromIndex = totalItems === 0 ? 0 : (activePage - 1) * perPage;
-  const toIndex = Math.min(fromIndex + perPage, totalItems);
-
-  const paginatedDepartments = useMemo(() => {
-    return processedDepartments.slice(fromIndex, toIndex);
-  }, [processedDepartments, fromIndex, toIndex]);
+  const paginatedDepartments = departments;
 
   // Page Numbers Array
   const pageNumbers = [];
@@ -199,7 +149,7 @@ const DepartmentList = ({
               <FilterBtn onClick={() => setShowFilters(!showFilters)} />
 
               {/* Clear Button if filtered */}
-              {(activeSearch || filterStatus !== 'All') && (
+              {(searchQuery || filterStatus !== 'All') && (
                 <button
                   type="button"
                   onClick={handleResetFilters}

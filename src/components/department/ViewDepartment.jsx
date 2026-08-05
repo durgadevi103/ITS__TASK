@@ -18,7 +18,7 @@ const ViewDepartment = ({ department, onBack }) => {
   useEffect(() => {
     const fetchEmployees = async () => {
       try {
-        const response = await api.get('/employee/list/1000/0');
+        const response = await api.get('/employee/list/10/0');
         if (response.data.success && response.data.list) {
           const mapped = response.data.list.map(emp => ({
             id: `EMP${String(emp.employee_id).padStart(3, '0')}`,
