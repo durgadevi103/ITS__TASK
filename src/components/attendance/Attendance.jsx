@@ -29,6 +29,7 @@ const Attendance = () => {
   const [employeeCount, setEmployeeCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [overtimeTab, setOvertimeTab] = useState('Hours'); // 'Hours' or 'Employees'
+  const [attendanceView, setAttendanceView] = useState('Attendance List');
 
   // Fetch live stats from backend to scale counts
   useEffect(() => {
@@ -140,17 +141,30 @@ const Attendance = () => {
 
         {/* Right Side: Filters */}
         <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 flex-1 lg:justify-end w-full">
-          {/* Date Filter */}
-          <div className="relative">
-            <select className="bg-slate-50 border border-slate-200/80 shadow-xs rounded-xl pl-4 pr-9 py-2.5 text-xs font-extrabold text-slate-700 outline-none hover:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition cursor-pointer appearance-none">
-              <option>Today ({new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})</option>
-              <option>Yesterday</option>
-              <option>This Week</option>
+          {/* Dropdown Mode Selector */}
+          <div className="relative w-full sm:w-auto">
+            <select
+              value={attendanceView}
+              onChange={(e) => setAttendanceView(e.target.value)}
+              className="bg-slate-50 border border-slate-200/80 shadow-xs rounded-xl pl-4 pr-9 py-2.5 text-xs font-extrabold text-slate-700 outline-none hover:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition cursor-pointer appearance-none w-full"
+            >
+              <option>Attendance List</option>
+              <option>Check In / Out</option>
+              <option>Reports</option>
             </select>
             <ChevronDown size={14} className="text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
         </div>
       </motion.div>
+
+      {/* Page Label */}
+      <div className="bg-white px-5 py-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col gap-2">
+        <span className="text-[11px] uppercase tracking-[0.24em] text-slate-400">This page</span>
+        <h2 className="text-2xl font-extrabold text-slate-900">Attendance List</h2>
+        <p className="text-sm text-slate-500 max-w-2xl">
+          Review employee attendance status, check-in/out timings, and quick summaries for today. This page is dedicated to the Attendance List view only.
+        </p>
+      </div>
 
       {/* Row 1: Statistics Donut & Attendance Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
