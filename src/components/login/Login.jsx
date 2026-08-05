@@ -13,7 +13,7 @@ export const DEFAULT_CREDENTIALS = [
 
 const EMSIllustration = () => {
   return (
-    <div className="relative w-full max-w-[280px] sm:max-w-[320px] aspect-square flex items-center justify-center select-none">
+    <div className="relative w-full max-w-[270px] sm:max-w-[320px] aspect-square flex items-center justify-center select-none">
       {/* Central glow ring */}
       <motion.div
         animate={{

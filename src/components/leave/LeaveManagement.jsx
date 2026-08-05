@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Calendar,
   CheckCircle2,
@@ -131,6 +131,9 @@ const LeaveManagement = () => {
 
   // Form states
   const [selectedEmpId, setSelectedEmpId] = useState('');
+  const [empSearch, setEmpSearch] = useState('');
+  const [showEmpDropdown, setShowEmpDropdown] = useState(false);
+  const empRef = useRef(null);
   const [leaveType, setLeaveType] = useState('Casual Leave (CL)');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
@@ -193,6 +196,25 @@ const LeaveManagement = () => {
     fetchLeaveRequests();
     fetchEmployees();
   }, []);
+
+  useEffect(() => {
+    if (employees.length > 0 && selectedEmpId) {
+      const matched = employees.find(emp => emp.employee_id.toString() === selectedEmpId.toString());
+      setEmpSearch(matched ? `${matched.emp_name} (ID: ${matched.employee_id})` : '');
+    }
+  }, [employees, selectedEmpId]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (empRef.current && !empRef.current.contains(event.target)) {
+        setShowEmpDropdown(false);
+        const matched = employees.find(emp => emp.employee_id.toString() === selectedEmpId.toString());
+        setEmpSearch(matched ? `${matched.emp_name} (ID: ${matched.employee_id})` : '');
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [selectedEmpId, employees]);
 
   // Leave Balances computed dynamically
   const leaveBalances = useMemo(() => {
@@ -539,28 +561,84 @@ const LeaveManagement = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
                 {/* Employee choice */}
-                <div className="flex flex-col">
+                <div className="flex flex-col relative" ref={empRef}>
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Employee Selection</label>
                   <div className="relative">
-                    <select
-                      value={selectedEmpId}
-                      onChange={(e) => setSelectedEmpId(e.target.value)}
-                      className="w-full bg-white border border-slate-200/90 rounded-2xl px-3 py-2.5 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 cursor-pointer appearance-none"
-                    >
-                      {loadingEmployees ? (
-                        <option>Loading staff...</option>
-                      ) : employees.length > 0 ? (
-                        employees.map(emp => (
-                          <option key={emp.employee_id} value={emp.employee_id}>
-                            {emp.emp_name} (ID: {emp.employee_id})
-                          </option>
-                        ))
-                      ) : (
-                        <option value="">Priya Sharma (EMP001)</option>
-                      )}
-                    </select>
-                    <ChevronDown size={14} className="text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <input
+                      type="text"
+                      required
+                      placeholder="Search and select staff..."
+                      value={empSearch}
+                      onFocus={() => setShowEmpDropdown(true)}
+                      onChange={(e) => {
+                        setEmpSearch(e.target.value);
+                        setShowEmpDropdown(true);
+                        if (!e.target.value.trim()) {
+                          setSelectedEmpId('');
+                        }
+                      }}
+                      className="w-full bg-white border border-slate-200/90 rounded-2xl px-3 py-2.5 pr-8 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    />
+                    {empSearch ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEmpSearch('');
+                          setSelectedEmpId('');
+                          setShowEmpDropdown(true);
+                        }}
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer text-base font-bold"
+                      >
+                        &times;
+                      </button>
+                    ) : (
+                      <ChevronDown size={14} className="text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    )}
                   </div>
+
+                  <AnimatePresence>
+                    {showEmpDropdown && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -5 }}
+                        className="absolute z-50 w-full top-full mt-1 bg-white border border-slate-200 rounded-2xl shadow-lg max-h-48 overflow-y-auto"
+                      >
+                        {loadingEmployees ? (
+                          <div className="px-3.5 py-2.5 text-xs text-slate-400 font-bold">
+                            Loading staff...
+                          </div>
+                        ) : employees.filter(emp => 
+                          (emp.emp_name || '').toLowerCase().includes(empSearch.toLowerCase()) || 
+                          (emp.employee_id || '').toString().toLowerCase().includes(empSearch.toLowerCase())
+                        ).length === 0 ? (
+                          <div className="px-3.5 py-2.5 text-xs text-slate-400 font-bold">
+                            No Staff Found
+                          </div>
+                        ) : (
+                          employees.filter(emp => 
+                            (emp.emp_name || '').toLowerCase().includes(empSearch.toLowerCase()) || 
+                            (emp.employee_id || '').toString().toLowerCase().includes(empSearch.toLowerCase())
+                          ).map((emp) => (
+                            <button
+                              key={emp.employee_id}
+                              type="button"
+                              onClick={() => {
+                                setSelectedEmpId(emp.employee_id.toString());
+                                setEmpSearch(`${emp.emp_name} (ID: ${emp.employee_id})`);
+                                setShowEmpDropdown(false);
+                              }}
+                              className={`w-full text-left px-3.5 py-2.5 text-xs transition duration-100 hover:bg-blue-50 hover:text-blue-600 font-bold cursor-pointer ${
+                                String(selectedEmpId) === String(emp.employee_id) ? 'bg-blue-50/50 text-blue-600 font-black' : 'text-slate-700'
+                              }`}
+                            >
+                              {emp.emp_name} (ID: {emp.employee_id})
+                            </button>
+                          ))
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
 
                 {/* Leave category */}

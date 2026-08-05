@@ -228,44 +228,78 @@ const EmployeeList = () => {
         advDesignation !== "" ||
         advStatus !== "All Status" ||
         advDept !== "All Departments";
-      const limit = isFilterActive ? 1000 : pageSize;
-      const offset = isFilterActive ? 0 : (currentPage - 1) * pageSize;
 
-      const response = await api.get(`/employee/list/${limit}/${offset}`);
-      if (response.data.success) {
-        const sorted = response.data.list.sort((a, b) => (a.emp_id || a.employee_id) - (b.emp_id || b.employee_id));
-        const maxId = Math.max(...sorted.map(e => parseInt(e.emp_id || e.employee_id)).filter(id => !isNaN(id)), 0);
-        const mapped = sorted.map((emp, index) => {
-          const empNumId = parseInt(emp.emp_id || emp.employee_id);
-          const displayIdx = offset + index + 1;
-          const isNewHire = sorted.length <= 3 || (empNumId >= maxId - 2);
-          const actualEmpId = emp.emp_id || emp.employee_id;
-          return {
-            id: `EMP${String(displayIdx).padStart(3, '0')}`,
-            employee_id: actualEmpId,
-            name: emp.emp_name,
-            email: emp.emp_email,
-            dob: emp.emp_dob,
-            gender: emp.emp_gender,
-            phone: emp.emp_ph_no,
-            address: emp.emp_address,
-            emergencyContact: emp.emp_emg_contact,
-            emergencyPhone: emp.emp_emg_phone,
-            bloodGroup: emp.emp_bld_grp,
-            maritalStatus: emp.emp_merit,
-            nationality: emp.emp_nationality,
-            languages: emp.emp_language,
-            department: emp.emp_dept,
-            designation: emp.emp_designation || emp.emp_desigation,
-            salary: emp.emp_salary || '',
-            status: emp.emp_status || 'Active',
-            avatarUrl: emp.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(emp.emp_name)}&background=2563eb&color=fff&bold=true`,
-            isNewHire: isNewHire
-          };
-        });
-        setEmployees(mapped);
-        setTotalEmployees(response.data.count || mapped.length);
+      let rawEmployeesList = [];
+      let totalFetchedCount = 0;
+
+      if (isFilterActive) {
+        // Fetch department ID if possible
+        let deptVal = "%";
+        if (advDept !== "All Departments") {
+          const matchedDept = departments.find(d => 
+            String(d.dept_id) === String(advDept) || 
+            d.dept_code === advDept || 
+            d.name === advDept
+          );
+          deptVal = matchedDept ? matchedDept.dept_id : advDept;
+        }
+
+        const payload = {
+          emp_dept: deptVal === "%" ? "%" : deptVal,
+          emp_designation: advDesignation.trim() === "" ? "%" : `%${advDesignation.trim()}%`,
+          emp_status: advStatus === "All Status" ? "%" : advStatus
+        };
+
+        const response = await api.post('/employee/filter', payload);
+        if (response.data.success) {
+          rawEmployeesList = response.data.data || [];
+          totalFetchedCount = rawEmployeesList.length;
+        }
+      } else {
+        const limit = pageSize;
+        const offset = (currentPage - 1) * pageSize;
+        const response = await api.get(`/employee/list/100/0`);
+        if (response.data.success) {
+          rawEmployeesList = response.data.list || [];
+          totalFetchedCount = response.data.count || rawEmployeesList.length;
+        }
       }
+
+      const sorted = rawEmployeesList.sort((a, b) => (a.emp_id || a.employee_id) - (b.emp_id || b.employee_id));
+      const maxId = Math.max(...sorted.map(e => parseInt(e.emp_id || e.employee_id)).filter(id => !isNaN(id)), 0);
+
+      const mapped = sorted.map((emp, index) => {
+        const empNumId = parseInt(emp.emp_id || emp.employee_id);
+        const offsetVal = isFilterActive ? 0 : (currentPage - 1) * pageSize;
+        const displayIdx = offsetVal + index + 1;
+        const isNewHire = sorted.length <= 3 || (empNumId >= maxId - 2);
+        const actualEmpId = emp.emp_id || emp.employee_id;
+        return {
+          id: `EMP${String(displayIdx).padStart(3, '0')}`,
+          employee_id: actualEmpId,
+          name: emp.emp_name,
+          email: emp.emp_email,
+          dob: emp.emp_dob,
+          gender: emp.emp_gender,
+          phone: emp.emp_ph_no,
+          address: emp.emp_address,
+          emergencyContact: emp.emp_emg_contact,
+          emergencyPhone: emp.emp_emg_phone,
+          bloodGroup: emp.emp_bld_grp,
+          maritalStatus: emp.emp_merit,
+          nationality: emp.emp_nationality,
+          languages: emp.emp_language,
+          department: emp.emp_dept,
+          designation: emp.emp_designation || emp.emp_desigation,
+          salary: emp.emp_salary || '',
+          status: emp.emp_status || 'Active',
+          avatarUrl: emp.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(emp.emp_name)}&background=2563eb&color=fff&bold=true`,
+          isNewHire: isNewHire
+        };
+      });
+
+      setEmployees(mapped);
+      setTotalEmployees(totalFetchedCount);
     } catch (err) {
       console.error("Error loading employees from backend", err);
       setEmployees([]);
@@ -274,7 +308,7 @@ const EmployeeList = () => {
 
   const fetchDepartments = async () => {
     try {
-      const response = await api.get('/department/list/1000/0');
+      const response = await api.get('/department/list/100/0');
       const listData = response.data.data || response.data.list;
       if (response.data.success && listData) {
         const mapped = listData.map(d => ({
