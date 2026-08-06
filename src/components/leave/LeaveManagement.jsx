@@ -104,7 +104,7 @@ export const LeaveManagement = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 bg-slate-50 min-h-screen">
+    <div className="p-4 sm:p-6 bg-slate-50">
       {/* 1. Page Header */}
       <LeaveHeader 
         title="Leave & Time-Off Management" 

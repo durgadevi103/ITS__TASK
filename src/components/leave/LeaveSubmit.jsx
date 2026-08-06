@@ -193,7 +193,7 @@ export const LeaveSubmit = ({ currentUser, allowance, onSubmitRequest, onCancel,
       </div>
 
       {/* RIGHT COLUMN: Interactive Widgets (5 cols on lg) */}
-      <div className="lg:col-span-5 space-y-6">
+      <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-20 self-start">
         
         {/* Interactive Month Grid Calendar */}
         <LeaveCalendar
