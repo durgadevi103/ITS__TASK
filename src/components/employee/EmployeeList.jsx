@@ -73,14 +73,13 @@ const EmployeeList = () => {
   const [advGender, setAdvGender] = useState("All Genders");
   const [advPhone, setAdvPhone] = useState("");
   const [advBloodGroup, setAdvBloodGroup] = useState("All");
-  const [advMaritalStatus, setAdvMaritalStatus] = useState("All");
-  const [advMinSalary, setAdvMinSalary] = useState("");
-  const [advMaxSalary, setAdvMaxSalary] = useState("");
+  const [advEmpCode, setAdvEmpCode] = useState("");
   const [advDesignation, setAdvDesignation] = useState("");
   const [advStatus, setAdvStatus] = useState("All Status");
   const [advDept, setAdvDept] = useState("All Departments");
   const [advDeptSearch, setAdvDeptSearch] = useState("");
   const [showAdvDeptDropdown, setShowAdvDeptDropdown] = useState(false);
+  const [searchedDepts, setSearchedDepts] = useState([]);
 
   const handleUpdateEmployeeStatus = async (employeeId, newStatus) => {
     const emp = employees.find(e => e.employee_id === employeeId);
@@ -132,13 +131,12 @@ const EmployeeList = () => {
     setAdvGender('All Genders');
     setAdvPhone('');
     setAdvBloodGroup('All');
-    setAdvMaritalStatus('All');
-    setAdvMinSalary('');
-    setAdvMaxSalary('');
+    setAdvEmpCode('');
     setAdvDesignation('');
     setAdvStatus('All Status');
     setAdvDept('All Departments');
     setAdvDeptSearch('');
+    setSearchedDepts([]);
     setCurrentPage(1);
   };
 
@@ -192,9 +190,6 @@ const EmployeeList = () => {
     advGender, 
     advPhone, 
     advBloodGroup, 
-    advMaritalStatus, 
-    advMinSalary, 
-    advMaxSalary, 
     advDesignation, 
     advStatus, 
     advDept, 
@@ -222,9 +217,6 @@ const EmployeeList = () => {
         advGender !== "All Genders" ||
         advPhone !== "" ||
         advBloodGroup !== "All" ||
-        advMaritalStatus !== "All" ||
-        advMinSalary !== "" ||
-        advMaxSalary !== "" ||
         advDesignation !== "" ||
         advStatus !== "All Status" ||
         advDept !== "All Departments";
@@ -270,13 +262,12 @@ const EmployeeList = () => {
           emergencyContact: emp.emp_emg_contact,
           emergencyPhone: emp.emp_emg_phone,
           bloodGroup: emp.emp_bld_grp,
-          maritalStatus: emp.emp_merit,
           nationality: emp.emp_nationality,
           languages: emp.emp_language,
           department: emp.emp_dept,
           designation: emp.emp_designation || emp.emp_desigation,
-          salary: emp.emp_salary || '',
           status: emp.emp_status || 'Active',
+          empCode: emp.emp_code,
           avatarUrl: emp.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(emp.emp_name)}&background=2563eb&color=fff&bold=true`,
           isNewHire: isNewHire
         };
@@ -337,9 +328,7 @@ const EmployeeList = () => {
     advGender, 
     advPhone, 
     advBloodGroup, 
-    advMaritalStatus, 
-    advMinSalary, 
-    advMaxSalary, 
+    advEmpCode, 
     advDesignation, 
     advStatus, 
     advDept
@@ -348,6 +337,33 @@ const EmployeeList = () => {
   useEffect(() => {
     fetchDepartments();
   }, []);
+
+  useEffect(() => {
+    const fetchSearchedDepts = async () => {
+      if (!advDeptSearch.trim()) {
+        setSearchedDepts([]);
+        return;
+      }
+      try {
+        const response = await api.post('/department/deptnamesearch', { search: advDeptSearch });
+        if (response.data.success && response.data.result) {
+          setSearchedDepts(response.data.result.map(d => ({
+            name: d.dept_name || d.name,
+            dept_id: d.dept_id,
+            dept_code: d.dept_code || d.dept_id_code
+          })));
+        }
+      } catch (err) {
+        console.error("Error searching departments via API", err);
+      }
+    };
+
+    const delayDebounce = setTimeout(() => {
+      fetchSearchedDepts();
+    }, 300);
+
+    return () => clearTimeout(delayDebounce);
+  }, [advDeptSearch]);
 
   // Filter conditions
   const filteredEmployees = employees.filter(emp => {
@@ -370,20 +386,15 @@ const EmployeeList = () => {
     const matchesAdvGender = advGender === "All Genders" || 
       (emp.gender && emp.gender.toLowerCase() === advGender.toLowerCase());
 
-    const phoneStr = emp.phone ? String(emp.phone).toLowerCase() : "";
     const matchesAdvPhone = !advPhone.trim() || 
       phoneStr.includes(advPhone.trim());
 
     const matchesAdvBlood = advBloodGroup === "All" || 
       (emp.bloodGroup && emp.bloodGroup.toLowerCase() === advBloodGroup.toLowerCase());
 
-    const matchesAdvMarital = advMaritalStatus === "All" || 
-      (emp.maritalStatus && emp.maritalStatus.toLowerCase() === advMaritalStatus.toLowerCase());
-
-    const empSalary = parseFloat(emp.salary) || 0;
-    const minSal = advMinSalary ? parseFloat(advMinSalary) : 0;
-    const maxSal = advMaxSalary ? parseFloat(advMaxSalary) : Infinity;
-    const matchesAdvSalary = empSalary >= minSal && empSalary <= maxSal;
+    const empCodeStr = emp.empCode ? String(emp.empCode).toLowerCase() : "";
+    const matchesAdvEmpCode = !advEmpCode.trim() || 
+      empCodeStr.includes(advEmpCode.toLowerCase().trim());
 
     const desigStr = emp.designation ? emp.designation.toLowerCase() : "";
     const matchesAdvDesignation = !advDesignation.trim() || 
@@ -406,8 +417,7 @@ const EmployeeList = () => {
       matchesAdvGender && 
       matchesAdvPhone && 
       matchesAdvBlood && 
-      matchesAdvMarital && 
-      matchesAdvSalary && 
+      matchesAdvEmpCode && 
       matchesAdvDesignation && 
       matchesAdvStatus && 
       matchesAdvDept;
@@ -419,9 +429,7 @@ const EmployeeList = () => {
     advGender !== "All Genders" ||
     advPhone !== "" ||
     advBloodGroup !== "All" ||
-    advMaritalStatus !== "All" ||
-    advMinSalary !== "" ||
-    advMaxSalary !== "" ||
+    advEmpCode !== "" ||
     advDesignation !== "" ||
     advStatus !== "All Status" ||
     advDept !== "All Departments";
@@ -1256,44 +1264,16 @@ const EmployeeList = () => {
                   </div>
                 </div>
 
-                {/* 6. Marital Status (Merit) */}
+                {/* 6. Employee Code */}
                 <div className="flex flex-col gap-1.5">
-                  <span className="text-slate-400">Marital Status:</span>
-                  <div className="relative">
-                    <select
-                      value={advMaritalStatus}
-                      onChange={(e) => setAdvMaritalStatus(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-3 pr-8 py-2 text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500 transition cursor-pointer appearance-none"
-                    >
-                      <option value="All">All</option>
-                      <option value="Single">Single</option>
-                      <option value="Married">Married</option>
-                      <option value="Divorced">Divorced</option>
-                      <option value="Widowed">Widowed</option>
-                    </select>
-                    <ChevronDown size={13} className="text-gray-450 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  </div>
-                </div>
-
-                {/* 7. Salary Range */}
-                <div className="flex flex-col gap-1.5 sm:col-span-2">
-                  <span className="text-slate-400">Salary Range:</span>
-                  <div className="grid grid-cols-2 gap-3">
-                    <input
-                      type="number"
-                      value={advMinSalary}
-                      onChange={(e) => setAdvMinSalary(e.target.value)}
-                      placeholder="Min Salary"
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-slate-800 font-semibold"
-                    />
-                    <input
-                      type="number"
-                      value={advMaxSalary}
-                      onChange={(e) => setAdvMaxSalary(e.target.value)}
-                      placeholder="Max Salary"
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-slate-800 font-semibold"
-                    />
-                  </div>
+                  <span className="text-slate-400">Employee Code:</span>
+                  <input
+                    type="text"
+                    value={advEmpCode}
+                    onChange={(e) => setAdvEmpCode(e.target.value)}
+                    placeholder="Search by employee code..."
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-slate-800 font-semibold"
+                  />
                 </div>
 
                 {/* 8. Designation */}
@@ -1385,10 +1365,7 @@ const EmployeeList = () => {
                           >
                             All Departments
                           </button>
-                          {departments.filter(d => 
-                            (d.name || '').toLowerCase().includes(advDeptSearch.toLowerCase()) || 
-                            (d.dept_code || '').toLowerCase().includes(advDeptSearch.toLowerCase())
-                          ).map((dept) => (
+                          {((advDeptSearch.trim() ? searchedDepts : departments) || []).map((dept) => (
                             <button
                               key={dept.dept_code || dept.name}
                               type="button"
