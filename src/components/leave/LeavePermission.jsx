@@ -150,13 +150,13 @@ export const LeavePermission = ({ currentUser }) => {
   const progressPercent = (remainingHours / DEFAULT_MONTHLY_HOURS) * 100;
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
       
       {/* Left Side: Allowance widget & request form */}
-      <div className="lg:col-span-5 space-y-6">
+      <div className="lg:col-span-5 space-y-4">
         
         {/* Permission Allowance Tracker */}
-        <div className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-3xl p-5 shadow-lg relative overflow-hidden">
+        <div className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-2xl p-4 shadow-lg relative overflow-hidden">
           <div className="absolute top-0 right-0 w-28 h-28 bg-white/5 rounded-full -mr-8 -mt-8 rotate-45 transform" />
           
           <div className="flex items-center justify-between">
@@ -166,7 +166,7 @@ export const LeavePermission = ({ currentUser }) => {
             <Clock size={18} />
           </div>
 
-          <div className="mt-4 flex items-baseline gap-1">
+          <div className="mt-3.5 flex items-baseline gap-1">
             <span className="text-3xl font-black">{remainingHours.toFixed(1)} hrs</span>
             <span className="text-xs font-semibold text-indigo-200">/ {DEFAULT_MONTHLY_HOURS} hrs Left</span>
           </div>
@@ -174,7 +174,7 @@ export const LeavePermission = ({ currentUser }) => {
           <p className="text-xs text-indigo-100 font-bold mt-1">Monthly allowance for quick checkouts</p>
 
           {/* Progress Bar */}
-          <div className="mt-5 space-y-1">
+          <div className="mt-4 space-y-1">
             <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
               <div className="h-full bg-white rounded-full transition-all duration-300" style={{ width: `${progressPercent}%` }} />
             </div>
@@ -186,23 +186,23 @@ export const LeavePermission = ({ currentUser }) => {
         </div>
 
         {/* Request Form */}
-        <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-md space-y-4">
-          <h4 className="text-sm font-extrabold text-slate-800 pb-2 border-b border-slate-100 uppercase tracking-wider">
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm space-y-3.5">
+          <h4 className="text-xs font-extrabold text-slate-800 pb-2 border-b border-slate-100 uppercase tracking-wider">
             File Permission Request
           </h4>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-3.5">
             
             {/* Date */}
-            <div className="space-y-1.5">
-              <label htmlFor="permDate" className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Date</label>
+            <div className="space-y-1">
+              <label htmlFor="permDate" className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Date</label>
               <div className="relative">
                 <input
                   id="permDate"
                   type="date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                  className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-2.5 text-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200"
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200"
                   required
                 />
               </div>
@@ -210,25 +210,25 @@ export const LeavePermission = ({ currentUser }) => {
 
             {/* Time range */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <label htmlFor="fromTime" className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Start Time</label>
+              <div className="space-y-1">
+                <label htmlFor="fromTime" className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Start Time</label>
                 <input
                   id="fromTime"
                   type="time"
                   value={fromTime}
                   onChange={(e) => setFromTime(e.target.value)}
-                  className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-2.5 text-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                   required
                 />
               </div>
-              <div className="space-y-1.5">
-                <label htmlFor="toTime" className="text-xs font-bold text-slate-500 uppercase tracking-wider block">End Time</label>
+              <div className="space-y-1">
+                <label htmlFor="toTime" className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">End Time</label>
                 <input
                   id="toTime"
                   type="time"
                   value={toTime}
                   onChange={(e) => setToTime(e.target.value)}
-                  className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-2.5 text-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                   required
                 />
               </div>
@@ -236,30 +236,30 @@ export const LeavePermission = ({ currentUser }) => {
 
             {/* Calculated duration display */}
             {calculatedDuration > 0 && (
-              <div className="bg-slate-50 border border-slate-200/50 rounded-2xl p-3 flex items-center justify-between text-xs font-semibold text-slate-600">
+              <div className="bg-slate-50 border border-slate-200/50 rounded-xl p-2.5 flex items-center justify-between text-[11px] font-semibold text-slate-650">
                 <span>Permission Duration:</span>
-                <span className="text-xs font-extrabold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-xl">
+                <span className="text-[11px] font-extrabold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-lg">
                   {calculatedDuration} {calculatedDuration === 1 ? 'Hour' : 'Hours'}
                 </span>
               </div>
             )}
 
             {/* Reason */}
-            <div className="space-y-1.5">
-              <label htmlFor="permReason" className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Reason</label>
+            <div className="space-y-1">
+              <label htmlFor="permReason" className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Reason</label>
               <textarea
                 id="permReason"
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
                 placeholder="Describe reason for permission (e.g. pick up children, dentist slot)..."
-                className="w-full bg-white border border-slate-200 rounded-2xl p-4 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 min-h-[80px] resize-none"
+                className="w-full bg-white border border-slate-200 rounded-xl p-3 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 min-h-[60px] resize-none"
                 required
               />
             </div>
 
             {/* Error Message */}
             {errorMsg && (
-              <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold rounded-2xl">
+              <div className="p-2.5 bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold rounded-xl animate-shake">
                 ⚠️ {errorMsg}
               </div>
             )}
@@ -267,9 +267,9 @@ export const LeavePermission = ({ currentUser }) => {
             {/* Submit Button */}
             <button
               type="submit"
-              className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-extrabold text-xs rounded-2xl shadow-md transition cursor-pointer flex items-center justify-center gap-1.5"
+              className="w-full py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-extrabold text-xs rounded-xl shadow-sm transition cursor-pointer flex items-center justify-center gap-1.5"
             >
-              <Send size={14} />
+              <Send size={13} />
               Submit Permission Request
             </button>
 
@@ -279,23 +279,23 @@ export const LeavePermission = ({ currentUser }) => {
       </div>
 
       {/* Right Side: History registry */}
-      <div className="lg:col-span-7 space-y-6">
+      <div className="lg:col-span-7 space-y-4">
         
-        <div className="glass-card rounded-3xl p-5 border border-slate-200/80 shadow-md">
-          <h4 className="text-sm font-extrabold text-slate-800 pb-2.5 border-b border-slate-100 uppercase tracking-wider mb-4">
+        <div className="glass-card rounded-2xl p-4 border border-slate-200/80 shadow-sm flex flex-col h-full max-h-[500px]">
+          <h4 className="text-xs font-extrabold text-slate-800 pb-2 border-b border-slate-100 uppercase tracking-wider mb-3">
             Permission Request History
           </h4>
 
-          <div className="overflow-x-auto">
+          <div className="overflow-auto min-h-0 flex-1">
             <table className="w-full border-collapse text-left text-xs">
-              <thead>
+              <thead className="sticky top-0 bg-white z-10">
                 <tr className="bg-slate-50 border-b border-slate-200 text-[9px] font-black text-slate-400 uppercase tracking-wider">
-                  <th className="py-3 px-4">Date</th>
-                  <th className="py-3 px-4">Timing</th>
-                  <th className="py-3 px-4 text-center">Duration</th>
-                  <th className="py-3 px-4">Reason</th>
-                  <th className="py-3 px-4 text-center">Status</th>
-                  <th className="py-3 px-4 text-right">Action</th>
+                  <th className="py-2.5 px-3">Date</th>
+                  <th className="py-2.5 px-3">Timing</th>
+                  <th className="py-2.5 px-3 text-center">Duration</th>
+                  <th className="py-2.5 px-3">Reason</th>
+                  <th className="py-2.5 px-3 text-center">Status</th>
+                  <th className="py-2.5 px-3 text-right">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -313,24 +313,24 @@ export const LeavePermission = ({ currentUser }) => {
 
                     return (
                       <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50/50 transition">
-                        <td className="py-3.5 px-4 font-bold text-slate-700">
+                        <td className="py-2.5 px-3 font-bold text-slate-700">
                           {formatDate(item.date)}
                         </td>
-                        <td className="py-3.5 px-4 font-semibold text-slate-600">
+                        <td className="py-2.5 px-3 font-semibold text-slate-600">
                           {item.fromTime} - {item.toTime}
                         </td>
-                        <td className="py-3.5 px-4 text-center font-extrabold text-slate-700">
+                        <td className="py-2.5 px-3 text-center font-extrabold text-slate-700">
                           {item.duration} hr
                         </td>
-                        <td className="py-3.5 px-4 text-slate-500 font-semibold max-w-[130px] truncate" title={item.reason}>
+                        <td className="py-2.5 px-3 text-slate-500 font-semibold max-w-[130px] truncate" title={item.reason}>
                           {item.reason}
                         </td>
-                        <td className="py-3.5 px-4 text-center">
+                        <td className="py-2.5 px-3 text-center">
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold border ${badge}`}>
                             {item.status}
                           </span>
                         </td>
-                        <td className="py-3.5 px-4 text-right">
+                        <td className="py-2.5 px-3 text-right">
                           <div className="flex items-center justify-end gap-1.5">
                             {/* Manager simulator trigger: Approve / Reject simulation directly on screen */}
                             {item.status === 'Pending' ? (
@@ -352,12 +352,12 @@ export const LeavePermission = ({ currentUser }) => {
                               </>
                             ) : (
                               <button
-                                onClick={() => handleDeleteRequest(item.id)}
-                                className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg border border-slate-100 hover:border-rose-100 transition cursor-pointer"
-                                title="Delete entry"
-                              >
-                                <Trash2 size={12} />
-                              </button>
+                                  onClick={() => handleDeleteRequest(item.id)}
+                                  className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg border border-slate-100 hover:border-rose-100 transition cursor-pointer"
+                                  title="Delete entry"
+                                >
+                                  <Trash2 size={12} />
+                                </button>
                             )}
                           </div>
                         </td>
@@ -369,9 +369,8 @@ export const LeavePermission = ({ currentUser }) => {
             </table>
           </div>
         </div>
-
+ 
       </div>
-
     </div>
   );
 };

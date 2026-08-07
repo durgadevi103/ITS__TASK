@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Phone, ShieldCheck } from 'lucide-react';
+import { Phone } from 'lucide-react';
 import { calculateLeaveDays } from '../../utils/leaveUtils';
 import EmployeeCard from './EmployeeCard';
 import ShiftSelector from './ShiftSelector';
@@ -94,28 +94,28 @@ export const LeaveSubmit = ({ currentUser, allowance, onSubmitRequest, onCancel,
   };
 
   return (
-    <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-4">
       
       {/* LEFT COLUMN: Input Form Controls (7 cols on lg) */}
-      <div className="lg:col-span-7 space-y-6">
+      <div className="lg:col-span-7 space-y-4">
         
         {/* Employee Info Section */}
         <EmployeeCard employee={currentUser} />
 
         {/* Small leave balance grid for reference */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 border border-slate-200/80 rounded-3xl p-4 shadow-sm">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-slate-50 border border-slate-200/80 rounded-2xl p-3 shadow-sm">
           {allowance.map(item => (
-            <div key={item.key} className="bg-white p-3 rounded-2xl border border-slate-100 flex flex-col items-center text-center shadow-inner">
+            <div key={item.key} className="bg-white p-2 py-2.5 rounded-xl border border-slate-100 flex flex-col items-center text-center shadow-inner">
               <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{item.key}</span>
-              <span className={`text-base font-extrabold mt-1 ${item.color}`}>{item.remaining}</span>
+              <span className={`text-base font-extrabold mt-0.5 ${item.color}`}>{item.remaining}</span>
               <span className="text-[8px] text-slate-400 font-bold">days left</span>
             </div>
           ))}
         </div>
 
         {/* Request Parameter Form fields */}
-        <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-md space-y-5">
-          <h4 className="text-sm font-extrabold text-slate-800 pb-2.5 border-b border-slate-100 uppercase tracking-wider">Leave Parameters</h4>
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm space-y-3.5">
+          <h4 className="text-xs font-extrabold text-slate-800 pb-2 border-b border-slate-100 uppercase tracking-wider">Leave Parameters</h4>
 
           {/* Shift Picker */}
           <ShiftSelector value={shift} onChange={setShift} />
@@ -130,7 +130,7 @@ export const LeaveSubmit = ({ currentUser, allowance, onSubmitRequest, onCancel,
           />
 
           {/* Leave Type and Reason selection */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <LeaveTypeSelect value={leaveType} onChange={setLeaveType} />
             <ReasonSelect value={leaveReason} onChange={setLeaveReason} />
           </div>
@@ -139,8 +139,8 @@ export const LeaveSubmit = ({ currentUser, allowance, onSubmitRequest, onCancel,
           <PrioritySelect value={priority} onChange={setPriority} />
 
           {/* Emergency Contact */}
-          <div className="space-y-1.5">
-            <label htmlFor="emergencyPhone" className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Emergency Contact Number</label>
+          <div className="space-y-1">
+            <label htmlFor="emergencyPhone" className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Emergency Contact Number</label>
             <div className="relative">
               <input
                 id="emergencyPhone"
@@ -148,11 +148,11 @@ export const LeaveSubmit = ({ currentUser, allowance, onSubmitRequest, onCancel,
                 value={emergencyPhone}
                 onChange={(e) => setEmergencyPhone(e.target.value)}
                 placeholder="Enter emergency mobile number..."
-                className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 pl-10 text-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200"
+                className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 pl-9 text-xs text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200"
                 required
               />
               <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-400">
-                <Phone size={15} />
+                <Phone size={13} />
               </div>
             </div>
           </div>
@@ -165,21 +165,21 @@ export const LeaveSubmit = ({ currentUser, allowance, onSubmitRequest, onCancel,
 
           {/* Error Message */}
           {errorMessage && (
-            <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold rounded-2xl animate-shake">
+            <div className="p-2.5 bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold rounded-xl animate-shake">
               ⚠️ {errorMessage}
             </div>
           )}
 
           {/* Declaration Checkbox */}
-          <label className="flex items-start gap-3 p-3.5 bg-slate-50 rounded-2xl border border-slate-200/50 cursor-pointer hover:bg-slate-100/50 select-none group">
+          <label className="flex items-start gap-2.5 p-2.5 bg-slate-50 rounded-xl border border-slate-200/50 cursor-pointer hover:bg-slate-100/50 select-none group">
             <input
               type="checkbox"
               checked={declarationAccepted}
               onChange={(e) => setDeclarationAccepted(e.target.checked)}
-              className="mt-0.5 w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+              className="mt-0.5 w-3.5 h-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
             />
-            <span className="text-xs font-semibold text-slate-500 leading-relaxed group-hover:text-slate-700">
-              I hereby declare that this leave request is filed for legitimate reasons. I will hand over my outstanding duties to my department before proceeding with my time-off.
+            <span className="text-[11px] font-semibold text-slate-500 leading-normal group-hover:text-slate-700">
+              I declare that this leave request is filed for legitimate reasons. I will hand over my outstanding duties to my department before my time-off.
             </span>
           </label>
 
@@ -193,7 +193,7 @@ export const LeaveSubmit = ({ currentUser, allowance, onSubmitRequest, onCancel,
       </div>
 
       {/* RIGHT COLUMN: Interactive Widgets (5 cols on lg) */}
-      <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-20 self-start">
+      <div className="lg:col-span-5 space-y-4 self-start">
         
         {/* Interactive Month Grid Calendar */}
         <LeaveCalendar

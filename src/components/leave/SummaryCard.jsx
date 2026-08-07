@@ -12,24 +12,24 @@ export const SummaryCard = ({ stats }) => {
   ];
 
   return (
-    <div className="glass-card rounded-3xl p-5 border border-slate-200/80 shadow-md">
-      <h4 className="text-sm font-extrabold text-slate-800 mb-3.5 pb-2 border-b border-slate-100">
+    <div className="glass-card rounded-2xl p-4 border border-slate-200/80 shadow-sm">
+      <h4 className="text-xs font-extrabold text-slate-800 mb-2 pb-1.5 border-b border-slate-100 uppercase tracking-wider">
         Monthly Summary
       </h4>
-      <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-5 md:grid-cols-2 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-5 md:grid-cols-2 lg:grid-cols-5 gap-2">
         {cards.map((card, idx) => {
           const Icon = card.icon;
           return (
             <motion.div
               key={idx}
-              whileHover={{ y: -3 }}
-              className={`p-3 rounded-2xl border flex flex-col justify-between gap-2 transition-all ${card.color}`}
+              whileHover={{ y: -2 }}
+              className={`p-2 px-2.5 rounded-xl border flex flex-col justify-between gap-1 transition-all ${card.color}`}
             >
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold tracking-tight uppercase opacity-80">{card.label}</span>
-                <Icon size={14} className="opacity-70" />
+                <span className="text-[8px] font-bold tracking-tight uppercase opacity-85">{card.label}</span>
+                <Icon size={12} className="opacity-70" />
               </div>
-              <span className="text-xl font-black">{card.value}</span>
+              <span className="text-lg font-black">{card.value}</span>
             </motion.div>
           );
         })}

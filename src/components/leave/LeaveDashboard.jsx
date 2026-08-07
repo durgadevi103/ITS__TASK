@@ -95,25 +95,6 @@ export const LeaveDashboard = ({ stats, allowance, requests = [], onNavigateToTa
         </motion.div>
       </motion.div>
 
-      {/* 3. Recent Submissions Registry Table (Full Width) */}
-      <motion.div 
-        variants={sectionVariants}
-        className="space-y-4"
-      >
-        <div className="flex justify-between items-center px-1">
-          <div>
-            <h4 className="text-base font-extrabold text-slate-800 tracking-tight">Recent Submissions Registry</h4>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Manager actions log</p>
-          </div>
-        </div>
-
-        <LeaveTable 
-          data={recentRequests} 
-          onUpdateStatus={onUpdateStatus} 
-          isAdmin={true} 
-        />
-      </motion.div>
-
     </motion.div>
   );
 };

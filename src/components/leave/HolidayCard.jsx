@@ -10,33 +10,30 @@ export const HolidayCard = () => {
   ];
 
   return (
-    <div className="space-y-4">
-      {/* Holidays List */}
-      <div className="glass-card rounded-3xl p-5 border border-slate-200/80 shadow-md">
-        <div className="flex items-center justify-between mb-3.5 pb-2.5 border-b border-slate-100">
-          <h4 className="text-sm font-extrabold text-slate-800 flex items-center gap-1.5">
-            <CalendarRange size={16} className="text-rose-500" />
-            Upcoming Holidays
-          </h4>
-          <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full select-none cursor-pointer hover:bg-blue-100">
-            View All
-          </span>
-        </div>
-        
-        <div className="space-y-2.5">
-          {holidays.map((h, index) => (
-            <div
-              key={index}
-              className={`p-3 rounded-2xl border flex items-center justify-between ${h.color} hover:scale-[1.01] transition-transform duration-200`}
-            >
-              <div>
-                <h5 className="text-xs font-black tracking-tight">{h.name}</h5>
-                <p className="text-[9px] font-bold opacity-80 mt-0.5">{h.type} • {h.day}</p>
-              </div>
-              <span className="text-[10px] font-black text-right">{h.date}</span>
+    <div className="glass-card rounded-2xl p-4 border border-slate-200/80 shadow-sm">
+      <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-100">
+        <h4 className="text-xs font-extrabold text-slate-800 flex items-center gap-1.5 uppercase tracking-wider">
+          <CalendarRange size={14} className="text-rose-500" />
+          Upcoming Holidays
+        </h4>
+        <span className="text-[9px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full select-none cursor-pointer hover:bg-blue-100">
+          View All
+        </span>
+      </div>
+      
+      <div className="space-y-2">
+        {holidays.map((h, index) => (
+          <div
+            key={index}
+            className={`p-2 px-2.5 rounded-xl border flex items-center justify-between ${h.color} hover:scale-[1.01] transition-transform duration-200`}
+          >
+            <div>
+              <h5 className="text-[11px] font-black tracking-tight">{h.name}</h5>
+              <p className="text-[8px] font-bold opacity-80 mt-0">{h.type} • {h.day}</p>
             </div>
-          ))}
-        </div>
+            <span className="text-[9px] font-black text-right">{h.date}</span>
+          </div>
+        ))}
       </div>
     </div>
   );

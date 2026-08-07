@@ -103,7 +103,7 @@ const Layout = ({ currentUser, setCurrentUser }) => {
           }}
         />
 
-        <main className={`ml-0 mt-16 w-full min-h-[calc(100vh-4rem)] overflow-y-auto transition-all duration-300 ${isExpanded
+        <main className={`ml-0 mt-16 w-full h-[calc(100vh-4rem)] overflow-hidden transition-all duration-300 ${isExpanded
             ? "md:ml-64 md:w-[calc(100%-16rem)]"
             : "md:ml-16 md:w-[calc(100%-4rem)]"
           }`}>

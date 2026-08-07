@@ -9,9 +9,9 @@ export const PrioritySelect = ({ value, onChange }) => {
   ];
 
   return (
-    <div className="space-y-2">
-      <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Priority</label>
-      <div className="flex gap-2">
+    <div className="space-y-1">
+      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Priority</label>
+      <div className="flex gap-1.5">
         {priorities.map((item) => {
           const isSelected = value === item.id;
           return (
@@ -19,13 +19,13 @@ export const PrioritySelect = ({ value, onChange }) => {
               key={item.id}
               type="button"
               onClick={() => onChange(item.id)}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-2xl text-xs font-extrabold border transition-all duration-200 cursor-pointer ${
+              className={`flex-1 flex items-center justify-center gap-1 py-1.5 px-3 rounded-xl text-xs font-extrabold border transition-all duration-200 cursor-pointer ${
                 isSelected 
                   ? `${item.color} ring-2 ring-offset-2 ring-slate-900 border-transparent shadow-sm` 
-                  : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                  : 'bg-white text-slate-650 border-slate-200 hover:bg-slate-50'
               }`}
             >
-              <AlertCircle size={14} className={isSelected ? 'animate-bounce' : 'text-slate-400'} />
+              <AlertCircle size={13} className={isSelected ? 'animate-bounce' : 'text-slate-400'} />
               {item.label}
             </button>
           );

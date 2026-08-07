@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, FileSpreadsheet, CalendarDays, History, Hourglass, Briefcase } from 'lucide-react';
+import { LayoutDashboard, FileSpreadsheet, History, Hourglass } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export const LeaveTabs = ({ activeTab, onChange }) => {
@@ -11,7 +11,7 @@ export const LeaveTabs = ({ activeTab, onChange }) => {
   ];
 
   return (
-    <div className="border-b border-slate-200 mb-6 bg-white/50 backdrop-blur rounded-2xl p-1.5 flex flex-wrap gap-1 shadow-sm">
+    <div className="border-b border-slate-200 mb-0 bg-white/50 backdrop-blur rounded-2xl px-1.5 py-1 flex gap-2 overflow-x-auto whitespace-nowrap shadow-sm">
       {tabs.map((tab) => {
         const Icon = tab.icon;
         const isActive = activeTab === tab.id;
@@ -20,7 +20,7 @@ export const LeaveTabs = ({ activeTab, onChange }) => {
           <button
             key={tab.id}
             onClick={() => onChange(tab.id)}
-            className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors duration-250 cursor-pointer ${
+            className={`relative flex items-center gap-2 px-2.5 py-1 rounded-xl text-xs sm:text-sm font-semibold transition-colors duration-250 cursor-pointer ${
               isActive ? 'text-blue-600 font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
             }`}
           >

@@ -8,9 +8,8 @@ export const EmployeeCard = ({ employee }) => {
   const desig = employee?.emp_designation || employee?.emp_desigation || 'Senior Frontend Engineer';
   const email = employee?.emp_email || employee?.email || 'employee@company.com';
   const managerName = employee?.emp_manager || 'Srinivasan Raman'; // Representative senior manager
-
   return (
-    <div className="glass-card rounded-3xl p-5 border border-slate-200/80 shadow-md relative overflow-hidden group">
+    <div className="glass-card rounded-2xl p-4 border border-slate-200/80 shadow-sm relative overflow-hidden group">
       {/* Decorative Glow */}
       <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-500/10 to-indigo-500/10 blur-2xl rounded-full" />
       
@@ -41,7 +40,7 @@ export const EmployeeCard = ({ employee }) => {
       </div>
 
       {/* Structured Details Grid */}
-      <div className="grid grid-cols-2 gap-4 mt-5 pt-4 border-t border-slate-100">
+      <div className="grid grid-cols-2 gap-3 mt-3.5 pt-3 border-t border-slate-100">
         <div className="space-y-0.5">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Department</span>
           <span className="text-xs font-bold text-slate-700 flex items-center gap-1">
@@ -59,7 +58,7 @@ export const EmployeeCard = ({ employee }) => {
       </div>
 
       {/* Reporting Manager details */}
-      <div className="bg-slate-50 rounded-2xl p-3 mt-4 border border-slate-100 flex items-center justify-between">
+      <div className="bg-slate-50 rounded-xl p-2.5 mt-3 border border-slate-100 flex items-center justify-between">
         <div>
           <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Reporting Manager</span>
           <span className="text-xs font-bold text-slate-700">{managerName}</span>

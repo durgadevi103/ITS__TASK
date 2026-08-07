@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Phone, Clock, Send, XCircle, Trash2, CheckCircle2, Info, CalendarDays } from 'lucide-react';
+import { Phone, Clock, Send, XCircle, Trash2, CheckCircle2, Info } from 'lucide-react';
 import { useLeave } from '../../hooks/useLeave';
 import LeaveHeader from './LeaveHeader';
 import LeaveTabs from './LeaveTabs';
@@ -127,19 +127,19 @@ export const LeaveManagement = () => {
   };
 
   return (
-    <div className="p-6 bg-slate-50 flex flex-col min-h-[calc(100vh-4rem)] h-[calc(100vh-4rem)] overflow-hidden">
-      <div className="sticky top-0 z-20 bg-slate-50/95 backdrop-blur-xl border-b border-slate-200/70 pb-4 pt-4">
+    <div className="px-4 pb-4 bg-slate-50 flex flex-col min-h-[calc(100vh-4rem)] h-[calc(100vh-4rem)] overflow-hidden">
+      <div className="sticky top-0 z-20 bg-slate-50/95 backdrop-blur-xl border-b border-slate-200/70 py-2">
         <LeaveHeader
           title="Leave & Time-Off Management"
           activeTab={activeTab}
         />
 
-        <div className="mt-4">
+        <div className="mt-5">
           <LeaveTabs activeTab={activeTab} onChange={setActiveTab} />
         </div>
       </div>
 
-      <div className="mt-4 overflow-y-auto flex-1 pr-1 pb-6">
+      <div className={`mt-1.5 flex-1 pr-1 ${['dashboard', 'permission'].includes(activeTab) ? 'overflow-hidden pb-1' : 'overflow-y-auto pb-3'}`}>
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
@@ -160,12 +160,12 @@ const LeaveDashboardView = ({ stats = {}, allowance = [], requests = [], onUpdat
   const recentRequests = requests.slice(0, 5);
 
   return (
-    <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-8 relative pb-10">
+    <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-4 relative pb-0">
       <motion.div variants={sectionVariants}>
         <DashboardStatsGrid stats={stats} requests={requests} />
       </motion.div>
 
-      <motion.div variants={sectionVariants} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <motion.div variants={sectionVariants} className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <motion.div
           whileHover={{ y: -4, border: '1px solid rgba(37, 99, 235, 0.25)' }}
           className="glass-card rounded-3xl p-6 border border-slate-200/80 shadow-md lg:col-span-2 relative group hover:shadow-xl transition-all duration-300 bg-white/70 backdrop-blur-xl"
@@ -197,16 +197,6 @@ const LeaveDashboardView = ({ stats = {}, allowance = [], requests = [], onUpdat
         </motion.div>
       </motion.div>
 
-      <motion.div variants={sectionVariants} className="space-y-4">
-        <div className="flex justify-between items-center px-1">
-          <div>
-            <h4 className="text-base font-extrabold text-slate-800 tracking-tight">Recent Submissions Registry</h4>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Manager actions log</p>
-          </div>
-        </div>
-
-        <LeaveTable data={recentRequests} onUpdateStatus={onUpdateStatus} isAdmin={true} />
-      </motion.div>
     </motion.div>
   );
 };
@@ -280,22 +270,22 @@ const LeaveSubmitView = ({ currentUser = {}, allowance = [], onSubmitRequest, on
   };
 
   return (
-    <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-      <div className="lg:col-span-7 space-y-6">
+    <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <div className="lg:col-span-7 space-y-4">
         <EmployeeCard employee={currentUser} />
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 border border-slate-200/80 rounded-3xl p-4 shadow-sm">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-slate-50 border border-slate-200/80 rounded-2xl p-3 shadow-sm">
           {allowance.map((item) => (
-            <div key={item.key} className="bg-white p-3 rounded-2xl border border-slate-100 flex flex-col items-center text-center shadow-inner">
+            <div key={item.key} className="bg-white p-2 py-2.5 rounded-xl border border-slate-100 flex flex-col items-center text-center shadow-inner">
               <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{item.key}</span>
-              <span className={`text-base font-extrabold mt-1 ${item.color}`}>{item.remaining}</span>
+              <span className={`text-base font-extrabold mt-0.5 ${item.color}`}>{item.remaining}</span>
               <span className="text-[8px] text-slate-400 font-bold">days left</span>
             </div>
           ))}
         </div>
 
-        <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-md space-y-5">
-          <h4 className="text-sm font-extrabold text-slate-800 pb-2.5 border-b border-slate-100 uppercase tracking-wider">Leave Parameters</h4>
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm space-y-3.5">
+          <h4 className="text-xs font-extrabold text-slate-800 pb-2 border-b border-slate-100 uppercase tracking-wider">Leave Parameters</h4>
 
           <ShiftSelector value={shift} onChange={setShift} />
 
@@ -307,15 +297,15 @@ const LeaveSubmitView = ({ currentUser = {}, allowance = [], onSubmitRequest, on
             totalDays={leaveDays}
           />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <LeaveTypeSelect value={leaveType} onChange={setLeaveType} />
             <ReasonSelect value={leaveReason} onChange={setLeaveReason} />
           </div>
 
           <PrioritySelect value={priority} onChange={setPriority} />
 
-          <div className="space-y-1.5">
-            <label htmlFor="emergencyPhone" className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Emergency Contact Number</label>
+          <div className="space-y-1">
+            <label htmlFor="emergencyPhone" className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Emergency Contact Number</label>
             <div className="relative">
               <input
                 id="emergencyPhone"
@@ -323,11 +313,11 @@ const LeaveSubmitView = ({ currentUser = {}, allowance = [], onSubmitRequest, on
                 value={emergencyPhone}
                 onChange={(e) => setEmergencyPhone(e.target.value)}
                 placeholder="Enter emergency mobile number..."
-                className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 pl-10 text-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200"
+                className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 pl-9 text-xs text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200"
                 required
               />
               <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-400">
-                <Phone size={15} />
+                <Phone size={13} />
               </div>
             </div>
           </div>
@@ -337,20 +327,20 @@ const LeaveSubmitView = ({ currentUser = {}, allowance = [], onSubmitRequest, on
           <CommentBox value={comments} onChange={setComments} />
 
           {errorMessage && (
-            <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold rounded-2xl animate-shake">
+            <div className="p-2.5 bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold rounded-xl animate-shake">
               ⚠️ {errorMessage}
             </div>
           )}
 
-          <label className="flex items-start gap-3 p-3.5 bg-slate-50 rounded-2xl border border-slate-200/50 cursor-pointer hover:bg-slate-100/50 select-none group">
+          <label className="flex items-start gap-2.5 p-2.5 bg-slate-50 rounded-xl border border-slate-200/50 cursor-pointer hover:bg-slate-100/50 select-none group">
             <input
               type="checkbox"
               checked={declarationAccepted}
               onChange={(e) => setDeclarationAccepted(e.target.checked)}
-              className="mt-0.5 w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+              className="mt-0.5 w-3.5 h-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
             />
-            <span className="text-xs font-semibold text-slate-500 leading-relaxed group-hover:text-slate-700">
-              I hereby declare that this leave request is filed for legitimate reasons. I will hand over my outstanding duties to my department before proceeding with my time-off.
+            <span className="text-[11px] font-semibold text-slate-500 leading-normal group-hover:text-slate-700">
+              I declare that this leave request is filed for legitimate reasons. I will hand over my outstanding duties to my department before my time-off.
             </span>
           </label>
 
@@ -358,7 +348,7 @@ const LeaveSubmitView = ({ currentUser = {}, allowance = [], onSubmitRequest, on
         </div>
       </div>
 
-      <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-20 self-start">
+      <div className="lg:col-span-5 space-y-4 self-start">
         <LeaveCalendar selectedFrom={fromDate} selectedTo={toDate} leaveRequests={leaveRequests} />
         <SummaryCard stats={stats} />
         <HolidayCard />
@@ -368,18 +358,7 @@ const LeaveSubmitView = ({ currentUser = {}, allowance = [], onSubmitRequest, on
 };
 
 const LeaveHistoryView = ({ requests = [], onUpdateStatus, loading = false }) => (
-  <div className="space-y-6">
-    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-3xl p-5 flex items-start gap-4">
-      <div className="w-10 h-10 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0 shadow-inner">
-        <Info size={18} />
-      </div>
-      <div className="space-y-1">
-        <h4 className="text-sm font-extrabold text-slate-800">Global Leave Registry</h4>
-        <p className="text-xs text-slate-500 leading-relaxed font-semibold">
-          Below is the list of all leave requests submitted across all departments. Administrators and Managers can use the action buttons (✓/✗) on pending requests to approve or reject them.
-        </p>
-      </div>
-    </div>
+  <div className="space-y-4">
 
     {loading ? (
       <div className="bg-white border border-slate-200/80 rounded-3xl p-20 flex flex-col items-center justify-center gap-3 shadow-sm">
@@ -507,23 +486,21 @@ const LeavePermissionView = ({ currentUser = {} }) => {
     saveToStorage(permissionList.map((item) => (item.id === id ? { ...item, status } : item)));
   };
 
-  const progressPercent = (remainingHours / DEFAULT_MONTHLY_HOURS) * 100;
-
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-      <div className="lg:col-span-5 space-y-6">
-        <div className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-3xl p-5 shadow-lg relative overflow-hidden">
+  const progressPercent = (remainingHours / DEFAULT_MONTHLY_HOURS) * 100;  return (
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <div className="lg:col-span-5 space-y-4">
+        <div className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-2xl p-4 shadow-lg relative overflow-hidden">
           <div className="absolute top-0 right-0 w-28 h-28 bg-white/5 rounded-full -mr-8 -mt-8 rotate-45 transform" />
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-black uppercase tracking-wider text-indigo-100 bg-white/10 px-2 py-0.5 rounded-full">Hourly Permission</span>
             <Clock size={18} />
           </div>
-          <div className="mt-4 flex items-baseline gap-1">
+          <div className="mt-3.5 flex items-baseline gap-1">
             <span className="text-3xl font-black">{remainingHours.toFixed(1)} hrs</span>
             <span className="text-xs font-semibold text-indigo-200">/ {DEFAULT_MONTHLY_HOURS} hrs Left</span>
           </div>
           <p className="text-xs text-indigo-100 font-bold mt-1">Monthly allowance for quick checkouts</p>
-          <div className="mt-5 space-y-1">
+          <div className="mt-4 space-y-1">
             <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
               <div className="h-full bg-white rounded-full transition-all duration-300" style={{ width: `${progressPercent}%` }} />
             </div>
@@ -534,98 +511,98 @@ const LeavePermissionView = ({ currentUser = {} }) => {
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-md space-y-4">
-          <h4 className="text-sm font-extrabold text-slate-800 pb-2.5 border-b border-slate-100 uppercase tracking-wider">File Permission Request</h4>
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm space-y-3.5">
+          <h4 className="text-xs font-extrabold text-slate-800 pb-2 border-b border-slate-100 uppercase tracking-wider">File Permission Request</h4>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-1.5">
-              <label htmlFor="permDate" className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Date</label>
+          <form onSubmit={handleSubmit} className="space-y-3.5">
+            <div className="space-y-1">
+              <label htmlFor="permDate" className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Date</label>
               <input
                 id="permDate"
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-2.5 text-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200"
+                className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200"
                 required
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <label htmlFor="fromTime" className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Start Time</label>
+              <div className="space-y-1">
+                <label htmlFor="fromTime" className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Start Time</label>
                 <input
                   id="fromTime"
                   type="time"
                   value={fromTime}
                   onChange={(e) => setFromTime(e.target.value)}
-                  className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-2.5 text-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                   required
                 />
               </div>
-              <div className="space-y-1.5">
-                <label htmlFor="toTime" className="text-xs font-bold text-slate-500 uppercase tracking-wider block">End Time</label>
+              <div className="space-y-1">
+                <label htmlFor="toTime" className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">End Time</label>
                 <input
                   id="toTime"
                   type="time"
                   value={toTime}
                   onChange={(e) => setToTime(e.target.value)}
-                  className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-2.5 text-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                   required
                 />
               </div>
             </div>
 
             {calculatedDuration > 0 && (
-              <div className="bg-slate-50 border border-slate-200/50 rounded-2xl p-3 flex items-center justify-between text-xs font-semibold text-slate-600">
+              <div className="bg-slate-50 border border-slate-200/50 rounded-xl p-2.5 flex items-center justify-between text-[11px] font-semibold text-slate-650">
                 <span>Permission Duration:</span>
-                <span className="text-xs font-extrabold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-xl">
+                <span className="text-[11px] font-extrabold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-lg">
                   {calculatedDuration} {calculatedDuration === 1 ? 'Hour' : 'Hours'}
                 </span>
               </div>
             )}
 
-            <div className="space-y-1.5">
-              <label htmlFor="permReason" className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Reason</label>
+            <div className="space-y-1">
+              <label htmlFor="permReason" className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Reason</label>
               <textarea
                 id="permReason"
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
                 placeholder="Describe reason for permission (e.g. pick up children, dentist slot)..."
-                className="w-full bg-white border border-slate-200 rounded-2xl p-4 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 min-h-[80px] resize-none"
+                className="w-full bg-white border border-slate-200 rounded-xl p-3 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 min-h-[60px] resize-none"
                 required
               />
             </div>
 
             {errorMsg && (
-              <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold rounded-2xl">
+              <div className="p-2.5 bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold rounded-xl animate-shake">
                 ⚠️ {errorMsg}
               </div>
             )}
 
             <button
               type="submit"
-              className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-extrabold text-xs rounded-2xl shadow-md transition cursor-pointer flex items-center justify-center gap-1.5"
+              className="w-full py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-extrabold text-xs rounded-xl shadow-sm transition cursor-pointer flex items-center justify-center gap-1.5"
             >
-              <Send size={14} />
+              <Send size={13} />
               Submit Permission Request
             </button>
           </form>
         </div>
       </div>
 
-      <div className="lg:col-span-7 space-y-6">
-        <div className="glass-card rounded-3xl p-5 border border-slate-200/80 shadow-md">
-          <h4 className="text-sm font-extrabold text-slate-800 pb-2.5 border-b border-slate-100 uppercase tracking-wider mb-4">Permission Request History</h4>
-          <div className="overflow-x-auto">
+      <div className="lg:col-span-7 space-y-4">
+        <div className="glass-card rounded-2xl p-4 border border-slate-200/80 shadow-sm flex flex-col h-full max-h-[500px]">
+          <h4 className="text-xs font-extrabold text-slate-800 pb-2 border-b border-slate-100 uppercase tracking-wider mb-3">Permission Request History</h4>
+          <div className="overflow-auto min-h-0 flex-1">
             <table className="w-full border-collapse text-left text-xs">
-              <thead>
+              <thead className="sticky top-0 bg-white z-10">
                 <tr className="bg-slate-50 border-b border-slate-200 text-[9px] font-black text-slate-400 uppercase tracking-wider">
-                  <th className="py-3 px-4">Date</th>
-                  <th className="py-3 px-4">Timing</th>
-                  <th className="py-3 px-4 text-center">Duration</th>
-                  <th className="py-3 px-4">Reason</th>
-                  <th className="py-3 px-4 text-center">Status</th>
-                  <th className="py-3 px-4 text-right">Action</th>
+                  <th className="py-2.5 px-3">Date</th>
+                  <th className="py-2.5 px-3">Timing</th>
+                  <th className="py-2.5 px-3 text-center">Duration</th>
+                  <th className="py-2.5 px-3">Reason</th>
+                  <th className="py-2.5 px-3 text-center">Status</th>
+                  <th className="py-2.5 px-3 text-right">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -642,16 +619,16 @@ const LeavePermissionView = ({ currentUser = {} }) => {
                     if (item.status === 'Rejected') badge = 'bg-rose-50 text-rose-700 border-rose-100';
                     return (
                       <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50/50 transition">
-                        <td className="py-3.5 px-4 font-bold text-slate-700">{formatDate(item.date)}</td>
-                        <td className="py-3.5 px-4 font-semibold text-slate-600">{item.fromTime} - {item.toTime}</td>
-                        <td className="py-3.5 px-4 text-center font-extrabold text-slate-700">{item.duration} hr</td>
-                        <td className="py-3.5 px-4 text-slate-500 font-semibold max-w-[130px] truncate" title={item.reason}>{item.reason}</td>
-                        <td className="py-3.5 px-4 text-center">
+                        <td className="py-2.5 px-3 font-bold text-slate-700">{formatDate(item.date)}</td>
+                        <td className="py-2.5 px-3 font-semibold text-slate-650">{item.fromTime} - {item.toTime}</td>
+                        <td className="py-2.5 px-3 text-center font-extrabold text-slate-700">{item.duration} hr</td>
+                        <td className="py-2.5 px-3 text-slate-500 font-semibold max-w-[130px] truncate" title={item.reason}>{item.reason}</td>
+                        <td className="py-2.5 px-3 text-center">
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold border ${badge}`}>
                             {item.status}
                           </span>
                         </td>
-                        <td className="py-3.5 px-4 text-right">
+                        <td className="py-2.5 px-3 text-right">
                           <div className="flex items-center justify-end gap-1.5">
                             {item.status === 'Pending' ? (
                               <>

@@ -108,35 +108,35 @@ export const LeaveCalendar = ({ selectedFrom, selectedTo, leaveRequests = [] }) 
   const weekdays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
   return (
-    <div className="glass-card rounded-3xl p-5 border border-slate-200/80 shadow-md">
+    <div className="glass-card rounded-2xl p-4 border border-slate-200/80 shadow-sm">
       {/* Calendar Header Controls */}
-      <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
-        <h4 className="text-sm font-extrabold text-slate-800 flex items-center gap-1.5">
-          <CalendarIcon size={16} className="text-blue-500" />
+      <div className="flex items-center justify-between mb-2 pb-2 border-b border-slate-100">
+        <h4 className="text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
+          <CalendarIcon size={14} className="text-blue-500" />
           {monthNames[month]} {year}
         </h4>
         <div className="flex gap-1">
           <button
             type="button"
             onClick={handlePrevMonth}
-            className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition cursor-pointer"
+            className="p-1 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition cursor-pointer"
           >
-            <ChevronLeft size={16} />
+            <ChevronLeft size={14} />
           </button>
           <button
             type="button"
             onClick={handleNextMonth}
-            className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition cursor-pointer"
+            className="p-1 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition cursor-pointer"
           >
-            <ChevronRight size={16} />
+            <ChevronRight size={14} />
           </button>
         </div>
       </div>
 
       {/* Weekday Titles */}
-      <div className="grid grid-cols-7 text-center gap-1 mb-2">
+      <div className="grid grid-cols-7 text-center gap-1 mb-1">
         {weekdays.map((w, idx) => (
-          <span key={idx} className="text-[10px] font-black text-slate-400 select-none">
+          <span key={idx} className="text-[9px] font-black text-slate-400 select-none">
             {w}
           </span>
         ))}
@@ -146,11 +146,11 @@ export const LeaveCalendar = ({ selectedFrom, selectedTo, leaveRequests = [] }) 
       <div className="grid grid-cols-7 gap-1 text-center font-semibold text-xs">
         {daysInMonth.map((cell) => {
           if (cell.padding) {
-            return <div key={cell.key} className="p-2 text-transparent" />;
+            return <div key={cell.key} className="p-1 text-transparent" />;
           }
 
           // Compute cell classes
-          let cellStyle = 'relative p-2 rounded-xl flex flex-col items-center justify-center h-10 select-none transition-all duration-200 ';
+          let cellStyle = 'relative p-1 rounded-lg flex flex-col items-center justify-center h-8.5 select-none transition-all duration-200 ';
           let labelStyle = 'text-slate-700 ';
 
           if (cell.isToday) {
@@ -184,14 +184,14 @@ export const LeaveCalendar = ({ selectedFrom, selectedTo, leaveRequests = [] }) 
               
               {/* Overlay indicators */}
               {cell.holiday && !cell.isSelected && (
-                <span className="absolute bottom-0.5 left-1/2 transform -translate-x-1/2 px-1 text-[7px] font-bold bg-blue-500 text-white rounded uppercase scale-90">
+                <span className="absolute bottom-0.5 left-1/2 transform -translate-x-1/2 px-0.5 text-[6px] font-bold bg-blue-500 text-white rounded uppercase scale-90">
                   HOL
                 </span>
               )}
 
               {/* Mini dots indicator (if approved/pending and not selected) */}
               {!cell.holiday && !cell.isSelected && (cell.isApproved || cell.isPending) && (
-                <span className={`absolute bottom-1 w-1.5 h-1.5 rounded-full ${
+                <span className={`absolute bottom-0.5 w-1 h-1 rounded-full ${
                   cell.isApproved ? 'bg-emerald-500' : 'bg-amber-500'
                 }`} />
               )}
@@ -201,17 +201,17 @@ export const LeaveCalendar = ({ selectedFrom, selectedTo, leaveRequests = [] }) 
       </div>
 
       {/* Calendar Legend */}
-      <div className="mt-4 pt-3 border-t border-slate-100 grid grid-cols-3 gap-2 text-[9px] font-black uppercase tracking-wider text-slate-400">
-        <div className="flex items-center gap-1.5 justify-center">
-          <span className="w-2 h-2 rounded-full bg-emerald-500" />
+      <div className="mt-2.5 pt-2 border-t border-slate-100 grid grid-cols-3 gap-1.5 text-[8px] font-black uppercase tracking-wider text-slate-400">
+        <div className="flex items-center gap-1 justify-center">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
           <span>Approved</span>
         </div>
-        <div className="flex items-center gap-1.5 justify-center">
-          <span className="w-2 h-2 rounded-full bg-amber-500" />
+        <div className="flex items-center gap-1 justify-center">
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
           <span>Pending</span>
         </div>
-        <div className="flex items-center gap-1.5 justify-center">
-          <span className="w-2 h-2 rounded-full bg-blue-500" />
+        <div className="flex items-center gap-1 justify-center">
+          <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
           <span>Holiday</span>
         </div>
       </div>
