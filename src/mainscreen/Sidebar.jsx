@@ -49,10 +49,11 @@ const Sidebar = ({ frstValue, isOpen, onClose, currentUser, setCurrentUser, onMo
       <div
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
-        className={`fixed top-0 left-0 h-full bg-gradient-to-b from-[#2b589f] via-[#108985] to-[#119e73] text-white z-50 transition-all duration-300 ease-in-out flex flex-col justify-between border-r border-[#119e73]/20 shadow-xl overflow-visible group ${isPinned || isOpen
+        className={`fixed top-0 left-0 h-full bg-gradient-to-b from-[#2b589f] via-[#108985] to-[#119e73] text-white z-50 transition-all duration-300 ease-in-out flex flex-col justify-between border-r border-[#119e73]/20 shadow-xl overflow-visible group ${
+          isOpen
             ? "translate-x-0 w-64"
-            : "-translate-x-full md:translate-x-0 w-16 hover:w-64"
-          }`}
+            : `-translate-x-full md:translate-x-0 ${isPinned ? "md:w-64" : "md:w-16 md:hover:w-64"}`
+        }`}
       >
         {/* Floating Pin Button Handle on Right Edge (Desktop only) */}
         <button

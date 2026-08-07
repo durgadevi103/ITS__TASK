@@ -26,8 +26,8 @@ export const LeaveManagement = () => {
       setCurrentUser({
         emp_id: 1,
         employee_id: 1,
-        emp_name: 'Durgadevi Balakrishnan',
-        fullName: 'Durgadevi Balakrishnan',
+        emp_name: 'Durgadevi',
+        fullName: 'Durgadevi',
         emp_email: 'durga@company.com',
         email: 'durga@company.com',
         emp_dept: 'Engineering',
@@ -99,7 +99,6 @@ export const LeaveManagement = () => {
       {/* 1. Page Header */}
       <LeaveHeader 
         title="Leave & Time-Off Management" 
-        subtitle="Apply for leave, track vacation allowance, and request hourly checkout permissions." 
         activeTab={activeTab} 
       />
 

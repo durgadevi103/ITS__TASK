@@ -271,7 +271,112 @@ export const LeaveTable = ({ data = [], onUpdateStatus, isAdmin = false }) => {
 
       {/* Main Data Table */}
       <div className="bg-white border border-slate-200/80 rounded-3xl shadow-sm overflow-hidden">
-        <div className="overflow-x-auto min-h-[300px]">
+        {/* Mobile Card / Vertical View */}
+        <div className="md:hidden divide-y divide-slate-100/80">
+          {paginatedData.length === 0 ? (
+            <div className="py-20 text-center">
+              <div className="flex flex-col items-center justify-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center text-xl shadow-inner">
+                  📭
+                </div>
+                <div>
+                  <h4 className="text-sm font-extrabold text-slate-800">No Leave Requests Found</h4>
+                  <p className="text-xs text-slate-400 mt-1">Try adjusting your filters or search criteria.</p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            paginatedData.map((row) => {
+              // Render status badge
+              let statusBadge = '';
+              if (row.leave_status === 'Approved') {
+                statusBadge = 'bg-emerald-50 text-emerald-700 border-emerald-100';
+              } else if (row.leave_status === 'Rejected') {
+                statusBadge = 'bg-rose-50 text-rose-700 border-rose-100';
+              } else {
+                statusBadge = 'bg-amber-50 text-amber-700 border-amber-100';
+              }
+
+              const name = row.emp_name || `Employee #${row.emp_id}`;
+
+              return (
+                <div key={row.leave_id} className="p-4 space-y-3 hover:bg-slate-50/50 transition-colors">
+                  {/* ID and Status */}
+                  <div className="flex items-center justify-between">
+                    <span className="font-extrabold text-slate-700 text-xs">#{row.leave_id}</span>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${statusBadge}`}>
+                      {row.leave_status}
+                    </span>
+                  </div>
+
+                  {/* Employee Details and Leave Info */}
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center text-xs font-bold border border-slate-200">
+                        {name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="text-xs font-extrabold text-slate-800">{name}</p>
+                        <p className="text-[10px] font-bold text-slate-400">ID: {row.emp_id}</p>
+                      </div>
+                    </div>
+
+                    <div className="text-right">
+                      <p className="font-bold text-slate-600 text-xs">{row.leave_type}</p>
+                      <p className="font-extrabold text-[11px] text-slate-500 mt-0.5">{row.leave_days} d</p>
+                    </div>
+                  </div>
+
+                  {/* Date Range */}
+                  <div className="flex items-center gap-1.5 text-xs text-slate-600">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase">Dates:</span>
+                    <span className="font-extrabold">{formatDate(row.leave_from)}</span>
+                    <span className="text-slate-400">to</span>
+                    <span className="font-extrabold">{formatDate(row.leave_to)}</span>
+                  </div>
+
+                  {/* Reason */}
+                  {row.leave_reason && (
+                    <div className="text-xs text-slate-500 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Reason:</span>
+                      <p className="font-semibold text-slate-600 leading-relaxed">{row.leave_reason}</p>
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div className="flex items-center justify-between pt-2.5 border-t border-slate-100">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase">Actions</span>
+                    {row.leave_status === 'Pending' && isAdmin ? (
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          onClick={() => onUpdateStatus(row.leave_id, 'Approved')}
+                          className="p-1 text-emerald-600 hover:bg-emerald-50 rounded-lg border border-slate-200 hover:border-emerald-200 shadow-sm transition cursor-pointer"
+                          title="Approve Request"
+                        >
+                          <Check size={14} />
+                        </button>
+                        <button
+                          onClick={() => onUpdateStatus(row.leave_id, 'Rejected')}
+                          className="p-1 text-rose-600 hover:bg-rose-50 rounded-lg border border-slate-200 hover:border-rose-200 shadow-sm transition cursor-pointer"
+                          title="Reject Request"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider select-none">
+                        Locked
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Desktop View Table */}
+        <div className="hidden md:block overflow-x-auto min-h-[300px]">
           <table className="w-full border-collapse text-left text-sm">
             {/* Header */}
             <thead>

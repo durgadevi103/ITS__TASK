@@ -11,8 +11,9 @@ export const LeaveHeader = ({ title, activeTab }) => {
           </h1>
         </div>
         
+
         {/* Active view status */}
-        <div className="flex items-center gap-2 bg-white/85 backdrop-blur border border-slate-200/80 px-3 py-5 rounded-2xl shadow-sm self-start">
+        <div className="flex items-center gap-2 bg-white/85 backdrop-blur border border-slate-200/80 px-5 py-5 rounded-2xl shadow-sm self-start">
           <span className="relative flex h-2 w-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
