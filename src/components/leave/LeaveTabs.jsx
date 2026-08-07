@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, FileSpreadsheet, CalendarDays, History, Hourglass } from 'lucide-react';
+import { LayoutDashboard, FileSpreadsheet, CalendarDays, History, Hourglass, Briefcase } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export const LeaveTabs = ({ activeTab, onChange }) => {

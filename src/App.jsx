@@ -74,7 +74,7 @@ const Layout = ({ currentUser, setCurrentUser }) => {
   const isExpanded = sidebarOpen || sidebarHovered || sidebarPinned;
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col overflow-x-hidden">
+    <div className="min-h-screen bg-slate-50 flex flex-col">
       <Navbar
         usedata={useData}
         onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
@@ -103,7 +103,7 @@ const Layout = ({ currentUser, setCurrentUser }) => {
           }}
         />
 
-        <main className={`ml-0 mt-16 w-full min-h-[calc(100vh-4rem)] overflow-x-hidden transition-all duration-300 ${isExpanded
+        <main className={`ml-0 mt-16 w-full min-h-[calc(100vh-4rem)] overflow-y-auto transition-all duration-300 ${isExpanded
             ? "md:ml-64 md:w-[calc(100%-16rem)]"
             : "md:ml-16 md:w-[calc(100%-4rem)]"
           }`}>
@@ -194,4 +194,3 @@ function App() {
 }
 
 export default App;
-
