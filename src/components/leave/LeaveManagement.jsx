@@ -6,7 +6,6 @@ import LeaveTabs from './LeaveTabs';
 import LeaveDashboard from './LeaveDashboard';
 import LeaveSubmit from './LeaveSubmit';
 import LeaveHistory from './LeaveHistory';
-import MyRequests from './MyRequests';
 import LeavePermission from './LeavePermission';
 
 export const LeaveManagement = () => {
@@ -77,14 +76,6 @@ export const LeaveManagement = () => {
           <LeaveHistory
             requests={leaveRequests}
             onUpdateStatus={updateLeaveStatus}
-            loading={loading}
-          />
-        );
-      case 'requests':
-        return (
-          <MyRequests
-            requests={leaveRequests}
-            currentUser={currentUser}
             loading={loading}
           />
         );

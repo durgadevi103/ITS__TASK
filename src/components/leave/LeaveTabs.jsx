@@ -7,7 +7,6 @@ export const LeaveTabs = ({ activeTab, onChange }) => {
     { id: 'dashboard', label: 'Leave Dashboard', icon: LayoutDashboard },
     { id: 'apply', label: 'Submit Leave Request', icon: FileSpreadsheet },
     { id: 'history', label: 'Leave History', icon: History },
-    { id: 'requests', label: 'My Requests', icon: CalendarDays },
     { id: 'permission', label: 'Leave Permission', icon: Hourglass }
   ];
 
