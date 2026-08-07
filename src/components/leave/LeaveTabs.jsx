@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, FileSpreadsheet, CalendarDays, History, Hourglass } from 'lucide-react';
+import { LayoutDashboard, FileSpreadsheet, CalendarDays, History, Hourglass, Briefcase } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export const LeaveTabs = ({ activeTab, onChange }) => {
@@ -7,6 +7,7 @@ export const LeaveTabs = ({ activeTab, onChange }) => {
     { id: 'dashboard', label: 'Leave Dashboard', icon: LayoutDashboard },
     { id: 'apply', label: 'Submit Leave Request', icon: FileSpreadsheet },
     { id: 'history', label: 'Leave History', icon: History },
+    { id: 'requests', label: 'My Requests', icon: Briefcase },
     { id: 'permission', label: 'Leave Permission', icon: Hourglass }
   ];
 
