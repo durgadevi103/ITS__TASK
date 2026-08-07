@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Phone, Clock, Send, XCircle, Trash2, CheckCircle2, Info, CalendarDays } from 'lucide-react';
+import { Phone, Clock, Send, XCircle, Trash2, CheckCircle2, Info } from 'lucide-react';
 import { useLeave } from '../../hooks/useLeave';
 import LeaveHeader from './LeaveHeader';
 import LeaveTabs from './LeaveTabs';
@@ -114,14 +114,6 @@ export const LeaveManagement = () => {
             loading={loading}
           />
         );
-      case 'requests':
-        return (
-          <LeaveRequestsView
-            requests={leaveRequests}
-            currentUser={currentUser}
-            loading={loading}
-          />
-        );
       case 'permission':
         return <LeavePermissionView currentUser={currentUser} />;
       default:
@@ -134,19 +126,19 @@ export const LeaveManagement = () => {
   };
 
   return (
-    <div className="p-6 bg-slate-50 flex flex-col min-h-[calc(100vh-4rem)] h-[calc(100vh-4rem)] overflow-hidden">
-      <div className="sticky top-0 z-20 bg-slate-50/95 backdrop-blur-xl border-b border-slate-200/70 pb-4 pt-4">
+    <div className="px-4 pb-4 bg-slate-50 flex flex-col min-h-[calc(100vh-4rem)] h-[calc(100vh-4rem)] overflow-hidden">
+      <div className="sticky top-0 z-20 bg-slate-50/95 backdrop-blur-xl border-b border-slate-200/70 py-2">
         <LeaveHeader
           title="Leave & Time-Off Management"
           activeTab={activeTab}
         />
 
-        <div className="mt-4">
+        <div className="mt-2">
           <LeaveTabs activeTab={activeTab} onChange={setActiveTab} />
         </div>
       </div>
 
-      <div className="mt-4 overflow-y-auto flex-1 pr-1 pb-6">
+      <div className="mt-2 overflow-y-auto flex-1 pr-1 pb-4">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
@@ -403,41 +395,6 @@ const LeaveHistoryView = ({ requests = [], onUpdateStatus, loading = false }) =>
     )}
   </div>
 );
-
-const LeaveRequestsView = ({ requests = [], currentUser, loading = false }) => {
-  const currentEmpId = currentUser?.emp_id || currentUser?.employee_id;
-  const filteredRequests = React.useMemo(() => {
-    if (!currentEmpId) return [];
-    return requests.filter((req) => String(req.emp_id) === String(currentEmpId));
-  }, [requests, currentEmpId]);
-
-  return (
-    <div className="space-y-6">
-      <div className="bg-gradient-to-r from-teal-50 to-emerald-50 border border-teal-100 rounded-3xl p-5 flex items-start gap-4">
-        <div className="w-10 h-10 rounded-2xl bg-teal-100 text-teal-700 flex items-center justify-center shrink-0 shadow-inner">
-          <CalendarDays size={18} />
-        </div>
-        <div className="space-y-1">
-          <h4 className="text-sm font-extrabold text-slate-800">My Leave Requests</h4>
-          <p className="text-xs text-slate-500 leading-relaxed font-semibold">
-            Track the status of all your submitted time-off requests. Once a manager reviews and updates your request, the status badge will automatically update.
-          </p>
-        </div>
-      </div>
-
-      {loading ? (
-        <div className="bg-white border border-slate-200/80 rounded-3xl p-20 flex flex-col items-center justify-center gap-3 shadow-sm">
-          <div className="relative w-10 h-10">
-            <div className="absolute inset-0 rounded-full border-4 border-blue-500/20 border-t-blue-500 animate-spin" />
-          </div>
-          <span className="text-xs font-bold text-slate-400 uppercase tracking-widest animate-pulse">Loading requests history...</span>
-        </div>
-      ) : (
-        <LeaveTable data={filteredRequests} onUpdateStatus={() => {}} isAdmin={false} />
-      )}
-    </div>
-  );
-};
 
 const LeavePermissionView = ({ currentUser = {} }) => {
   const storageKey = `permissions_${currentUser?.emp_id || currentUser?.employee_id || 'guest'}`;
