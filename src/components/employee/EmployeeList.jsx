@@ -456,7 +456,7 @@ const EmployeeList = () => {
       initial="hidden"
       animate="visible"
       variants={pageVariants}
-      className="p-3 bg-[#f8fafc] h-[calc(100vh-4.2rem)] flex flex-col gap-3 text-gray-700 overflow-hidden relative"
+      className="p-0 bg-[#f8fafc] h-[calc(100vh-4rem)] flex flex-col gap-3 text-gray-700 overflow-hidden relative"
     >
 
       {/* Dynamic Slide-in Toast Notice */}

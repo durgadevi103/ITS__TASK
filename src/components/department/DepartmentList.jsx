@@ -110,7 +110,7 @@ const DepartmentList = ({
   };
 
   return (
-    <div className="p-3 bg-[#f8fafc] h-[calc(100vh-4.2rem)] flex flex-col gap-3 text-gray-700 overflow-hidden">
+    <div className="p-0 bg-[#f8fafc] h-[calc(100vh-4rem)] flex flex-col gap-3 text-gray-700 overflow-hidden">
 
       {/* Unified Header & Filter Section */}
       <div className="bg-white px-4 py-3 rounded-2xl border border-slate-100 shadow-sm flex flex-col gap-3 shrink-0">

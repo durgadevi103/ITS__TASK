@@ -250,7 +250,7 @@ const Department = () => {
         )}
 
         {currentView === 'view' && selectedDept && (
-          <div className="p-3 bg-[#f8fafc] h-[calc(100vh-4.2rem)] flex flex-col text-gray-700 overflow-hidden">
+          <div className="p-0 bg-[#f8fafc] h-[calc(100vh-4rem)] flex flex-col text-gray-700 overflow-hidden">
             <ViewDepartment
               department={selectedDept}
               onBack={() => {
@@ -262,7 +262,7 @@ const Department = () => {
         )}
 
         {(currentView === 'add' || currentView === 'edit') && (
-          <div className="p-3 bg-[#f8fafc] h-[calc(100vh-4.2rem)] flex flex-col text-gray-700 overflow-hidden">
+          <div className="p-0 bg-[#f8fafc] h-[calc(100vh-4rem)] flex flex-col text-gray-700 overflow-hidden">
             <AddEditDepartment
               department={selectedDept}
               onSave={handleSaveDepartment}

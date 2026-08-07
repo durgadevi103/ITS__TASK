@@ -345,7 +345,7 @@ const Dashboard = () => {
       initial="hidden"
       animate="visible"
       variants={containerVariants}
-      className="p-3 bg-slate-50/60 h-[calc(100vh-4.2rem)] space-y-3 sm:space-y-4 text-slate-800 overflow-y-auto"
+      className="p-0 bg-slate-50/60 h-[calc(100vh-4rem)] space-y-3 sm:space-y-4 text-slate-800 overflow-y-auto"
     >
       {/* Toast Notification */}
       <AnimatePresence>

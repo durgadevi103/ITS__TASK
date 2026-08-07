@@ -205,7 +205,7 @@ export const LeaveSubmit = ({ currentUser, allowance, onSubmitRequest, onCancel,
         {/* Summary counts widget */}
         <SummaryCard stats={stats} />
 
-        {/* Holidays list and Company events */}
+        {/* Holidays list */}
         <HolidayCard />
 
       </div>
