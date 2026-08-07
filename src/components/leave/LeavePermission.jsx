@@ -156,18 +156,34 @@ export const LeavePermission = ({ currentUser }) => {
       <div className="lg:col-span-5 space-y-4">
         
         {/* Permission Allowance Tracker */}
-        <div className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-2xl p-4 shadow-lg relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-28 h-28 bg-white/5 rounded-full -mr-8 -mt-8 rotate-45 transform" />
+        <motion.div 
+          whileHover={{ 
+            y: -6, 
+            scale: 1.02, 
+            boxShadow: '0 20px 35px -5px rgba(99, 102, 241, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.45)',
+            borderColor: 'rgba(255, 255, 255, 0.4)'
+          }}
+          transition={{ duration: 0.3, cubicBezier: [0.16, 1, 0.3, 1] }}
+          className="relative bg-gradient-to-br from-indigo-600 to-purple-700 text-white rounded-2xl p-4 border border-white/20 backdrop-blur-xl shadow-lg overflow-hidden shimmer-shine-overlay border-beam-card group cursor-pointer"
+          style={{
+            '--beam-color': 'rgba(255, 255, 255, 0.95)',
+            '--beam-speed': '4s',
+            '--beam-dwell': '0.5s'
+          }}
+        >
+          {/* Glassy overlays */}
+          <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-white/5 pointer-events-none transition-opacity duration-300 group-hover:opacity-100" />
+          <div className="absolute top-0 right-0 w-28 h-28 bg-white/5 rounded-full -mr-8 -mt-8 rotate-45 transform pointer-events-none" />
           
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-black uppercase tracking-wider text-indigo-100 bg-white/10 px-2 py-0.5 rounded-full">
+            <span className="text-[10px] font-black uppercase tracking-wider text-indigo-100 bg-white/20 px-2 py-0.5 rounded-full backdrop-blur-md border border-white/10 shadow-inner">
               Hourly Permission
             </span>
-            <Clock size={18} />
+            <Clock size={18} className="group-hover:rotate-12 transition-transform duration-300" />
           </div>
 
           <div className="mt-3.5 flex items-baseline gap-1">
-            <span className="text-3xl font-black">{remainingHours.toFixed(1)} hrs</span>
+            <span className="text-3xl font-black drop-shadow-md">{remainingHours.toFixed(1)} hrs</span>
             <span className="text-xs font-semibold text-indigo-200">/ {DEFAULT_MONTHLY_HOURS} hrs Left</span>
           </div>
           
@@ -175,18 +191,24 @@ export const LeavePermission = ({ currentUser }) => {
 
           {/* Progress Bar */}
           <div className="mt-4 space-y-1">
-            <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
-              <div className="h-full bg-white rounded-full transition-all duration-300" style={{ width: `${progressPercent}%` }} />
+            <div className="w-full h-1.5 bg-white/25 rounded-full overflow-hidden p-[1px]">
+              <div className="h-full bg-gradient-to-r from-white via-white/90 to-white rounded-full shadow-inner animate-[pulse_3s_infinite]" style={{ width: `${progressPercent}%` }} />
             </div>
             <div className="flex justify-between text-[8px] font-black text-indigo-200 uppercase">
               <span>Used: {(DEFAULT_MONTHLY_HOURS - remainingHours).toFixed(1)} hrs</span>
               <span>Available: {progressPercent.toFixed(0)}%</span>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Request Form */}
-        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm space-y-3.5">
+        <div className="premium-glossy-card rounded-2xl p-4 border-white/40 shadow-sm space-y-3.5 bg-white/80 border-beam-card"
+          style={{
+            '--beam-color': '#8b5cf6',
+            '--beam-speed': '6.5s',
+            '--beam-dwell': '2s'
+          }}
+        >
           <h4 className="text-xs font-extrabold text-slate-800 pb-2 border-b border-slate-100 uppercase tracking-wider">
             File Permission Request
           </h4>
@@ -265,13 +287,15 @@ export const LeavePermission = ({ currentUser }) => {
             )}
 
             {/* Submit Button */}
-            <button
+            <motion.button
+              whileHover={{ y: -1.5, scale: 1.02 }}
+              whileTap={{ scale: 0.97 }}
               type="submit"
-              className="w-full py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-extrabold text-xs rounded-xl shadow-sm transition cursor-pointer flex items-center justify-center gap-1.5"
+              className="w-full py-2.5 glossy-button-primary text-white font-extrabold text-xs rounded-xl cursor-pointer flex items-center justify-center gap-1.5"
             >
               <Send size={13} />
               Submit Permission Request
-            </button>
+            </motion.button>
 
           </form>
         </div>
@@ -281,7 +305,13 @@ export const LeavePermission = ({ currentUser }) => {
       {/* Right Side: History registry */}
       <div className="lg:col-span-7 space-y-4">
         
-        <div className="glass-card rounded-2xl p-4 border border-slate-200/80 shadow-sm flex flex-col h-full max-h-[500px]">
+        <div className="premium-glossy-card rounded-2xl p-4 border-white/40 shadow-sm flex flex-col h-full max-h-[500px] border-beam-card"
+          style={{
+            '--beam-color': '#4f46e5',
+            '--beam-speed': '6s',
+            '--beam-dwell': '1s'
+          }}
+        >
           <h4 className="text-xs font-extrabold text-slate-800 pb-2 border-b border-slate-100 uppercase tracking-wider mb-3">
             Permission Request History
           </h4>
@@ -335,29 +365,35 @@ export const LeavePermission = ({ currentUser }) => {
                             {/* Manager simulator trigger: Approve / Reject simulation directly on screen */}
                             {item.status === 'Pending' ? (
                               <>
-                                <button
+                                <motion.button
+                                  whileHover={{ scale: 1.15 }}
+                                  whileTap={{ scale: 0.9 }}
                                   onClick={() => handleSimulateApproval(item.id, 'Approved')}
-                                  className="p-1 text-emerald-600 hover:bg-emerald-50 rounded-lg border border-slate-100 hover:border-emerald-200 transition cursor-pointer"
+                                  className="p-1 text-emerald-600 hover:bg-emerald-50 rounded-lg border border-slate-200 hover:border-emerald-300 transition cursor-pointer"
                                   title="[Simulate Manager Approve]"
                                 >
                                   <CheckCircle2 size={12} />
-                                </button>
-                                <button
+                                </motion.button>
+                                <motion.button
+                                  whileHover={{ scale: 1.15 }}
+                                  whileTap={{ scale: 0.9 }}
                                   onClick={() => handleSimulateApproval(item.id, 'Rejected')}
-                                  className="p-1 text-rose-600 hover:bg-rose-50 rounded-lg border border-slate-100 hover:border-rose-200 transition cursor-pointer"
+                                  className="p-1 text-rose-600 hover:bg-rose-50 rounded-lg border border-slate-200 hover:border-rose-300 transition cursor-pointer"
                                   title="[Simulate Manager Reject]"
                                 >
                                   <XCircle size={12} />
-                                </button>
+                                </motion.button>
                               </>
                             ) : (
-                              <button
+                              <motion.button
+                                  whileHover={{ scale: 1.15 }}
+                                  whileTap={{ scale: 0.9 }}
                                   onClick={() => handleDeleteRequest(item.id)}
-                                  className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg border border-slate-100 hover:border-rose-100 transition cursor-pointer"
+                                  className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg border border-slate-200 hover:border-rose-200 transition cursor-pointer"
                                   title="Delete entry"
                                 >
                                   <Trash2 size={12} />
-                                </button>
+                                </motion.button>
                             )}
                           </div>
                         </td>

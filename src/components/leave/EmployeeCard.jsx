@@ -1,5 +1,6 @@
 import React from 'react';
 import { User, ShieldCheck, Mail, Briefcase, Award } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 export const EmployeeCard = ({ employee }) => {
   const name = employee?.emp_name || employee?.fullName || employee?.username || 'Guest Employee';
@@ -9,9 +10,18 @@ export const EmployeeCard = ({ employee }) => {
   const email = employee?.emp_email || employee?.email || 'employee@company.com';
   const managerName = employee?.emp_manager || 'Srinivasan Raman'; // Representative senior manager
   return (
-    <div className="glass-card rounded-2xl p-4 border border-slate-200/80 shadow-sm relative overflow-hidden group">
+    <motion.div
+      whileHover={{ y: -4 }}
+      transition={{ duration: 0.3, ease: 'easeOut' }}
+      className="premium-glossy-card premium-glossy-card-hover shimmer-shine-overlay border-beam-card rounded-2xl p-4 border-white/40 shadow-sm relative overflow-hidden group"
+      style={{
+        '--beam-color': '#6366f1',
+        '--beam-speed': '6s',
+        '--beam-dwell': '1s'
+      }}
+    >
       {/* Decorative Glow */}
-      <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-500/10 to-indigo-500/10 blur-2xl rounded-full" />
+      <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-500/15 to-indigo-500/15 blur-2xl rounded-full pointer-events-none" />
       
       <div className="flex items-start gap-4">
         {/* Profile Avatar */}
@@ -67,7 +77,7 @@ export const EmployeeCard = ({ employee }) => {
           SR
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

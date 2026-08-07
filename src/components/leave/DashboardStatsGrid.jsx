@@ -43,8 +43,8 @@ export const DashboardStatsGrid = ({ stats, requests = [] }) => {
       icon: Users,
       color: 'from-blue-600 to-indigo-600',
       bgGlow: 'bg-blue-500/10',
-      borderColor: 'hover:border-blue-500/40',
-      shadow: 'hover:shadow-blue-500/10'
+      borderColor: 'hover:border-blue-500/50',
+      shadow: 'hover:shadow-blue-500/25'
     },
     {
       title: 'Approved',
@@ -52,8 +52,8 @@ export const DashboardStatsGrid = ({ stats, requests = [] }) => {
       icon: CheckCircle2,
       color: 'from-emerald-500 to-teal-600',
       bgGlow: 'bg-emerald-500/10',
-      borderColor: 'hover:border-emerald-500/40',
-      shadow: 'hover:shadow-emerald-500/10'
+      borderColor: 'hover:border-emerald-500/50',
+      shadow: 'hover:shadow-emerald-500/25'
     },
     {
       title: 'Pending',
@@ -61,8 +61,8 @@ export const DashboardStatsGrid = ({ stats, requests = [] }) => {
       icon: Clock,
       color: 'from-amber-400 to-orange-500',
       bgGlow: 'bg-amber-500/10',
-      borderColor: 'hover:border-amber-500/40',
-      shadow: 'hover:shadow-amber-500/10'
+      borderColor: 'hover:border-amber-500/50',
+      shadow: 'hover:shadow-amber-500/25'
     },
     {
       title: 'Rejected',
@@ -70,8 +70,8 @@ export const DashboardStatsGrid = ({ stats, requests = [] }) => {
       icon: XCircle,
       color: 'from-rose-500 to-pink-600',
       bgGlow: 'bg-rose-500/10',
-      borderColor: 'hover:border-rose-500/40',
-      shadow: 'hover:shadow-rose-500/10'
+      borderColor: 'hover:border-rose-500/50',
+      shadow: 'hover:shadow-rose-500/25'
     },
     {
       title: 'Cancelled',
@@ -79,8 +79,8 @@ export const DashboardStatsGrid = ({ stats, requests = [] }) => {
       icon: Ban,
       color: 'from-slate-500 to-zinc-600',
       bgGlow: 'bg-slate-500/10',
-      borderColor: 'hover:border-slate-500/40',
-      shadow: 'hover:shadow-slate-500/10'
+      borderColor: 'hover:border-slate-500/50',
+      shadow: 'hover:shadow-slate-500/20'
     }
   ];
 
@@ -94,10 +94,15 @@ export const DashboardStatsGrid = ({ stats, requests = [] }) => {
             key={idx}
             whileHover={{ y: -6, scale: 1.01 }}
             whileTap={{ scale: 0.98 }}
-            className={`relative rounded-3xl p-5 bg-white/75 backdrop-blur-xl border border-slate-200/80 shadow-md ${card.borderColor} ${card.shadow} overflow-hidden group cursor-pointer transition-all duration-300`}
+            className={`premium-glossy-card premium-glossy-card-hover shimmer-shine-overlay border-beam-card rounded-3xl p-5 cursor-pointer group transition-all duration-300 border-white/40 ${card.borderColor} ${card.shadow}`}
+            style={{
+              '--beam-color': card.title === 'Approved' ? '#10b981' : card.title === 'Pending' ? '#f59e0b' : card.title === 'Rejected' ? '#ef4444' : card.title === 'Cancelled' ? '#64748b' : '#3b82f6',
+              '--beam-speed': '5s',
+              '--beam-dwell': `${idx * 0.4}s`
+            }}
           >
             {/* Shimmer Effect */}
-            <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] pointer-events-none" />
+            <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] pointer-events-none" />
 
             {/* Loop-animated floating background blob */}
             <motion.div

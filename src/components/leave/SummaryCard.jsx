@@ -12,7 +12,16 @@ export const SummaryCard = ({ stats }) => {
   ];
 
   return (
-    <div className="glass-card rounded-2xl p-4 border border-slate-200/80 shadow-sm">
+    <motion.div 
+      whileHover={{ y: -4 }}
+      transition={{ duration: 0.3 }}
+      className="premium-glossy-card premium-glossy-card-hover shimmer-shine-overlay border-beam-card rounded-2xl p-4 border-white/40 shadow-sm"
+      style={{
+        '--beam-color': '#06b6d4',
+        '--beam-speed': '4.5s',
+        '--beam-dwell': '0s'
+      }}
+    >
       <h4 className="text-xs font-extrabold text-slate-800 mb-2 pb-1.5 border-b border-slate-100 uppercase tracking-wider">
         Monthly Summary
       </h4>
@@ -22,8 +31,9 @@ export const SummaryCard = ({ stats }) => {
           return (
             <motion.div
               key={idx}
-              whileHover={{ y: -2 }}
-              className={`p-2 px-2.5 rounded-xl border flex flex-col justify-between gap-1 transition-all ${card.color}`}
+              whileHover={{ y: -4, scale: 1.03 }}
+              transition={{ type: 'spring', stiffness: 350, damping: 15 }}
+              className={`p-2 px-2.5 rounded-xl border flex flex-col justify-between gap-1 shadow-sm transition-all ${card.color} cursor-pointer`}
             >
               <div className="flex items-center justify-between">
                 <span className="text-[8px] font-bold tracking-tight uppercase opacity-85">{card.label}</span>
@@ -34,7 +44,7 @@ export const SummaryCard = ({ stats }) => {
           );
         })}
       </div>
-    </div>
+    </motion.div>
   );
 };
 
