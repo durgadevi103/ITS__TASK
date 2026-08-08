@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Phone } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Phone, ChevronDown } from 'lucide-react';
 import { calculateLeaveDays } from '../../utils/leaveUtils';
 import EmployeeCard from './EmployeeCard';
 import ShiftSelector from './ShiftSelector';
@@ -14,9 +14,38 @@ import HolidayCard from './HolidayCard';
 import SummaryCard from './SummaryCard';
 import LeaveButtons from './LeaveButtons';
 
-export const LeaveSubmit = ({ currentUser, allowance, onSubmitRequest, onCancel, leaveRequests, stats }) => {
+export const LeaveSubmit = ({ currentUser, allowance, onSubmitRequest, onCancel, leaveRequests, stats, employees = [], fetchAllowance }) => {
   // Form state fields
+  const [empId, setEmpId] = useState(currentUser?.emp_id || currentUser?.employee_id || '');
+  const [empName, setEmpName] = useState(currentUser?.emp_name || currentUser?.fullName || '');
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [employeeSearch, setEmployeeSearch] = useState('');
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    if (empId && fetchAllowance) {
+      fetchAllowance(empId);
+    }
+  }, [empId, fetchAllowance]);
+
   const [shift, setShift] = useState('full');
+
+  useEffect(() => {
+    if (currentUser) {
+      setEmpId(currentUser.emp_id || currentUser.employee_id || '');
+      setEmpName(currentUser.emp_name || currentUser.fullName || '');
+    }
+  }, [currentUser]);
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [leaveDays, setLeaveDays] = useState(0);
@@ -63,7 +92,8 @@ export const LeaveSubmit = ({ currentUser, allowance, onSubmitRequest, onCancel,
     setIsSubmitting(true);
     try {
       const payload = {
-        emp_id: currentUser?.emp_id || currentUser?.employee_id || 1,
+        emp_id: empId,
+        emp_name: empName,
         leave_type: leaveType,
         leave_from: fromDate,
         leave_to: toDate,
@@ -117,8 +147,68 @@ export const LeaveSubmit = ({ currentUser, allowance, onSubmitRequest, onCancel,
         <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm space-y-3.5">
           <h4 className="text-xs font-extrabold text-slate-800 pb-2 border-b border-slate-100 uppercase tracking-wider">Leave Parameters</h4>
 
-          {/* Shift Picker */}
-          <ShiftSelector value={shift} onChange={setShift} />
+          {/* Employee Search & Select Selector */}
+          <div className="space-y-1 relative" ref={dropdownRef}>
+            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Select Employee</label>
+            <div 
+              onClick={() => setShowDropdown(!showDropdown)}
+              className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 cursor-pointer flex justify-between items-center shadow-sm"
+            >
+              <span>{empName ? `${empName} (ID: ${empId})` : 'Select an employee...'}</span>
+              <ChevronDown size={14} className={`text-slate-400 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
+            </div>
+
+            {showDropdown && (
+              <div className="absolute z-50 w-full mt-1.5 bg-white border border-slate-250 rounded-2xl shadow-xl p-2.5 space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                <input
+                  type="text"
+                  placeholder="Search by ID or name..."
+                  value={employeeSearch}
+                  onChange={(e) => setEmployeeSearch(e.target.value)}
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-full border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  autoFocus
+                />
+                <div className="max-h-48 overflow-y-auto divide-y divide-slate-50">
+                  {((employees || []).filter(emp => {
+                    const name = (emp.emp_name || emp.name || '').toLowerCase();
+                    const id = String(emp.emp_id || emp.employee_id || '').toLowerCase();
+                    const searchVal = employeeSearch.toLowerCase();
+                    return name.includes(searchVal) || id.includes(searchVal);
+                  })).length === 0 ? (
+                    <div className="py-3 text-center text-xs text-slate-400 font-semibold">
+                      No employees found.
+                    </div>
+                  ) : (
+                    (employees || []).filter(emp => {
+                      const name = (emp.emp_name || emp.name || '').toLowerCase();
+                      const id = String(emp.emp_id || emp.employee_id || '').toLowerCase();
+                      const searchVal = employeeSearch.toLowerCase();
+                      return name.includes(searchVal) || id.includes(searchVal);
+                    }).map(emp => {
+                      const id = emp.emp_id || emp.employee_id;
+                      const name = emp.emp_name || emp.name;
+                      return (
+                        <div
+                          key={id}
+                          onClick={() => {
+                            setEmpId(id);
+                            setEmpName(name);
+                            setShowDropdown(false);
+                            setEmployeeSearch('');
+                          }}
+                          className="py-2 px-3 text-xs font-semibold text-slate-700 hover:bg-blue-50/50 hover:text-blue-600 rounded-lg cursor-pointer transition flex justify-between items-center"
+                        >
+                          <span>{name}</span>
+                          <span className="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded font-bold">ID: {id}</span>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Dates Selector */}
           <LeaveDatePicker
@@ -187,7 +277,7 @@ export const LeaveSubmit = ({ currentUser, allowance, onSubmitRequest, onCancel,
           <LeaveButtons
             onCancel={onCancel}
             isSubmitting={isSubmitting}
-            submitLabel="Submit Leave Request"
+            submitLabel="Save"
           />
         </div>
       </div>
