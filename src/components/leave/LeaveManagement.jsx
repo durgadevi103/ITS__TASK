@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import api from '../../api/axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Phone, Clock, Send, XCircle, Trash2, CheckCircle2, Info, PlusCircle, ArrowRight } from 'lucide-react';
 import { useLeave } from '../../hooks/useLeave';
@@ -128,8 +129,8 @@ export const LeaveManagement = () => {
   };
 
   return (
-    <div className="px-4 pb-4 bg-slate-50 flex flex-col min-h-[calc(100vh-4rem)] h-[calc(100vh-4rem)] overflow-hidden">
-      <div className="sticky top-0 z-20 bg-slate-50/95 backdrop-blur-xl border-b border-slate-200/70 py-2">
+    <div className="px-4 pb-4 bg-green-50 flex flex-col min-h-[calc(100vh-4rem)] h-[calc(100vh-4rem)] overflow-hidden">
+      <div className="sticky top-0 z-20 bg-green-50/95 backdrop-blur-xl border-b border-slate-200/70 py-2">
         <LeaveHeader
           title="Leave & Time-Off Management"
           activeTab={activeTab}
@@ -364,10 +365,10 @@ const LeaveSubmitView = ({ currentUser = {}, allowance = [], onSubmitRequest, on
         </div>
       </div>
 
-      <div className="lg:col-span-5 space-y-4 self-start">
+      <div className="lg:col-span-5 space-y-4 flex flex-col lg:h-full">
         <LeaveCalendar selectedFrom={fromDate} selectedTo={toDate} leaveRequests={leaveRequests} />
         <SummaryCard stats={stats} />
-        <HolidayCard />
+        <HolidayCard className="flex-1 flex flex-col" />
       </div>
     </form>
   );
@@ -391,7 +392,6 @@ const LeaveHistoryView = ({ requests = [], onUpdateStatus, loading = false }) =>
 
 
 const LeavePermissionView = ({ currentUser = {} }) => {
-  const storageKey = `permissions_${currentUser?.emp_id || currentUser?.employee_id || 'guest'}`;
   const [date, setDate] = useState('');
   const [fromTime, setFromTime] = useState('');
   const [toTime, setToTime] = useState('');
@@ -399,46 +399,54 @@ const LeavePermissionView = ({ currentUser = {} }) => {
   const [permissionList, setPermissionList] = useState([]);
   const [errorMsg, setErrorMsg] = useState('');
 
-  useEffect(() => {
-    const cached = localStorage.getItem(storageKey);
-    if (cached) {
-      try {
-        setPermissionList(JSON.parse(cached));
-      } catch (e) {
-        console.error('Failed to parse permissions history', e);
-      }
-    } else {
-      const mockHistory = [
-        {
-          id: 'PER-101',
-          date: '2026-08-04',
-          fromTime: '10:00',
-          toTime: '11:00',
-          duration: 1.0,
-          reason: 'Routine Medical Eye Checkup',
-          status: 'Approved',
-          manager: 'Srinivasan Raman'
-        },
-        {
-          id: 'PER-102',
-          date: '2026-08-05',
-          fromTime: '15:30',
-          toTime: '16:00',
-          duration: 0.5,
-          reason: 'Collect documents from bank',
-          status: 'Approved',
-          manager: 'Srinivasan Raman'
-        }
-      ];
-      setPermissionList(mockHistory);
-      localStorage.setItem(storageKey, JSON.stringify(mockHistory));
-    }
-  }, [storageKey]);
+  const empId = currentUser?.emp_id || currentUser?.employee_id || 1;
 
-  const saveToStorage = (updatedList) => {
-    setPermissionList(updatedList);
-    localStorage.setItem(storageKey, JSON.stringify(updatedList));
-  };
+  const loadPermissions = useCallback(async () => {
+    try {
+      const res = await api.get(`/leave/permission/list/${empId}`);
+      if (res.data && res.data.success) {
+        const seedKey = `permissions_seeded_${empId}`;
+        if (res.data.data.length === 0 && !sessionStorage.getItem(seedKey)) {
+          sessionStorage.setItem(seedKey, 'true');
+          const mockHistory = [
+            {
+              emp_id: empId,
+              date: '2026-08-04',
+              fromTime: '10:00',
+              toTime: '11:00',
+              duration: 1.0,
+              reason: 'Routine Medical Eye Checkup',
+              status: 'Approved',
+              manager: 'Srinivasan Raman'
+            },
+            {
+              emp_id: empId,
+              date: '2026-08-05',
+              fromTime: '15:30',
+              toTime: '16:00',
+              duration: 0.5,
+              reason: 'Collect documents from bank',
+              status: 'Approved',
+              manager: 'Srinivasan Raman'
+            }
+          ];
+          await Promise.all(mockHistory.map(item => api.post('/leave/permission/create', item)));
+          const refetched = await api.get(`/leave/permission/list/${empId}`);
+          if (refetched.data && refetched.data.success) {
+            setPermissionList(refetched.data.data);
+          }
+        } else {
+          setPermissionList(res.data.data);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load permissions from DB', err);
+    }
+  }, [empId]);
+
+  useEffect(() => {
+    loadPermissions();
+  }, [loadPermissions]);
 
   const calculatedDuration = useMemo(() => {
     if (!fromTime || !toTime) return 0;
@@ -460,11 +468,11 @@ const LeavePermissionView = ({ currentUser = {} }) => {
         const d = new Date(item.date);
         return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
       })
-      .reduce((sum, item) => sum + item.duration, 0);
+      .reduce((sum, item) => sum + Number(item.duration || 0), 0);
     return Math.max(DEFAULT_MONTHLY_HOURS - usedThisMonth, 0);
   }, [permissionList]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg('');
     if (calculatedDuration <= 0) {
@@ -475,8 +483,8 @@ const LeavePermissionView = ({ currentUser = {} }) => {
       setErrorMsg(`Request duration exceeds your remaining monthly allowance of ${remainingHours} hours.`);
       return;
     }
-    const newRequest = {
-      id: `PER-${Math.floor(100 + Math.random() * 900)}`,
+    const payload = {
+      emp_id: empId,
       date,
       fromTime,
       toTime,
@@ -485,21 +493,44 @@ const LeavePermissionView = ({ currentUser = {} }) => {
       status: 'Pending',
       manager: 'Srinivasan Raman'
     };
-    const updated = [newRequest, ...permissionList];
-    saveToStorage(updated);
-    setDate('');
-    setFromTime('');
-    setToTime('');
-    setReason('');
-    alert('Permission request submitted successfully to reporting manager!');
+    try {
+      const res = await api.post('/leave/permission/create', payload);
+      if (res.data && res.data.success) {
+        await loadPermissions();
+        setDate('');
+        setFromTime('');
+        setToTime('');
+        setReason('');
+        alert('Permission request submitted successfully to reporting manager!');
+      } else {
+        setErrorMsg('Failed to submit permission request.');
+      }
+    } catch (err) {
+      console.error(err);
+      setErrorMsg('An error occurred during submission.');
+    }
   };
 
-  const handleDeleteRequest = (id) => {
-    saveToStorage(permissionList.filter((item) => item.id !== id));
+  const handleDeleteRequest = async (id) => {
+    try {
+      const res = await api.delete(`/leave/permission/${id}`);
+      if (res.data && res.data.success) {
+        await loadPermissions();
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  const handleSimulateApproval = (id, status) => {
-    saveToStorage(permissionList.map((item) => (item.id === id ? { ...item, status } : item)));
+  const handleSimulateApproval = async (id, status) => {
+    try {
+      const res = await api.put('/leave/permission/status', { id, status });
+      if (res.data && res.data.success) {
+        await loadPermissions();
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const progressPercent = (remainingHours / DEFAULT_MONTHLY_HOURS) * 100;  return (

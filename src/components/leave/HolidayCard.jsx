@@ -2,19 +2,23 @@ import React from 'react';
 import { CalendarRange } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-export const HolidayCard = () => {
+export const HolidayCard = ({ className = '' }) => {
   const holidays = [
+    { name: "New Year's Day", date: '01, Jan', day: 'Thursday', type: 'Public Holiday', color: 'bg-violet-50 border-violet-100 text-violet-700' },
+    { name: 'Republic Day', date: '26, Jan', day: 'Monday', type: 'National Holiday', color: 'bg-cyan-50 border-cyan-100 text-cyan-700' },
     { name: 'Holi', date: '03, Mar', day: 'Tuesday', type: 'Public Holiday', color: 'bg-rose-50 border-rose-100 text-rose-700' },
     { name: 'Good Friday', date: '19, Mar', day: 'Friday', type: 'Public Holiday', color: 'bg-amber-50 border-amber-100 text-amber-700' },
     { name: 'Idul-Fitr', date: '08, Apr', day: 'Wednesday', type: 'Public Holiday', color: 'bg-emerald-50 border-emerald-100 text-emerald-700' },
-    { name: 'Independence Day', date: '15, Aug', day: 'Saturday', type: 'National Holiday', color: 'bg-blue-50 border-blue-100 text-blue-700' }
+    { name: 'Independence Day', date: '15, Aug', day: 'Saturday', type: 'National Holiday', color: 'bg-blue-50 border-blue-100 text-blue-700' },
+    { name: 'Gandhi Jayanti', date: '02, Oct', day: 'Friday', type: 'National Holiday', color: 'bg-fuchsia-50 border-fuchsia-100 text-fuchsia-700' },
+    { name: 'Christmas Day', date: '25, Dec', day: 'Friday', type: 'Public Holiday', color: 'bg-teal-50 border-teal-100 text-teal-700' }
   ];
 
   return (
     <motion.div 
       whileHover={{ y: -4 }}
       transition={{ duration: 0.3 }}
-      className="premium-glossy-card premium-glossy-card-hover shimmer-shine-overlay border-beam-card rounded-2xl p-4 border-white/40 shadow-sm"
+      className={`premium-glossy-card premium-glossy-card-hover shimmer-shine-overlay border-beam-card rounded-2xl p-4 border-white/40 shadow-sm ${className}`}
       style={{
         '--beam-color': '#f43f5e',
         '--beam-speed': '5s',

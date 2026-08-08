@@ -193,7 +193,7 @@ export const LeaveSubmit = ({ currentUser, allowance, onSubmitRequest, onCancel,
       </div>
 
       {/* RIGHT COLUMN: Interactive Widgets (5 cols on lg) */}
-      <div className="lg:col-span-5 space-y-4 self-start">
+      <div className="lg:col-span-5 space-y-4 flex flex-col lg:h-full">
         
         {/* Interactive Month Grid Calendar */}
         <LeaveCalendar
@@ -206,7 +206,7 @@ export const LeaveSubmit = ({ currentUser, allowance, onSubmitRequest, onCancel,
         <SummaryCard stats={stats} />
 
         {/* Holidays list */}
-        <HolidayCard />
+        <HolidayCard className="flex-1 flex flex-col" />
 
       </div>
 
