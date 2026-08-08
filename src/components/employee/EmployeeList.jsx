@@ -56,6 +56,7 @@ const EmployeeList = () => {
   const navigate = useNavigate();
   const [employees, setEmployees] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchType, setSearchType] = useState("both"); // "both" | "name" | "id"
   const [selectedDept, setSelectedDept] = useState("All Departments");
   const [selectedStatus, setSelectedStatus] = useState("All Status");
   const [selectedEmployee, setSelectedEmployee] = useState(null);
@@ -126,6 +127,7 @@ const EmployeeList = () => {
 
   const handleResetFilters = () => {
     setSearchTerm('');
+    setSearchType('both');
     setAdvName('');
     setAdvEmail('');
     setAdvGender('All Genders');
@@ -185,6 +187,7 @@ const EmployeeList = () => {
     setCurrentPage(1);
   }, [
     searchTerm, 
+    searchType,
     advName, 
     advEmail, 
     advGender, 
@@ -226,7 +229,7 @@ const EmployeeList = () => {
 
       if (isFilterActive) {
         // Fetch all employees so we can filter them in-memory
-        const response = await api.get('/employee/list/10/0');
+        const response = await api.get('/employee/list/1000/0');
         if (response.data.success) {
           rawEmployeesList = response.data.list || [];
           totalFetchedCount = response.data.count || rawEmployeesList.length;
@@ -323,6 +326,7 @@ const EmployeeList = () => {
     currentPage, 
     pageSize, 
     searchTerm, 
+    searchType,
     advName, 
     advEmail, 
     advGender, 
@@ -371,11 +375,25 @@ const EmployeeList = () => {
     const emailStr = emp.email ? emp.email.toLowerCase() : "";
     const idStr = emp.id ? emp.id.toLowerCase() : "";
     const dbIdStr = emp.employee_id ? String(emp.employee_id).toLowerCase() : "";
+    const phoneStr = emp.phone ? String(emp.phone) : "";
+    const empCodeStr = emp.empCode ? String(emp.empCode).toLowerCase() : "";
 
-    const matchesSearch = nameStr.includes(searchTerm.toLowerCase()) ||
-      emailStr.includes(searchTerm.toLowerCase()) ||
-      idStr.includes(searchTerm.toLowerCase()) ||
-      dbIdStr.includes(searchTerm.toLowerCase());
+    let matchesSearch = true;
+    if (searchTerm) {
+      const lowerSearch = searchTerm.toLowerCase();
+      if (searchType === "name") {
+        matchesSearch = nameStr.includes(lowerSearch);
+      } else if (searchType === "id") {
+        matchesSearch = idStr.includes(lowerSearch) || 
+                        dbIdStr.includes(lowerSearch) || 
+                        empCodeStr.includes(lowerSearch);
+      } else {
+        matchesSearch = nameStr.includes(lowerSearch) ||
+                        idStr.includes(lowerSearch) ||
+                        dbIdStr.includes(lowerSearch) ||
+                        empCodeStr.includes(lowerSearch);
+      }
+    }
 
     const matchesAdvName = !advName.trim() || 
       nameStr.includes(advName.toLowerCase().trim());
@@ -392,7 +410,6 @@ const EmployeeList = () => {
     const matchesAdvBlood = advBloodGroup === "All" || 
       (emp.bloodGroup && emp.bloodGroup.toLowerCase() === advBloodGroup.toLowerCase());
 
-    const empCodeStr = emp.empCode ? String(emp.empCode).toLowerCase() : "";
     const matchesAdvEmpCode = !advEmpCode.trim() || 
       empCodeStr.includes(advEmpCode.toLowerCase().trim());
 
@@ -424,6 +441,7 @@ const EmployeeList = () => {
   });
 
   const isFilterActive = searchTerm !== "" || 
+    searchType !== "both" ||
     advName !== "" ||
     advEmail !== "" ||
     advGender !== "All Genders" ||
@@ -495,15 +513,33 @@ const EmployeeList = () => {
             {/* Right Side: Search and Toggler */}
             <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 flex-1 lg:justify-end w-full">
               {/* Search Field */}
-              <div className="relative flex-1 max-w-xs w-full">
-                <Search size={14} className="text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search details..."
-                  className="w-full pl-9 pr-3 py-2 bg-slate-50/50 border border-slate-200/80 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all duration-200 font-semibold"
-                />
+              <div className="relative flex-1 max-w-xs w-full flex gap-2">
+                <div className="relative flex-1">
+                  <Search size={14} className="text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder={
+                      searchType === "name"
+                        ? "Search by name..."
+                        : searchType === "id"
+                        ? "Search by ID..."
+                        : "Search by ID or name..."
+                    }
+                    className="w-full pl-9 pr-3 py-2 bg-slate-50/50 border border-slate-200/80 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all duration-200 font-semibold"
+                  />
+                </div>
+                {/* Search Type Selector */}
+                <select
+                  value={searchType}
+                  onChange={(e) => setSearchType(e.target.value)}
+                  className="bg-slate-50 border border-slate-200/80 rounded-xl text-xs font-semibold px-2.5 py-2 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-sm"
+                >
+                  <option value="both">Name & ID</option>
+                  <option value="name">Name Only</option>
+                  <option value="id">ID Only</option>
+                </select>
               </div>
 
               <div className="flex items-center gap-2">

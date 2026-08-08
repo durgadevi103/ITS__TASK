@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import api from '../../api/axios';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Phone, Clock, Send, XCircle, Trash2, CheckCircle2, Info, PlusCircle, ArrowRight } from 'lucide-react';
+import { Phone, Clock, Send, XCircle, Trash2, CheckCircle2, Info, PlusCircle, ArrowRight, ChevronDown } from 'lucide-react';
 import { useLeave } from '../../hooks/useLeave';
 import LeaveHeader from './LeaveHeader';
 import LeaveTabs from './LeaveTabs';
@@ -83,8 +83,29 @@ export const LeaveManagement = () => {
     dashboardStats,
     allowance,
     submitLeaveRequest,
-    updateLeaveStatus
+    updateLeaveStatus,
+    employees,
+    fetchAllowance,
+    fetchLeaveRequests,
+    fetchDashboardStats
   } = useLeave(currentUser);
+
+  useEffect(() => {
+    // Refresh stats and requests when switching tabs
+    if (activeTab === 'dashboard') {
+      fetchDashboardStats();
+      fetchLeaveRequests();
+      if (currentUser?.emp_id || currentUser?.employee_id) {
+        fetchAllowance(currentUser.emp_id || currentUser.employee_id);
+      }
+    } else if (activeTab === 'history') {
+      fetchLeaveRequests();
+    } else if (activeTab === 'apply') {
+      if (currentUser?.emp_id || currentUser?.employee_id) {
+        fetchAllowance(currentUser.emp_id || currentUser.employee_id);
+      }
+    }
+  }, [activeTab, fetchDashboardStats, fetchLeaveRequests, fetchAllowance, currentUser]);
 
   const renderActiveView = () => {
     switch (activeTab) {
@@ -106,6 +127,8 @@ export const LeaveManagement = () => {
             onCancel={() => setActiveTab('dashboard')}
             leaveRequests={leaveRequests}
             stats={dashboardStats}
+            employees={employees}
+            fetchAllowance={fetchAllowance}
           />
         );
       case 'history':
@@ -118,7 +141,7 @@ export const LeaveManagement = () => {
         );
 
       case 'permission':
-        return <LeavePermissionView currentUser={currentUser} />;
+        return <LeavePermissionView currentUser={currentUser} employees={employees} />;
       default:
         return (
           <div className="text-center py-20 font-semibold text-slate-400">
@@ -129,7 +152,7 @@ export const LeaveManagement = () => {
   };
 
   return (
-    <div className="px-4 pb-4 bg-green-50 flex flex-col min-h-[calc(100vh-4rem)] h-[calc(100vh-4rem)] overflow-hidden">
+    <div className="px-4 pb-4 bg-green-100 flex flex-col min-h-[calc(100vh-4rem)] h-[calc(100vh-4rem)] overflow-hidden">
       <div className="sticky top-0 z-20 bg-green-50/95 backdrop-blur-xl border-b border-slate-200/70 py-2">
         <LeaveHeader
           title="Leave & Time-Off Management"
@@ -141,7 +164,7 @@ export const LeaveManagement = () => {
         </div>
       </div>
 
-      <div className={`mt-1.5 flex-1 pr-1 ${['dashboard', 'permission'].includes(activeTab) ? 'overflow-hidden pb-1' : 'overflow-y-auto pb-3'}`}>
+      <div className="mt-1.5 flex-1 pr-1 overflow-y-auto pb-3">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
@@ -203,7 +226,29 @@ const LeaveDashboardView = ({ stats = {}, allowance = [], requests = [], onUpdat
   );
 };
 
-const LeaveSubmitView = ({ currentUser = {}, allowance = [], onSubmitRequest, onCancel, leaveRequests = [], stats = {} }) => {
+const LeaveSubmitView = ({ currentUser = {}, allowance = [], onSubmitRequest, onCancel, leaveRequests = [], stats = {}, employees = [], fetchAllowance }) => {
+  const [empId, setEmpId] = useState(currentUser?.emp_id || currentUser?.employee_id || '');
+  const [empName, setEmpName] = useState(currentUser?.emp_name || currentUser?.fullName || '');
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [employeeSearch, setEmployeeSearch] = useState('');
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    if (empId && fetchAllowance) {
+      fetchAllowance(empId);
+    }
+  }, [empId, fetchAllowance]);
+
   const [shift, setShift] = useState('full');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
@@ -217,6 +262,13 @@ const LeaveSubmitView = ({ currentUser = {}, allowance = [], onSubmitRequest, on
   const [declarationAccepted, setDeclarationAccepted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  useEffect(() => {
+    if (currentUser) {
+      setEmpId(currentUser.emp_id || currentUser.employee_id || '');
+      setEmpName(currentUser.emp_name || currentUser.fullName || '');
+    }
+  }, [currentUser]);
 
   useEffect(() => {
     if (fromDate && toDate) {
@@ -242,7 +294,8 @@ const LeaveSubmitView = ({ currentUser = {}, allowance = [], onSubmitRequest, on
     setIsSubmitting(true);
     try {
       const payload = {
-        emp_id: currentUser?.emp_id || currentUser?.employee_id || 1,
+        emp_id: empId,
+        emp_name: empName,
         leave_type: leaveType,
         leave_from: fromDate,
         leave_to: toDate,
@@ -304,7 +357,68 @@ const LeaveSubmitView = ({ currentUser = {}, allowance = [], onSubmitRequest, on
         >
           <h4 className="text-xs font-extrabold text-slate-800 pb-2 border-b border-slate-100 uppercase tracking-wider">Leave Parameters</h4>
 
-          <ShiftSelector value={shift} onChange={setShift} />
+          {/* Employee Search & Select Selector */}
+          <div className="space-y-1 relative" ref={dropdownRef}>
+            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Select Employee</label>
+            <div 
+              onClick={() => setShowDropdown(!showDropdown)}
+              className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 cursor-pointer flex justify-between items-center shadow-sm"
+            >
+              <span>{empName ? `${empName} (ID: ${empId})` : 'Select an employee...'}</span>
+              <ChevronDown size={14} className={`text-slate-400 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
+            </div>
+
+            {showDropdown && (
+              <div className="absolute z-50 w-full mt-1.5 bg-white border border-slate-250 rounded-2xl shadow-xl p-2.5 space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                <input
+                  type="text"
+                  placeholder="Search by ID or name..."
+                  value={employeeSearch}
+                  onChange={(e) => setEmployeeSearch(e.target.value)}
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-full border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  autoFocus
+                />
+                <div className="max-h-48 overflow-y-auto divide-y divide-slate-50">
+                  {((employees || []).filter(emp => {
+                    const name = (emp.emp_name || emp.name || '').toLowerCase();
+                    const id = String(emp.emp_id || emp.employee_id || '').toLowerCase();
+                    const searchVal = employeeSearch.toLowerCase();
+                    return name.includes(searchVal) || id.includes(searchVal);
+                  })).length === 0 ? (
+                    <div className="py-3 text-center text-xs text-slate-400 font-semibold">
+                      No employees found.
+                    </div>
+                  ) : (
+                    (employees || []).filter(emp => {
+                      const name = (emp.emp_name || emp.name || '').toLowerCase();
+                      const id = String(emp.emp_id || emp.employee_id || '').toLowerCase();
+                      const searchVal = employeeSearch.toLowerCase();
+                      return name.includes(searchVal) || id.includes(searchVal);
+                    }).map(emp => {
+                      const id = emp.emp_id || emp.employee_id;
+                      const name = emp.emp_name || emp.name;
+                      return (
+                        <div
+                          key={id}
+                          onClick={() => {
+                            setEmpId(id);
+                            setEmpName(name);
+                            setShowDropdown(false);
+                            setEmployeeSearch('');
+                          }}
+                          className="py-2 px-3 text-xs font-semibold text-slate-700 hover:bg-blue-50/50 hover:text-blue-600 rounded-lg cursor-pointer transition flex justify-between items-center"
+                        >
+                          <span>{name}</span>
+                          <span className="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded font-bold">ID: {id}</span>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
 
           <LeaveDatePicker
             fromDate={fromDate}
@@ -361,7 +475,7 @@ const LeaveSubmitView = ({ currentUser = {}, allowance = [], onSubmitRequest, on
             </span>
           </label>
 
-          <LeaveButtons onCancel={onCancel} isSubmitting={isSubmitting} submitLabel="Submit Leave Request" />
+          <LeaveButtons onCancel={onCancel} isSubmitting={isSubmitting} submitLabel="Save" />
         </div>
       </div>
 
@@ -391,7 +505,23 @@ const LeaveHistoryView = ({ requests = [], onUpdateStatus, loading = false }) =>
 );
 
 
-const LeavePermissionView = ({ currentUser = {} }) => {
+const LeavePermissionView = ({ currentUser = {}, employees = [] }) => {
+  const [empId, setEmpId] = useState(currentUser?.emp_id || currentUser?.employee_id || '');
+  const [empName, setEmpName] = useState(currentUser?.emp_name || currentUser?.fullName || '');
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [employeeSearch, setEmployeeSearch] = useState('');
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const [date, setDate] = useState('');
   const [fromTime, setFromTime] = useState('');
   const [toTime, setToTime] = useState('');
@@ -399,9 +529,15 @@ const LeavePermissionView = ({ currentUser = {} }) => {
   const [permissionList, setPermissionList] = useState([]);
   const [errorMsg, setErrorMsg] = useState('');
 
-  const empId = currentUser?.emp_id || currentUser?.employee_id || 1;
+  useEffect(() => {
+    if (currentUser) {
+      setEmpId(currentUser.emp_id || currentUser.employee_id || '');
+      setEmpName(currentUser.emp_name || currentUser.fullName || '');
+    }
+  }, [currentUser]);
 
   const loadPermissions = useCallback(async () => {
+    if (!empId) return;
     try {
       const res = await api.get(`/leave/permission/list/${empId}`);
       if (res.data && res.data.success) {
@@ -411,6 +547,7 @@ const LeavePermissionView = ({ currentUser = {} }) => {
           const mockHistory = [
             {
               emp_id: empId,
+              emp_name: empName,
               date: '2026-08-04',
               fromTime: '10:00',
               toTime: '11:00',
@@ -421,6 +558,7 @@ const LeavePermissionView = ({ currentUser = {} }) => {
             },
             {
               emp_id: empId,
+              emp_name: empName,
               date: '2026-08-05',
               fromTime: '15:30',
               toTime: '16:00',
@@ -442,7 +580,7 @@ const LeavePermissionView = ({ currentUser = {} }) => {
     } catch (err) {
       console.error('Failed to load permissions from DB', err);
     }
-  }, [empId]);
+  }, [empId, empName]);
 
   useEffect(() => {
     loadPermissions();
@@ -485,6 +623,7 @@ const LeavePermissionView = ({ currentUser = {} }) => {
     }
     const payload = {
       emp_id: empId,
+      emp_name: empName,
       date,
       fromTime,
       toTime,
@@ -535,6 +674,16 @@ const LeavePermissionView = ({ currentUser = {} }) => {
 
   const progressPercent = (remainingHours / DEFAULT_MONTHLY_HOURS) * 100;  return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <style>{`
+        @media (max-width: 920px) {
+          .permission-history-card {
+            max-height: none !important;
+          }
+          .permission-history-scrollable {
+            overflow: visible !important;
+          }
+        }
+      `}</style>
       <div className="lg:col-span-5 space-y-4">
         {/* Permission Allowance Tracker */}
         <motion.div 
@@ -587,6 +736,69 @@ const LeavePermissionView = ({ currentUser = {} }) => {
           <h4 className="text-xs font-extrabold text-slate-800 pb-2 border-b border-slate-100 uppercase tracking-wider">File Permission Request</h4>
 
           <form onSubmit={handleSubmit} className="space-y-3.5">
+            {/* Employee Search & Select Selector */}
+            <div className="space-y-1 relative" ref={dropdownRef}>
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Select Employee</label>
+              <div 
+                onClick={() => setShowDropdown(!showDropdown)}
+                className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 cursor-pointer flex justify-between items-center shadow-sm"
+              >
+                <span>{empName ? `${empName} (ID: ${empId})` : 'Select an employee...'}</span>
+                <ChevronDown size={14} className={`text-slate-400 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
+              </div>
+
+              {showDropdown && (
+                <div className="absolute z-50 w-full mt-1.5 bg-white border border-slate-250 rounded-2xl shadow-xl p-2.5 space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                  <input
+                    type="text"
+                    placeholder="Search by ID or name..."
+                    value={employeeSearch}
+                    onChange={(e) => setEmployeeSearch(e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                    className="w-full border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    autoFocus
+                  />
+                  <div className="max-h-48 overflow-y-auto divide-y divide-slate-50">
+                    {((employees || []).filter(emp => {
+                      const name = (emp.emp_name || emp.name || '').toLowerCase();
+                      const id = String(emp.emp_id || emp.employee_id || '').toLowerCase();
+                      const searchVal = employeeSearch.toLowerCase();
+                      return name.includes(searchVal) || id.includes(searchVal);
+                    })).length === 0 ? (
+                      <div className="py-3 text-center text-xs text-slate-400 font-semibold">
+                        No employees found.
+                      </div>
+                    ) : (
+                      (employees || []).filter(emp => {
+                        const name = (emp.emp_name || emp.name || '').toLowerCase();
+                        const id = String(emp.emp_id || emp.employee_id || '').toLowerCase();
+                        const searchVal = employeeSearch.toLowerCase();
+                        return name.includes(searchVal) || id.includes(searchVal);
+                      }).map(emp => {
+                        const id = emp.emp_id || emp.employee_id;
+                        const name = emp.emp_name || emp.name;
+                        return (
+                          <div
+                            key={id}
+                            onClick={() => {
+                              setEmpId(id);
+                              setEmpName(name);
+                              setShowDropdown(false);
+                              setEmployeeSearch('');
+                            }}
+                            className="py-2 px-3 text-xs font-semibold text-slate-700 hover:bg-blue-50/50 hover:text-blue-600 rounded-lg cursor-pointer transition flex justify-between items-center"
+                          >
+                            <span>{name}</span>
+                            <span className="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded font-bold">ID: {id}</span>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="space-y-1">
               <label htmlFor="permDate" className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Date</label>
               <input
@@ -651,21 +863,23 @@ const LeavePermissionView = ({ currentUser = {} }) => {
               </div>
             )}
 
-            <motion.button
-              whileHover={{ y: -1.5, scale: 1.02 }}
-              whileTap={{ scale: 0.97 }}
-              type="submit"
-              className="w-full py-2.5 glossy-button-primary text-white font-extrabold text-xs rounded-xl cursor-pointer flex items-center justify-center gap-1.5"
-            >
-              <Send size={13} />
-              Submit Permission Request
-            </motion.button>
+            <div className="flex justify-end pt-3 border-t border-slate-100">
+              <motion.button
+                whileHover={{ y: -1.5, scale: 1.02 }}
+                whileTap={{ scale: 0.97 }}
+                type="submit"
+                className="w-full sm:w-auto px-5 py-2.5 glossy-button-primary text-white font-extrabold text-xs rounded-xl cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <Send size={14} />
+                Save
+              </motion.button>
+            </div>
           </form>
         </div>
       </div>
 
       <div className="lg:col-span-7 space-y-4">
-        <div className="premium-glossy-card rounded-2xl p-4 border-white/40 shadow-sm flex flex-col h-full max-h-[500px] border-beam-card"
+        <div className="premium-glossy-card rounded-2xl p-4 border-white/40 shadow-sm flex flex-col h-full max-h-[500px] border-beam-card permission-history-card"
           style={{
             '--beam-color': '#4f46e5',
             '--beam-speed': '6s',
@@ -673,10 +887,11 @@ const LeavePermissionView = ({ currentUser = {} }) => {
           }}
         >
           <h4 className="text-xs font-extrabold text-slate-800 pb-2 border-b border-slate-100 uppercase tracking-wider mb-3">Permission Request History</h4>
-          <div className="overflow-auto min-h-0 flex-1">
+          <div className="overflow-auto min-h-0 flex-1 permission-history-scrollable">
             <table className="w-full border-collapse text-left text-xs">
               <thead className="sticky top-0 bg-white z-10">
                 <tr className="bg-slate-50 border-b border-slate-200 text-[9px] font-black text-slate-400 uppercase tracking-wider">
+                  <th className="py-2.5 px-3">Employee</th>
                   <th className="py-2.5 px-3">Date</th>
                   <th className="py-2.5 px-3">Timing</th>
                   <th className="py-2.5 px-3 text-center">Duration</th>
@@ -688,7 +903,7 @@ const LeavePermissionView = ({ currentUser = {} }) => {
               <tbody>
                 {permissionList.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-12 text-center text-slate-400 font-semibold">
+                    <td colSpan={7} className="py-12 text-center text-slate-400 font-semibold">
                       No permission requests recorded.
                     </td>
                   </tr>
@@ -699,6 +914,12 @@ const LeavePermissionView = ({ currentUser = {} }) => {
                     if (item.status === 'Rejected') badge = 'bg-rose-50 text-rose-700 border-rose-100';
                     return (
                       <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50/50 transition">
+                        <td className="py-2.5 px-3 font-semibold text-slate-600">
+                          <div>
+                            <p className="font-extrabold text-slate-800">{item.name || 'N/A'}</p>
+                            <p className="text-[9px] text-slate-400 font-bold">ID: {item.emp_id}</p>
+                          </div>
+                        </td>
                         <td className="py-2.5 px-3 font-bold text-slate-700">{formatDate(item.date)}</td>
                         <td className="py-2.5 px-3 font-semibold text-slate-650">{item.fromTime} - {item.toTime}</td>
                         <td className="py-2.5 px-3 text-center font-extrabold text-slate-700">{item.duration} hr</td>

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { 
-  Search, ArrowUpDown, ChevronDown, Check, X, 
+  Search, ArrowUpDown, ChevronDown, Check, X, XCircle, Clock, MoreVertical,
   FileSpreadsheet, FileText, ChevronLeft, ChevronRight, Filter, Calendar
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -14,6 +14,7 @@ export const LeaveTable = ({ data = [], onUpdateStatus, isAdmin = false }) => {
   const [fromDateFilter, setFromDateFilter] = useState('');
   const [toDateFilter, setToDateFilter] = useState('');
   const [showAdvanceFilters, setShowAdvanceFilters] = useState(false);
+  const [openMenuId, setOpenMenuId] = useState(null);
 
   // Sorting
   const [sortField, setSortField] = useState('leave_from');
@@ -32,6 +33,7 @@ export const LeaveTable = ({ data = [], onUpdateStatus, isAdmin = false }) => {
     setSortDirection(isAsc ? 'desc' : 'asc');
     setSortField(field);
     setCurrentPage(1);
+    setOpenMenuId(null);
   };
 
   // Filter & Sort logic
@@ -43,9 +45,7 @@ export const LeaveTable = ({ data = [], onUpdateStatus, isAdmin = false }) => {
       const q = searchQuery.toLowerCase().trim();
       result = result.filter(item => 
         String(item.emp_id).toLowerCase().includes(q) ||
-        (item.emp_name || '').toLowerCase().includes(q) ||
-        (item.leave_reason || '').toLowerCase().includes(q) ||
-        (item.leave_type || '').toLowerCase().includes(q)
+        (item.emp_name || '').toLowerCase().includes(q)
       );
     }
 
@@ -111,6 +111,7 @@ export const LeaveTable = ({ data = [], onUpdateStatus, isAdmin = false }) => {
     setFromDateFilter('');
     setToDateFilter('');
     setCurrentPage(1);
+    setOpenMenuId(null);
   };
 
   // Export functions
@@ -151,6 +152,24 @@ export const LeaveTable = ({ data = [], onUpdateStatus, isAdmin = false }) => {
 
   return (
     <div className="space-y-4">
+      <style>{`
+        @media (max-width: 920px) {
+          .leave-table-desktop {
+            display: none !important;
+          }
+          .leave-table-mobile {
+            display: block !important;
+          }
+        }
+        @media (min-width: 921px) {
+          .leave-table-desktop {
+            display: block !important;
+          }
+          .leave-table-mobile {
+            display: none !important;
+          }
+        }
+      `}</style>
       {/* Table Action Controls */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white p-4 rounded-3xl border border-slate-200/80 shadow-sm">
         <div className="flex flex-wrap items-center gap-2 flex-1">
@@ -176,6 +195,7 @@ export const LeaveTable = ({ data = [], onUpdateStatus, isAdmin = false }) => {
             <option value="Pending">Pending</option>
             <option value="Approved">Approved</option>
             <option value="Rejected">Rejected</option>
+            <option value="Cancelled">Cancelled</option>
           </select>
 
           <button
@@ -272,7 +292,7 @@ export const LeaveTable = ({ data = [], onUpdateStatus, isAdmin = false }) => {
       {/* Main Data Table */}
       <div className="bg-white border border-slate-200/80 rounded-3xl shadow-sm overflow-hidden">
         {/* Mobile Card / Vertical View */}
-        <div className="md:hidden divide-y divide-slate-100/80">
+        <div className="leave-table-mobile divide-y divide-slate-100/80">
           {paginatedData.length === 0 ? (
             <div className="py-20 text-center">
               <div className="flex flex-col items-center justify-center gap-3">
@@ -293,6 +313,8 @@ export const LeaveTable = ({ data = [], onUpdateStatus, isAdmin = false }) => {
                 statusBadge = 'bg-emerald-50 text-emerald-700 border-emerald-100';
               } else if (row.leave_status === 'Rejected') {
                 statusBadge = 'bg-rose-50 text-rose-700 border-rose-100';
+              } else if (row.leave_status === 'Cancelled') {
+                statusBadge = 'bg-slate-100 text-slate-600 border-slate-200';
               } else {
                 statusBadge = 'bg-amber-50 text-amber-700 border-amber-100';
               }
@@ -341,27 +363,96 @@ export const LeaveTable = ({ data = [], onUpdateStatus, isAdmin = false }) => {
                       <span className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Reason:</span>
                       <p className="font-semibold text-slate-600 leading-relaxed">{row.leave_reason}</p>
                     </div>
-                  )}
-
-                  {/* Actions */}
+                  )}                  {/* Actions */}
                   <div className="flex items-center justify-between pt-2.5 border-t border-slate-100">
                     <span className="text-[10px] font-bold text-slate-400 uppercase">Actions</span>
-                    {row.leave_status === 'Pending' && isAdmin ? (
-                      <div className="flex items-center justify-end gap-1.5">
+                    {isAdmin ? (
+                      <div className="relative inline-block text-left">
                         <button
-                          onClick={() => onUpdateStatus(row.leave_id, 'Approved')}
-                          className="p-1 text-emerald-600 hover:bg-emerald-50 rounded-lg border border-slate-200 hover:border-emerald-200 shadow-sm transition cursor-pointer"
-                          title="Approve Request"
+                          onClick={() => setOpenMenuId(openMenuId === row.leave_id ? null : row.leave_id)}
+                          className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl border border-slate-200 hover:border-slate-300 shadow-sm transition-all duration-200 cursor-pointer"
+                          title="Actions"
                         >
-                          <Check size={14} />
+                          <MoreVertical size={14} />
                         </button>
-                        <button
-                          onClick={() => onUpdateStatus(row.leave_id, 'Rejected')}
-                          className="p-1 text-rose-600 hover:bg-rose-50 rounded-lg border border-slate-200 hover:border-rose-200 shadow-sm transition cursor-pointer"
-                          title="Reject Request"
-                        >
-                          <X size={14} />
-                        </button>
+                        
+                        {openMenuId === row.leave_id && (
+                          <>
+                            {/* Backdrop for click outside */}
+                            <div className="fixed inset-0 z-30" onClick={() => setOpenMenuId(null)} />
+                            
+                            {/* Dropdown Menu */}
+                            <div className="absolute right-0 mt-1.5 w-40 bg-white border border-slate-200/80 rounded-2xl p-1 shadow-lg z-40 animate-in fade-in slide-in-from-top-2 duration-200">
+                              {/* Pending Option */}
+                              <button
+                                onClick={() => {
+                                  if (row.leave_status !== 'Pending') onUpdateStatus(row.leave_id, 'Pending');
+                                  setOpenMenuId(null);
+                                }}
+                                disabled={row.leave_status === 'Pending'}
+                                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left text-xs font-bold transition-all duration-200 cursor-pointer ${
+                                  row.leave_status === 'Pending'
+                                    ? 'text-amber-600 bg-amber-50/70 select-none'
+                                    : 'text-slate-600 hover:text-amber-600 hover:bg-amber-50/30'
+                                }`}
+                              >
+                                <Clock size={13} className={row.leave_status === 'Pending' ? 'text-amber-600' : 'text-slate-400'} />
+                                Pending
+                              </button>
+
+                              {/* Approve Option */}
+                              <button
+                                onClick={() => {
+                                  if (row.leave_status !== 'Approved') onUpdateStatus(row.leave_id, 'Approved');
+                                  setOpenMenuId(null);
+                                }}
+                                disabled={row.leave_status === 'Approved'}
+                                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left text-xs font-bold transition-all duration-200 cursor-pointer ${
+                                  row.leave_status === 'Approved'
+                                    ? 'text-emerald-600 bg-emerald-50/70 select-none'
+                                    : 'text-slate-600 hover:text-emerald-600 hover:bg-emerald-50/30'
+                                }`}
+                              >
+                                <Check size={13} className={row.leave_status === 'Approved' ? 'text-emerald-600' : 'text-slate-400'} />
+                                Approve
+                              </button>
+
+                              {/* Reject Option */}
+                              <button
+                                onClick={() => {
+                                  if (row.leave_status !== 'Rejected') onUpdateStatus(row.leave_id, 'Rejected');
+                                  setOpenMenuId(null);
+                                }}
+                                disabled={row.leave_status === 'Rejected'}
+                                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left text-xs font-bold transition-all duration-200 cursor-pointer ${
+                                  row.leave_status === 'Rejected'
+                                    ? 'text-rose-600 bg-rose-50/70 select-none'
+                                    : 'text-slate-600 hover:text-rose-600 hover:bg-rose-50/30'
+                                }`}
+                              >
+                                <X size={13} className={row.leave_status === 'Rejected' ? 'text-rose-600' : 'text-slate-400'} />
+                                Reject
+                              </button>
+
+                              {/* Cancel Option */}
+                              <button
+                                onClick={() => {
+                                  if (row.leave_status !== 'Cancelled') onUpdateStatus(row.leave_id, 'Cancelled');
+                                  setOpenMenuId(null);
+                                }}
+                                disabled={row.leave_status === 'Cancelled'}
+                                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left text-xs font-bold transition-all duration-200 cursor-pointer ${
+                                  row.leave_status === 'Cancelled'
+                                    ? 'text-slate-600 bg-slate-100 select-none'
+                                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/50'
+                                }`}
+                              >
+                                <XCircle size={13} className={row.leave_status === 'Cancelled' ? 'text-slate-600' : 'text-slate-400'} />
+                                Cancel
+                              </button>
+                            </div>
+                          </>
+                        )}
                       </div>
                     ) : (
                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider select-none">
@@ -376,7 +467,7 @@ export const LeaveTable = ({ data = [], onUpdateStatus, isAdmin = false }) => {
         </div>
 
         {/* Desktop View Table */}
-        <div className="hidden md:block overflow-x-auto min-h-[300px]">
+        <div className="leave-table-desktop overflow-x-auto min-h-[300px]">
           <table className="w-full border-collapse text-left text-sm">
             {/* Header */}
             <thead>
@@ -446,6 +537,8 @@ export const LeaveTable = ({ data = [], onUpdateStatus, isAdmin = false }) => {
                     statusBadge = 'bg-emerald-50 text-emerald-700 border-emerald-100';
                   } else if (row.leave_status === 'Rejected') {
                     statusBadge = 'bg-rose-50 text-rose-700 border-rose-100';
+                  } else if (row.leave_status === 'Cancelled') {
+                    statusBadge = 'bg-slate-100 text-slate-600 border-slate-200';
                   } else {
                     statusBadge = 'bg-amber-50 text-amber-700 border-amber-100';
                   }
@@ -503,22 +596,93 @@ export const LeaveTable = ({ data = [], onUpdateStatus, isAdmin = false }) => {
 
                       {/* Actions */}
                       <td className="py-3.5 px-5 text-right">
-                        {row.leave_status === 'Pending' && isAdmin ? (
-                          <div className="flex items-center justify-end gap-1.5">
+                        {isAdmin ? (
+                          <div className="relative inline-block text-left">
                             <button
-                              onClick={() => onUpdateStatus(row.leave_id, 'Approved')}
-                              className="p-1 text-emerald-600 hover:bg-emerald-50 rounded-lg border border-slate-200 hover:border-emerald-200 shadow-sm transition cursor-pointer"
-                              title="Approve Request"
+                              onClick={() => setOpenMenuId(openMenuId === row.leave_id ? null : row.leave_id)}
+                              className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl border border-slate-200 hover:border-slate-300 shadow-sm transition-all duration-200 cursor-pointer"
+                              title="Actions"
                             >
-                              <Check size={14} />
+                              <MoreVertical size={14} />
                             </button>
-                            <button
-                              onClick={() => onUpdateStatus(row.leave_id, 'Rejected')}
-                              className="p-1 text-rose-600 hover:bg-rose-50 rounded-lg border border-slate-200 hover:border-rose-200 shadow-sm transition cursor-pointer"
-                              title="Reject Request"
-                            >
-                              <X size={14} />
-                            </button>
+                            
+                            {openMenuId === row.leave_id && (
+                              <>
+                                {/* Backdrop for click outside */}
+                                <div className="fixed inset-0 z-30" onClick={() => setOpenMenuId(null)} />
+                                
+                                {/* Dropdown Menu */}
+                                <div className="absolute right-0 mt-1.5 w-40 bg-white border border-slate-200/80 rounded-2xl p-1 shadow-lg z-40 animate-in fade-in slide-in-from-top-2 duration-200">
+                                  {/* Pending Option */}
+                                  <button
+                                    onClick={() => {
+                                      if (row.leave_status !== 'Pending') onUpdateStatus(row.leave_id, 'Pending');
+                                      setOpenMenuId(null);
+                                    }}
+                                    disabled={row.leave_status === 'Pending'}
+                                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left text-xs font-bold transition-all duration-200 cursor-pointer ${
+                                      row.leave_status === 'Pending'
+                                        ? 'text-amber-600 bg-amber-50/70 select-none'
+                                        : 'text-slate-600 hover:text-amber-600 hover:bg-amber-50/30'
+                                    }`}
+                                  >
+                                    <Clock size={13} className={row.leave_status === 'Pending' ? 'text-amber-600' : 'text-slate-400'} />
+                                    Pending
+                                  </button>
+
+                                  {/* Approve Option */}
+                                  <button
+                                    onClick={() => {
+                                      if (row.leave_status !== 'Approved') onUpdateStatus(row.leave_id, 'Approved');
+                                      setOpenMenuId(null);
+                                    }}
+                                    disabled={row.leave_status === 'Approved'}
+                                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left text-xs font-bold transition-all duration-200 cursor-pointer ${
+                                      row.leave_status === 'Approved'
+                                        ? 'text-emerald-600 bg-emerald-50/70 select-none'
+                                        : 'text-slate-600 hover:text-emerald-600 hover:bg-emerald-50/30'
+                                    }`}
+                                  >
+                                    <Check size={13} className={row.leave_status === 'Approved' ? 'text-emerald-600' : 'text-slate-400'} />
+                                    Approve
+                                  </button>
+
+                                  {/* Reject Option */}
+                                  <button
+                                    onClick={() => {
+                                      if (row.leave_status !== 'Rejected') onUpdateStatus(row.leave_id, 'Rejected');
+                                      setOpenMenuId(null);
+                                    }}
+                                    disabled={row.leave_status === 'Rejected'}
+                                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left text-xs font-bold transition-all duration-200 cursor-pointer ${
+                                      row.leave_status === 'Rejected'
+                                        ? 'text-rose-600 bg-rose-50/70 select-none'
+                                        : 'text-slate-600 hover:text-rose-600 hover:bg-rose-50/30'
+                                    }`}
+                                  >
+                                    <X size={13} className={row.leave_status === 'Rejected' ? 'text-rose-600' : 'text-slate-400'} />
+                                    Reject
+                                  </button>
+
+                                  {/* Cancel Option */}
+                                  <button
+                                    onClick={() => {
+                                      if (row.leave_status !== 'Cancelled') onUpdateStatus(row.leave_id, 'Cancelled');
+                                      setOpenMenuId(null);
+                                    }}
+                                    disabled={row.leave_status === 'Cancelled'}
+                                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left text-xs font-bold transition-all duration-200 cursor-pointer ${
+                                      row.leave_status === 'Cancelled'
+                                        ? 'text-slate-600 bg-slate-100 select-none'
+                                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/50'
+                                    }`}
+                                  >
+                                    <XCircle size={13} className={row.leave_status === 'Cancelled' ? 'text-slate-600' : 'text-slate-400'} />
+                                    Cancel
+                                  </button>
+                                </div>
+                              </>
+                            )}
                           </div>
                         ) : (
                           <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider select-none">

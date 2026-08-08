@@ -1,13 +1,28 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import api from '../../api/axios';
 import { motion } from 'framer-motion';
-import { Clock, Calendar, AlertCircle, CheckCircle2, Send, XCircle, Trash2 } from 'lucide-react';
+import { Clock, Calendar, AlertCircle, CheckCircle2, Send, XCircle, Trash2, ChevronDown } from 'lucide-react';
 import { formatDate } from '../../utils/leaveUtils';
 
 const DEFAULT_MONTHLY_HOURS = 2.0; // 2 hours allowance
 
-export const LeavePermission = ({ currentUser }) => {
+export const LeavePermission = ({ currentUser, employees = [] }) => {
   // Form states
+  const [empId, setEmpId] = useState(currentUser?.emp_id || currentUser?.employee_id || '');
+  const [empName, setEmpName] = useState(currentUser?.emp_name || currentUser?.fullName || '');
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [employeeSearch, setEmployeeSearch] = useState('');
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
   const [date, setDate] = useState('');
   const [fromTime, setFromTime] = useState('');
   const [toTime, setToTime] = useState('');
@@ -15,9 +30,15 @@ export const LeavePermission = ({ currentUser }) => {
   const [permissionList, setPermissionList] = useState([]);
   const [errorMsg, setErrorMsg] = useState('');
 
-  const empId = currentUser?.emp_id || currentUser?.employee_id || 1;
+  useEffect(() => {
+    if (currentUser) {
+      setEmpId(currentUser.emp_id || currentUser.employee_id || '');
+      setEmpName(currentUser.emp_name || currentUser.fullName || '');
+    }
+  }, [currentUser]);
 
   const loadPermissions = useCallback(async () => {
+    if (!empId) return;
     try {
       const res = await api.get(`/leave/permission/list/${empId}`);
       if (res.data && res.data.success) {
@@ -27,6 +48,7 @@ export const LeavePermission = ({ currentUser }) => {
           const mockHistory = [
             {
               emp_id: empId,
+              emp_name: empName,
               date: '2026-08-04',
               fromTime: '10:00',
               toTime: '11:00',
@@ -37,6 +59,7 @@ export const LeavePermission = ({ currentUser }) => {
             },
             {
               emp_id: empId,
+              emp_name: empName,
               date: '2026-08-05',
               fromTime: '15:30',
               toTime: '16:00',
@@ -58,7 +81,7 @@ export const LeavePermission = ({ currentUser }) => {
     } catch (err) {
       console.error('Failed to load permissions from DB', err);
     }
-  }, [empId]);
+  }, [empId, empName]);
 
   useEffect(() => {
     loadPermissions();
@@ -113,6 +136,7 @@ export const LeavePermission = ({ currentUser }) => {
 
     const payload = {
       emp_id: empId,
+      emp_name: empName,
       date,
       fromTime,
       toTime,
@@ -168,6 +192,16 @@ export const LeavePermission = ({ currentUser }) => {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <style>{`
+        @media (max-width: 920px) {
+          .permission-history-card {
+            max-height: none !important;
+          }
+          .permission-history-scrollable {
+            overflow: visible !important;
+          }
+        }
+      `}</style>
       
       {/* Left Side: Allowance widget & request form */}
       <div className="lg:col-span-5 space-y-4">
@@ -232,7 +266,68 @@ export const LeavePermission = ({ currentUser }) => {
 
           <form onSubmit={handleSubmit} className="space-y-3.5">
             
-            {/* Date */}
+            {/* Employee Search & Select Selector */}
+            <div className="space-y-1 relative" ref={dropdownRef}>
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Select Employee</label>
+              <div 
+                onClick={() => setShowDropdown(!showDropdown)}
+                className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 cursor-pointer flex justify-between items-center shadow-sm"
+              >
+                <span>{empName ? `${empName} (ID: ${empId})` : 'Select an employee...'}</span>
+                <ChevronDown size={14} className={`text-slate-400 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
+              </div>
+
+              {showDropdown && (
+                <div className="absolute z-50 w-full mt-1.5 bg-white border border-slate-250 rounded-2xl shadow-xl p-2.5 space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                  <input
+                    type="text"
+                    placeholder="Search by ID or name..."
+                    value={employeeSearch}
+                    onChange={(e) => setEmployeeSearch(e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                    className="w-full border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    autoFocus
+                  />
+                  <div className="max-h-48 overflow-y-auto divide-y divide-slate-50">
+                    {((employees || []).filter(emp => {
+                      const name = (emp.emp_name || emp.name || '').toLowerCase();
+                      const id = String(emp.emp_id || emp.employee_id || '').toLowerCase();
+                      const searchVal = employeeSearch.toLowerCase();
+                      return name.includes(searchVal) || id.includes(searchVal);
+                    })).length === 0 ? (
+                      <div className="py-3 text-center text-xs text-slate-400 font-semibold">
+                        No employees found.
+                      </div>
+                    ) : (
+                      (employees || []).filter(emp => {
+                        const name = (emp.emp_name || emp.name || '').toLowerCase();
+                        const id = String(emp.emp_id || emp.employee_id || '').toLowerCase();
+                        const searchVal = employeeSearch.toLowerCase();
+                        return name.includes(searchVal) || id.includes(searchVal);
+                      }).map(emp => {
+                        const id = emp.emp_id || emp.employee_id;
+                        const name = emp.emp_name || emp.name;
+                        return (
+                          <div
+                            key={id}
+                            onClick={() => {
+                              setEmpId(id);
+                              setEmpName(name);
+                              setShowDropdown(false);
+                              setEmployeeSearch('');
+                            }}
+                            className="py-2 px-3 text-xs font-semibold text-slate-700 hover:bg-blue-50/50 hover:text-blue-600 rounded-lg cursor-pointer transition flex justify-between items-center"
+                          >
+                            <span>{name}</span>
+                            <span className="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded font-bold">ID: {id}</span>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
             <div className="space-y-1">
               <label htmlFor="permDate" className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Date</label>
               <div className="relative">
@@ -304,15 +399,17 @@ export const LeavePermission = ({ currentUser }) => {
             )}
 
             {/* Submit Button */}
-            <motion.button
-              whileHover={{ y: -1.5, scale: 1.02 }}
-              whileTap={{ scale: 0.97 }}
-              type="submit"
-              className="w-full py-2.5 glossy-button-primary text-white font-extrabold text-xs rounded-xl cursor-pointer flex items-center justify-center gap-1.5"
-            >
-              <Send size={13} />
-              Submit Permission Request
-            </motion.button>
+            <div className="flex justify-end pt-3 border-t border-slate-100">
+              <motion.button
+                whileHover={{ y: -1.5, scale: 1.02 }}
+                whileTap={{ scale: 0.97 }}
+                type="submit"
+                className="w-full sm:w-auto px-5 py-2.5 glossy-button-primary text-white font-extrabold text-xs rounded-xl cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <Send size={14} />
+                Save
+              </motion.button>
+            </div>
 
           </form>
         </div>
@@ -322,7 +419,7 @@ export const LeavePermission = ({ currentUser }) => {
       {/* Right Side: History registry */}
       <div className="lg:col-span-7 space-y-4">
         
-        <div className="premium-glossy-card rounded-2xl p-4 border-white/40 shadow-sm flex flex-col h-full max-h-[500px] border-beam-card"
+        <div className="premium-glossy-card rounded-2xl p-4 border-white/40 shadow-sm flex flex-col h-full max-h-[500px] border-beam-card permission-history-card"
           style={{
             '--beam-color': '#4f46e5',
             '--beam-speed': '6s',
@@ -333,10 +430,11 @@ export const LeavePermission = ({ currentUser }) => {
             Permission Request History
           </h4>
 
-          <div className="overflow-auto min-h-0 flex-1">
+          <div className="overflow-auto min-h-0 flex-1 permission-history-scrollable">
             <table className="w-full border-collapse text-left text-xs">
               <thead className="sticky top-0 bg-white z-10">
                 <tr className="bg-slate-50 border-b border-slate-200 text-[9px] font-black text-slate-400 uppercase tracking-wider">
+                  <th className="py-2.5 px-3">Employee</th>
                   <th className="py-2.5 px-3">Date</th>
                   <th className="py-2.5 px-3">Timing</th>
                   <th className="py-2.5 px-3 text-center">Duration</th>
@@ -348,7 +446,7 @@ export const LeavePermission = ({ currentUser }) => {
               <tbody>
                 {permissionList.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-12 text-center text-slate-400 font-semibold">
+                    <td colSpan={7} className="py-12 text-center text-slate-400 font-semibold">
                       No permission requests recorded.
                     </td>
                   </tr>
@@ -360,6 +458,12 @@ export const LeavePermission = ({ currentUser }) => {
 
                     return (
                       <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50/50 transition">
+                        <td className="py-2.5 px-3 font-semibold text-slate-655">
+                          <div>
+                            <p className="font-extrabold text-slate-800">{item.name || 'N/A'}</p>
+                            <p className="text-[9px] text-slate-400 font-bold">ID: {item.emp_id}</p>
+                          </div>
+                        </td>
                         <td className="py-2.5 px-3 font-bold text-slate-700">
                           {formatDate(item.date)}
                         </td>
