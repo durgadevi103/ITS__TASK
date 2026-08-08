@@ -1,173 +1,223 @@
-import React, { useMemo } from 'react';
-import { 
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, 
-  Tooltip, ResponsiveContainer 
+import React, { useMemo, useState } from 'react';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
 } from 'recharts';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
-// Custom Tooltip with blur filter, fade, scale, and spring slides
-const CustomTooltip = ({ active, payload, label }) => {
-  if (active && payload && payload.length) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.92, y: 8, filter: 'blur(4px)' }}
-        animate={{ opacity: 1, scale: 1, y: 0, filter: 'blur(0px)' }}
-        exit={{ opacity: 0, scale: 0.92, y: 8, filter: 'blur(4px)' }}
-        transition={{ type: 'spring', stiffness: 400, damping: 26 }}
-        className="bg-slate-950/90 backdrop-blur-xl p-4 border border-slate-800/80 rounded-2xl shadow-2xl text-white select-none pointer-events-none"
-      >
-        <p className="text-[9px] font-black tracking-widest text-blue-400 uppercase">
-          {label} Leaves
-        </p>
-        <div className="mt-2 space-y-1.5 min-w-[120px]">
-          <div className="flex justify-between items-baseline gap-4 text-xs font-bold">
-            <span className="text-slate-400">Total Duration:</span>
-            <span className="text-white text-sm font-black">{payload[0].value} d</span>
-          </div>
-          <div className="flex justify-between items-center gap-4 text-[9px] font-semibold text-slate-500">
-            <span>Approved count:</span>
-            <span>{payload[0].payload.requests}</span>
-          </div>
-        </div>
-      </motion.div>
-    );
+const barFill = '#2563eb';
+const barHoverFill = '#1d4ed8';
+const accentGlow = '#3b82f6';
+const topShade = '#93c5fd';
+const sideShade = '#1e40af';
+const axisTextColor = '#64748b';
+const uniqueBarColors = ['#2563eb', '#3b82f6', '#0ea5e9', '#6366f1', '#8b5cf6', '#ec4899', '#14b8a6', '#f59e0b', '#ef4444', '#10b981', '#64748b', '#0f172a'];
+
+const CustomBar = ({ x, y, width, height, fill, index, isHovered, ...props }) => {
+  if (height <= 0 || width <= 0) {
+    return null;
   }
-  return null;
-};
 
-// Glowing pulse dot for coordinates
-const CustomActiveDot = (props) => {
-  const { cx, cy, stroke, value, index, totalPoints } = props;
-  
-  if (value === 0) return null;
-
-  const isLatest = index === totalPoints - 1;
+  const depth = Math.max(7, Math.min(12, width * 0.18));
+  const topHeight = Math.max(5, Math.min(8, height * 0.08));
+  const colorIndex = index % uniqueBarColors.length;
+  const baseColor = uniqueBarColors[colorIndex] || barFill;
+  const hoverColor = isHovered ? '#0f172a' : baseColor;
+  const mainFill = isHovered ? hoverColor : baseColor;
+  const topFill = isHovered ? '#ffffff' : '#dbeafe';
+  const sideFill = isHovered ? '#334155' : '#1d4ed8';
 
   return (
-    <g>
-      {/* Outer Halo glow circle */}
-      <circle cx={cx} cy={cy} r={isLatest ? 12 : 9} fill={stroke} fillOpacity={0.15}>
-        <animate
-          attributeName="r"
-          values={isLatest ? "8;16;8" : "6;10;6"}
-          dur={isLatest ? "2s" : "3s"}
-          repeatCount="indefinite"
-        />
-      </circle>
-      <circle 
-        cx={cx} 
-        cy={cy} 
-        r={4.5} 
-        fill={stroke} 
-        stroke="#ffffff" 
-        strokeWidth={2} 
-        style={{ filter: 'drop-shadow(0 0 4px rgba(59, 130, 246, 0.6))' }} 
+    <g {...props}>
+      <rect
+        x={x + width - depth}
+        y={y + topHeight}
+        width={depth}
+        height={Math.max(height - topHeight, 0)}
+        rx={6}
+        fill={sideFill}
+        opacity={0.9}
+      />
+      <rect
+        x={x}
+        y={y - topHeight}
+        width={width}
+        height={topHeight}
+        rx={6}
+        fill={topFill}
+        opacity={0.95}
+      />
+      <rect
+        x={x}
+        y={y}
+        width={width}
+        height={height}
+        rx={8}
+        fill={mainFill}
+        filter="url(#barShadow)"
+      />
+      <rect
+        x={x + 2}
+        y={y + 2}
+        width={width - 4}
+        height={Math.max(2, Math.min(6, height * 0.18))}
+        rx={5}
+        fill="rgba(255,255,255,0.24)"
       />
     </g>
   );
 };
 
-export const LeaveTrendChart = ({ requests = [] }) => {
-  // Aggregate data points by month dynamically
+const CustomTooltip = ({ active, payload, label }) => {
+  if (!active || !payload?.length) {
+    return null;
+  }
+
+  const value = Number(payload[0]?.value || 0);
+  const requestCount = Number(payload[0]?.payload?.requests || 0);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8, scale: 0.96 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.18, ease: 'easeOut' }}
+      className="rounded-2xl border border-slate-200 bg-white/95 px-3 py-2.5 shadow-lg shadow-slate-200/70 backdrop-blur"
+    >
+      <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-blue-600">
+        {label}
+      </p>
+      <p className="mt-1 text-sm font-semibold text-slate-900">
+        {value} {value === 1 ? 'day' : 'days'}
+      </p>
+      <p className="mt-0.5 text-xs text-slate-500">
+        {requestCount} approved request{requestCount === 1 ? '' : 's'}
+      </p>
+    </motion.div>
+  );
+};
+
+const LoadingState = () => (
+  <div className="flex h-full items-end justify-between gap-2 px-1 pb-2 pt-2">
+    {Array.from({ length: 6 }).map((_, index) => (
+      <motion.div
+        key={index}
+        initial={{ height: 24, opacity: 0.5 }}
+        animate={{ height: [24, 90 + (index % 3) * 28, 24], opacity: [0.5, 0.9, 0.5] }}
+        transition={{ duration: 1.3, repeat: Infinity, delay: index * 0.08, ease: 'easeInOut' }}
+        className="w-full rounded-t-2xl bg-slate-200"
+      />
+    ))}
+  </div>
+);
+
+export const LeaveTrendChart = ({ requests = [], isLoading = false, error = null }) => {
+  const [hoveredIndex, setHoveredIndex] = useState(null);
+
   const chartData = useMemo(() => {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    
-    return months.map((month, idx) => {
-      const currentYear = new Date().getFullYear();
-      
-      const filtered = requests.filter(r => {
-        const d = new Date(r.leave_from);
-        return d.getMonth() === idx && d.getFullYear() === currentYear && r.leave_status === 'Approved';
+    const currentYear = new Date().getFullYear();
+    const safeRequests = Array.isArray(requests) ? requests : [];
+
+    return months.map((month, index) => {
+      const filtered = safeRequests.filter((request) => {
+        const leaveDate = new Date(request?.leave_from);
+
+        return (
+          !Number.isNaN(leaveDate.getTime()) &&
+          leaveDate.getMonth() === index &&
+          leaveDate.getFullYear() === currentYear &&
+          request?.leave_status === 'Approved'
+        );
       });
 
-      const daysCount = filtered.reduce((sum, r) => sum + (Number(r.leave_days) || 0), 0);
-      
+      const daysCount = filtered.reduce((sum, request) => sum + (Number(request?.leave_days) || 0), 0);
+
       return {
         month,
-        days: daysCount,
-        requests: filtered.length
+        days: Number(daysCount.toFixed(1)),
+        requests: filtered.length,
       };
     });
   }, [requests]);
 
-  // Find index of last month with actual approved leaves
-  const lastActiveIndex = useMemo(() => {
-    let lastIdx = -1;
-    for (let i = chartData.length - 1; i >= 0; i--) {
-      if (chartData[i].days > 0) {
-        lastIdx = i;
-        break;
-      }
-    }
-    return lastIdx;
-  }, [chartData]);
+  const hasData = chartData.some((item) => item.days > 0);
+  const maxValue = Math.max(...chartData.map((item) => item.days), 1);
+  const yAxisMax = Math.max(10, Math.ceil(maxValue / 5) * 5);
+
+  if (isLoading) {
+    return (
+      <div className="relative h-64 w-full rounded-2xl border border-slate-200/80 bg-slate-50/70 p-4">
+        <div className="mb-3 h-3 w-24 animate-pulse rounded-full bg-slate-200" />
+        <LoadingState />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex h-64 w-full items-center justify-center rounded-2xl border border-slate-200/80 bg-slate-50/70 px-6 text-center text-sm font-medium text-slate-500">
+        Unable to load leave data.
+      </div>
+    );
+  }
+
+  if (!hasData) {
+    return (
+      <div className="flex h-64 w-full items-center justify-center rounded-2xl border border-slate-200/80 bg-slate-50/70 px-6 text-center text-sm font-medium text-slate-500">
+        No data available
+      </div>
+    );
+  }
 
   return (
-    <div className="relative w-full h-[240px]">
-      
-      {/* Dynamic breathing gradient linear overlay definition */}
+    <div className="relative h-64 w-full rounded-2xl border border-slate-200/80 bg-slate-50/70 p-2 sm:p-3">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart
+        <BarChart
           data={chartData}
-          margin={{ top: 15, right: 10, left: -25, bottom: 0 }}
+          margin={{ top: 8, right: 6, left: -10, bottom: 4 }}
         >
           <defs>
-            <linearGradient id="premiumTrendGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#2563eb" stopOpacity={0.25}>
-                {/* Breathing keyframe animation */}
-                <animate attributeName="stop-opacity" values="0.25;0.12;0.25" dur="4s" repeatCount="indefinite" />
-              </stop>
-              <stop offset="95%" stopColor="#2563eb" stopOpacity={0.0} />
-            </linearGradient>
+            <filter id="barShadow" x="-20%" y="-20%" width="140%" height="160%">
+              <feDropShadow dx="0" dy="3" stdDeviation="2.5" floodColor="#3b82f6" floodOpacity="0.24" />
+            </filter>
           </defs>
-
-          {/* Dotted Grid lines */}
-          <CartesianGrid strokeDasharray="4 4" stroke="#f1f5f9" vertical={false} />
-
-          {/* X Axis */}
-          <XAxis 
-            dataKey="month" 
-            axisLine={false} 
-            tickLine={false}
-            tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: '700' }}
-            dy={8}
-          />
-
-          {/* Y Axis */}
-          <YAxis 
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+          <XAxis
+            dataKey="month"
             axisLine={false}
             tickLine={false}
-            tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: '700' }}
-            dx={-8}
+            tick={{ fill: axisTextColor, fontSize: 11, fontWeight: 600 }}
+            dy={6}
           />
-
-          {/* Custom guide line */}
-          <Tooltip 
-            content={<CustomTooltip />} 
-            cursor={{ stroke: '#2563eb', strokeWidth: 1.5, strokeDasharray: '4 4' }}
+          <YAxis
+            axisLine={false}
+            tickLine={false}
+            tick={{ fill: axisTextColor, fontSize: 10 }}
+            width={34}
+            domain={[0, yAxisMax]}
+            allowDecimals={false}
           />
-
-          {/* Bezier curve Area */}
-          <Area
-            type="monotone"
+          <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(37, 99, 235, 0.06)' }} />
+          <Bar
             dataKey="days"
-            stroke="#2563eb"
-            strokeWidth={2.5}
-            fillOpacity={1}
-            fill="url(#premiumTrendGrad)"
-            activeDot={(props) => (
-              <CustomActiveDot 
-                {...props} 
-                totalPoints={chartData.length} 
-                index={props.index} 
+            maxBarSize={42}
+            isAnimationActive
+            animationDuration={900}
+            animationEasing="ease-out"
+            shape={(props) => (
+              <CustomBar
+                {...props}
+                isHovered={hoveredIndex === props.index}
+                index={props.index}
               />
             )}
-            dot={{ r: 0 }}
-            isAnimationActive={true}
-            animationDuration={1500}
-            animationEasing="ease-out"
           />
-        </AreaChart>
+        </BarChart>
       </ResponsiveContainer>
     </div>
   );

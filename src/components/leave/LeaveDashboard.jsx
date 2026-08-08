@@ -67,13 +67,15 @@ export const LeaveDashboard = ({ stats, allowance, requests = [], onNavigateToTa
           whileHover={{ y: -4, border: '1px solid rgba(37, 99, 235, 0.25)' }}
           className="glass-card rounded-3xl p-6 border border-slate-200/80 shadow-md lg:col-span-2 relative group hover:shadow-xl transition-all duration-300 bg-white/70 backdrop-blur-xl"
         >
-          <div className="flex justify-between items-center mb-4">
+          <div className="mb-4 flex items-start justify-between gap-3">
             <div>
-              <h4 className="text-sm font-extrabold text-slate-800 tracking-tight">Leave Utilization Trend</h4>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Approved Days Taken</p>
+              <h4 className="text-sm font-extrabold tracking-tight text-slate-800">Employee Performance Overview</h4>
+              <p className="mt-0.5 text-[10px] font-bold uppercase tracking-[0.24em] text-slate-400">
+                Performance comparison across departments
+              </p>
             </div>
-            <div className="flex items-center gap-1.5 bg-blue-50 border border-blue-100/50 px-2.5 py-1 rounded-full text-[9px] font-black text-blue-600">
-              <ActivityIcon className="w-2.5 h-2.5" />
+            <div className="flex items-center gap-1.5 rounded-full border border-blue-100/50 bg-blue-50 px-2.5 py-1 text-[9px] font-black text-blue-600">
+              <ActivityIcon className="h-2.5 w-2.5" />
               <span>LIVE DATA</span>
             </div>
           </div>
