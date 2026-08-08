@@ -51,31 +51,28 @@ const sectionVariants = {
 const DEFAULT_MONTHLY_HOURS = 2.0;
 
 export const LeaveManagement = () => {
-  const [currentUser, setCurrentUser] = useState(null);
-  const [activeTab, setActiveTab] = useState('dashboard');
-
-  useEffect(() => {
+  const [currentUser, setCurrentUser] = useState(() => {
     const stored = sessionStorage.getItem('currentUser');
     if (stored) {
       try {
-        setCurrentUser(JSON.parse(stored));
+        return JSON.parse(stored);
       } catch (e) {
         console.error('Failed to parse current user session', e);
       }
-    } else {
-      setCurrentUser({
-        emp_id: 1,
-        employee_id: 1,
-        emp_name: 'Durgadevi',
-        fullName: 'Durgadevi',
-        emp_email: 'durga@company.com',
-        email: 'durga@company.com',
-        emp_dept: 'Engineering',
-        emp_designation: 'Senior Frontend Engineer',
-        phone: '+91 98765 43210'
-      });
     }
-  }, []);
+    return {
+      emp_id: 1,
+      employee_id: 1,
+      emp_name: 'Durgadevi',
+      fullName: 'Durgadevi',
+      emp_email: 'durga@company.com',
+      email: 'durga@company.com',
+      emp_dept: 'Engineering',
+      emp_designation: 'Senior Frontend Engineer',
+      phone: '+91 98765 43210'
+    };
+  });
+  const [activeTab, setActiveTab] = useState('dashboard');
 
   const {
     loading,
@@ -90,7 +87,14 @@ export const LeaveManagement = () => {
     fetchDashboardStats
   } = useLeave(currentUser);
 
+  const isFirstRender = useRef(true);
+
   useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+
     // Refresh stats and requests when switching tabs
     if (activeTab === 'dashboard') {
       fetchDashboardStats();
