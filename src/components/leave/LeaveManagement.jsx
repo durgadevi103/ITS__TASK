@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import api from '../../api/axios';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Phone, Clock, Send, XCircle, Trash2, CheckCircle2, Info, PlusCircle, ArrowRight, ChevronDown } from 'lucide-react';
+import { Phone, Clock, Send, XCircle, Trash2, CheckCircle2, Info, PlusCircle, ArrowRight, ChevronDown, MoreVertical, Check, X } from 'lucide-react';
 import { useLeave } from '../../hooks/useLeave';
 import leaveApi from '../../services/leaveApi';
 import LeaveHeader from './LeaveHeader';
@@ -11,6 +11,7 @@ import LeaveTrendChart from './LeaveTrendChart';
 import RequestShareChart from './RequestShareChart';
 import LeaveTable from './LeaveTable';
 import EmployeeCard from './EmployeeCard';
+import { EmployeeDetailsView } from './EmployeeDetailsView';
 import ShiftSelector from './ShiftSelector';
 import LeaveDatePicker from './LeaveDatePicker';
 import LeaveTypeSelect from './LeaveTypeSelect';
@@ -74,6 +75,8 @@ export const LeaveManagement = () => {
     };
   });
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState(null);
+  const [backTab, setBackTab] = useState('history');
 
   const {
     loading,
@@ -98,19 +101,41 @@ export const LeaveManagement = () => {
   const fetchPaginatedHistory = useCallback(async (page, search = '') => {
     try {
       setHistoryLoading(true);
-      if (search.trim()) {
-        const res = await leaveApi.getLeaveList();
-        if (res?.success && res.data) {
-          const q = search.toLowerCase().trim();
-          const filtered = res.data.filter(item => 
-            String(item.emp_id).toLowerCase().includes(q) ||
-            (item.emp_name || '').toLowerCase().includes(q)
-          );
-          const limit = 5;
-          const startIndex = (page - 1) * limit;
-          const sliced = filtered.slice(startIndex, startIndex + limit);
-          setHistoryRequests(sliced);
-          setHistoryTotalCount(filtered.length);
+      const q = (search || '').trim();
+      if (q) {
+        // Check if query is a numeric ID
+        const isNumericId = !isNaN(q) && /^\d+$/.test(q);
+        if (isNumericId) {
+          // If it's a numeric ID, call backend searchLeaveHistory
+          const res = await leaveApi.searchLeaveHistory(q, '');
+          if (res?.success && res.data) {
+            const filtered = res.data;
+            const limit = 5;
+            const startIndex = (page - 1) * limit;
+            const sliced = filtered.slice(startIndex, startIndex + limit);
+            setHistoryRequests(sliced);
+            setHistoryTotalCount(filtered.length);
+          } else {
+            setHistoryRequests([]);
+            setHistoryTotalCount(0);
+          }
+        } else {
+          // If it's a name, query all list and filter client-side (as backend query requires emp_id)
+          const res = await leaveApi.getLeaveList();
+          if (res?.success && res.data) {
+            const lowerQ = q.toLowerCase();
+            const filtered = res.data.filter(item => 
+              (item.emp_name || '').toLowerCase().includes(lowerQ)
+            );
+            const limit = 5;
+            const startIndex = (page - 1) * limit;
+            const sliced = filtered.slice(startIndex, startIndex + limit);
+            setHistoryRequests(sliced);
+            setHistoryTotalCount(filtered.length);
+          } else {
+            setHistoryRequests([]);
+            setHistoryTotalCount(0);
+          }
         }
       } else {
         const limit = 5;
@@ -129,7 +154,7 @@ export const LeaveManagement = () => {
   }, [dashboardStats?.total_submissions]);
 
   useEffect(() => {
-    if (!historySearchQuery.trim()) {
+    if (!historySearchQuery || !historySearchQuery.trim()) {
       setHistoryTotalCount(dashboardStats?.total_submissions || 0);
     }
   }, [dashboardStats?.total_submissions, historySearchQuery]);
@@ -205,11 +230,35 @@ export const LeaveManagement = () => {
               setHistorySearchQuery(q);
               setHistoryPage(1);
             }}
+            onEmployeeClick={(empId) => {
+              setSelectedEmployeeId(empId);
+              setBackTab('history');
+              setActiveTab('employee-details');
+            }}
+          />
+        );
+
+      case 'employee-details':
+        return (
+          <EmployeeDetailsView 
+            empId={selectedEmployeeId} 
+            onBack={() => setActiveTab(backTab)} 
+            backLabel={backTab === 'permission' ? 'Permission History' : 'Leave History'}
           />
         );
 
       case 'permission':
-        return <LeavePermissionView currentUser={currentUser} employees={employees} />;
+        return (
+          <LeavePermissionView 
+            currentUser={currentUser} 
+            employees={employees} 
+            onEmployeeClick={(empId) => {
+              setSelectedEmployeeId(empId);
+              setBackTab('permission');
+              setActiveTab('employee-details');
+            }}
+          />
+        );
       default:
         return (
           <div className="text-center py-20 font-semibold text-slate-400">
@@ -567,7 +616,8 @@ const LeaveHistoryView = ({
   totalCount = 0,
   currentPage = 1,
   onPageChange,
-  onSearchChange
+  onSearchChange,
+  onEmployeeClick
 }) => (
   <div className="space-y-4">
 
@@ -589,13 +639,14 @@ const LeaveHistoryView = ({
         pageSize={5}
         onPageChange={onPageChange}
         onSearchChange={onSearchChange}
+        onEmployeeClick={onEmployeeClick}
       />
     )}
   </div>
 );
 
 
-const LeavePermissionView = ({ currentUser = {}, employees = [] }) => {
+const LeavePermissionView = ({ currentUser = {}, employees = [], onEmployeeClick }) => {
   const [empId, setEmpId] = useState(currentUser?.emp_id || currentUser?.employee_id || '');
   const [empName, setEmpName] = useState(currentUser?.emp_name || currentUser?.fullName || '');
   const [showDropdown, setShowDropdown] = useState(false);
@@ -617,6 +668,7 @@ const LeavePermissionView = ({ currentUser = {}, employees = [] }) => {
   const [toTime, setToTime] = useState('');
   const [reason, setReason] = useState('');
   const [permissionList, setPermissionList] = useState([]);
+  const [openMenuId, setOpenMenuId] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
@@ -1028,8 +1080,12 @@ const LeavePermissionView = ({ currentUser = {}, employees = [] }) => {
                     return (
                       <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50/50 transition">
                         <td className="py-2.5 px-3 font-semibold text-slate-600">
-                          <div>
-                            <p className="font-extrabold text-slate-800">{item.name || 'N/A'}</p>
+                          <div 
+                            onClick={() => onEmployeeClick && onEmployeeClick(item.emp_id)}
+                            className="cursor-pointer group/name"
+                            title="Click to view employee dashboard"
+                          >
+                            <p className="font-extrabold text-slate-800 group-hover/name:text-blue-600 group-hover/name:underline transition-colors">{item.name || 'N/A'}</p>
                             <p className="text-[9px] text-slate-400 font-bold">ID: {item.emp_id}</p>
                           </div>
                         </td>
@@ -1043,41 +1099,94 @@ const LeavePermissionView = ({ currentUser = {}, employees = [] }) => {
                           </span>
                         </td>
                         <td className="py-2.5 px-3 text-right">
-                          <div className="flex items-center justify-end gap-1.5">
-                            {item.status === 'Pending' ? (
+                          <div className="relative inline-block text-left">
+                            <button
+                              onClick={() => setOpenMenuId(openMenuId === item.id ? null : item.id)}
+                              className="p-1 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg border border-slate-200 hover:border-slate-300 shadow-sm transition-all duration-200 cursor-pointer"
+                              title="Actions"
+                              type="button"
+                            >
+                              <MoreVertical size={13} />
+                            </button>
+                            
+                            {openMenuId === item.id && (
                               <>
-                                <motion.button
-                                  whileHover={{ scale: 1.15 }}
-                                  whileTap={{ scale: 0.9 }}
-                                  type="button"
-                                  onClick={() => handleSimulateApproval(item.id, 'Approved')}
-                                  className="p-1 text-emerald-600 hover:bg-emerald-50 rounded-lg border border-slate-200 hover:border-emerald-300 transition cursor-pointer"
-                                  title="Simulate Approve"
-                                >
-                                  <CheckCircle2 size={12} />
-                                </motion.button>
-                                <motion.button
-                                  whileHover={{ scale: 1.15 }}
-                                  whileTap={{ scale: 0.9 }}
-                                  type="button"
-                                  onClick={() => handleSimulateApproval(item.id, 'Rejected')}
-                                  className="p-1 text-rose-600 hover:bg-rose-50 rounded-lg border border-slate-200 hover:border-rose-300 transition cursor-pointer"
-                                  title="Simulate Reject"
-                                >
-                                  <XCircle size={12} />
-                                </motion.button>
+                                {/* Backdrop for click outside */}
+                                <div className="fixed inset-0 z-30" onClick={() => setOpenMenuId(null)} />
+                                
+                                {/* Dropdown Menu */}
+                                <div className="absolute right-0 mt-1 w-36 bg-white border border-slate-200/80 rounded-2xl p-1 shadow-lg z-40 text-left animate-in fade-in slide-in-from-top-2 duration-200">
+                                  {/* Pending Option */}
+                                  <button
+                                    onClick={() => {
+                                      if (item.status !== 'Pending') handleSimulateApproval(item.id, 'Pending');
+                                      setOpenMenuId(null);
+                                    }}
+                                    disabled={item.status === 'Pending'}
+                                    className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-left text-xs font-bold transition-all duration-200 cursor-pointer ${
+                                      item.status === 'Pending'
+                                        ? 'text-amber-600 bg-amber-50/70 select-none'
+                                        : 'text-slate-655 hover:text-amber-600 hover:bg-amber-50/30'
+                                    }`}
+                                    type="button"
+                                  >
+                                    <Clock size={12} className={item.status === 'Pending' ? 'text-amber-600' : 'text-slate-400'} />
+                                    Pending
+                                  </button>
+
+                                  {/* Approved Option */}
+                                  <button
+                                    onClick={() => {
+                                      if (item.status !== 'Approved') handleSimulateApproval(item.id, 'Approved');
+                                      setOpenMenuId(null);
+                                    }}
+                                    disabled={item.status === 'Approved'}
+                                    className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-left text-xs font-bold transition-all duration-200 cursor-pointer ${
+                                      item.status === 'Approved'
+                                        ? 'text-emerald-600 bg-emerald-50/70 select-none'
+                                        : 'text-slate-655 hover:text-emerald-600 hover:bg-emerald-50/30'
+                                    }`}
+                                    type="button"
+                                  >
+                                    <Check size={12} className={item.status === 'Approved' ? 'text-emerald-600' : 'text-slate-400'} />
+                                    Approve
+                                  </button>
+
+                                  {/* Rejected Option */}
+                                  <button
+                                    onClick={() => {
+                                      if (item.status !== 'Rejected') handleSimulateApproval(item.id, 'Rejected');
+                                      setOpenMenuId(null);
+                                    }}
+                                    disabled={item.status === 'Rejected'}
+                                    className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-left text-xs font-bold transition-all duration-200 cursor-pointer ${
+                                      item.status === 'Rejected'
+                                        ? 'text-rose-600 bg-rose-50/70 select-none'
+                                        : 'text-slate-655 hover:text-rose-600 hover:bg-rose-50/30'
+                                    }`}
+                                    type="button"
+                                  >
+                                    <X size={12} className={item.status === 'Rejected' ? 'text-rose-600' : 'text-slate-400'} />
+                                    Reject
+                                  </button>
+
+                                  {/* Divider */}
+                                  <div className="h-[1px] bg-slate-100 my-1" />
+
+                                  {/* Cancel Option */}
+                                  <button
+                                    onClick={() => {
+                                      handleDeleteRequest(item.id);
+                                      setOpenMenuId(null);
+                                    }}
+                                    className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-left text-xs font-bold text-rose-600 hover:bg-rose-50/50 transition-all duration-200 cursor-pointer"
+                                    type="button"
+                                  >
+                                    <XCircle size={12} className="text-rose-500" />
+                                    Cancel
+                                  </button>
+                                </div>
                               </>
-                            ) : (
-                              <motion.button
-                                  whileHover={{ scale: 1.15 }}
-                                  whileTap={{ scale: 0.9 }}
-                                  type="button"
-                                  onClick={() => handleDeleteRequest(item.id)}
-                                  className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg border border-slate-200 hover:border-rose-200 transition cursor-pointer"
-                                  title="Delete entry"
-                                >
-                                  <Trash2 size={12} />
-                                </motion.button>
                             )}
                           </div>
                         </td>

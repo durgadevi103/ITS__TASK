@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import api from '../../api/axios';
 import { motion } from 'framer-motion';
-import { Clock, Calendar, AlertCircle, CheckCircle2, Send, XCircle, Trash2, ChevronDown } from 'lucide-react';
+import { Clock, Calendar, AlertCircle, CheckCircle2, Send, XCircle, ChevronDown, MoreVertical, Check, X } from 'lucide-react';
 import { formatDate } from '../../utils/leaveUtils';
 
 const DEFAULT_MONTHLY_HOURS = 2.0; // 2 hours allowance
 
-export const LeavePermission = ({ currentUser, employees = [] }) => {
+export const LeavePermission = ({ currentUser, employees = [], onEmployeeClick }) => {
   // Form states
   const [empId, setEmpId] = useState(currentUser?.emp_id || currentUser?.employee_id || '');
   const [empName, setEmpName] = useState(currentUser?.emp_name || currentUser?.fullName || '');
@@ -28,6 +28,7 @@ export const LeavePermission = ({ currentUser, employees = [] }) => {
   const [toTime, setToTime] = useState('');
   const [reason, setReason] = useState('');
   const [permissionList, setPermissionList] = useState([]);
+  const [openMenuId, setOpenMenuId] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
@@ -482,8 +483,12 @@ export const LeavePermission = ({ currentUser, employees = [] }) => {
                     return (
                       <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50/50 transition">
                         <td className="py-2.5 px-3 font-semibold text-slate-655">
-                          <div>
-                            <p className="font-extrabold text-slate-800">{item.name || 'N/A'}</p>
+                          <div 
+                            onClick={() => onEmployeeClick && onEmployeeClick(item.emp_id)}
+                            className="cursor-pointer group/name"
+                            title="Click to view employee dashboard"
+                          >
+                            <p className="font-extrabold text-slate-800 group-hover/name:text-blue-600 group-hover/name:underline transition-colors">{item.name || 'N/A'}</p>
                             <p className="text-[9px] text-slate-400 font-bold">ID: {item.emp_id}</p>
                           </div>
                         </td>
@@ -505,39 +510,89 @@ export const LeavePermission = ({ currentUser, employees = [] }) => {
                           </span>
                         </td>
                         <td className="py-2.5 px-3 text-right">
-                          <div className="flex items-center justify-end gap-1.5">
-                            {/* Manager simulator trigger: Approve / Reject simulation directly on screen */}
-                            {item.status === 'Pending' ? (
+                          <div className="relative inline-block text-left">
+                            <button
+                              onClick={() => setOpenMenuId(openMenuId === item.id ? null : item.id)}
+                              className="p-1 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg border border-slate-200 hover:border-slate-300 shadow-sm transition-all duration-200 cursor-pointer"
+                              title="Actions"
+                            >
+                              <MoreVertical size={13} />
+                            </button>
+                            
+                            {openMenuId === item.id && (
                               <>
-                                <motion.button
-                                  whileHover={{ scale: 1.15 }}
-                                  whileTap={{ scale: 0.9 }}
-                                  onClick={() => handleSimulateApproval(item.id, 'Approved')}
-                                  className="p-1 text-emerald-600 hover:bg-emerald-50 rounded-lg border border-slate-200 hover:border-emerald-300 transition cursor-pointer"
-                                  title="[Simulate Manager Approve]"
-                                >
-                                  <CheckCircle2 size={12} />
-                                </motion.button>
-                                <motion.button
-                                  whileHover={{ scale: 1.15 }}
-                                  whileTap={{ scale: 0.9 }}
-                                  onClick={() => handleSimulateApproval(item.id, 'Rejected')}
-                                  className="p-1 text-rose-600 hover:bg-rose-50 rounded-lg border border-slate-200 hover:border-rose-300 transition cursor-pointer"
-                                  title="[Simulate Manager Reject]"
-                                >
-                                  <XCircle size={12} />
-                                </motion.button>
+                                {/* Backdrop for click outside */}
+                                <div className="fixed inset-0 z-30" onClick={() => setOpenMenuId(null)} />
+                                
+                                {/* Dropdown Menu */}
+                                <div className="absolute right-0 mt-1 w-36 bg-white border border-slate-200/80 rounded-2xl p-1 shadow-lg z-40 text-left animate-in fade-in slide-in-from-top-2 duration-200">
+                                  {/* Pending Option */}
+                                  <button
+                                    onClick={() => {
+                                      if (item.status !== 'Pending') handleSimulateApproval(item.id, 'Pending');
+                                      setOpenMenuId(null);
+                                    }}
+                                    disabled={item.status === 'Pending'}
+                                    className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-left text-xs font-bold transition-all duration-200 cursor-pointer ${
+                                      item.status === 'Pending'
+                                        ? 'text-amber-600 bg-amber-50/70 select-none'
+                                        : 'text-slate-655 hover:text-amber-600 hover:bg-amber-50/30'
+                                    }`}
+                                  >
+                                    <Clock size={12} className={item.status === 'Pending' ? 'text-amber-600' : 'text-slate-400'} />
+                                    Pending
+                                  </button>
+
+                                  {/* Approved Option */}
+                                  <button
+                                    onClick={() => {
+                                      if (item.status !== 'Approved') handleSimulateApproval(item.id, 'Approved');
+                                      setOpenMenuId(null);
+                                    }}
+                                    disabled={item.status === 'Approved'}
+                                    className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-left text-xs font-bold transition-all duration-200 cursor-pointer ${
+                                      item.status === 'Approved'
+                                        ? 'text-emerald-600 bg-emerald-50/70 select-none'
+                                        : 'text-slate-655 hover:text-emerald-600 hover:bg-emerald-50/30'
+                                    }`}
+                                  >
+                                    <Check size={12} className={item.status === 'Approved' ? 'text-emerald-600' : 'text-slate-400'} />
+                                    Approve
+                                  </button>
+
+                                  {/* Rejected Option */}
+                                  <button
+                                    onClick={() => {
+                                      if (item.status !== 'Rejected') handleSimulateApproval(item.id, 'Rejected');
+                                      setOpenMenuId(null);
+                                    }}
+                                    disabled={item.status === 'Rejected'}
+                                    className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-left text-xs font-bold transition-all duration-200 cursor-pointer ${
+                                      item.status === 'Rejected'
+                                        ? 'text-rose-600 bg-rose-50/70 select-none'
+                                        : 'text-slate-655 hover:text-rose-600 hover:bg-rose-50/30'
+                                    }`}
+                                  >
+                                    <X size={12} className={item.status === 'Rejected' ? 'text-rose-600' : 'text-slate-400'} />
+                                    Reject
+                                  </button>
+
+                                  {/* Divider */}
+                                  <div className="h-[1px] bg-slate-100 my-1" />
+
+                                  {/* Cancel Option */}
+                                  <button
+                                    onClick={() => {
+                                      handleDeleteRequest(item.id);
+                                      setOpenMenuId(null);
+                                    }}
+                                    className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-left text-xs font-bold text-rose-600 hover:bg-rose-50/50 transition-all duration-200 cursor-pointer"
+                                  >
+                                    <XCircle size={12} className="text-rose-500" />
+                                    Cancel
+                                  </button>
+                                </div>
                               </>
-                            ) : (
-                              <motion.button
-                                  whileHover={{ scale: 1.15 }}
-                                  whileTap={{ scale: 0.9 }}
-                                  onClick={() => handleDeleteRequest(item.id)}
-                                  className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg border border-slate-200 hover:border-rose-200 transition cursor-pointer"
-                                  title="Delete entry"
-                                >
-                                  <Trash2 size={12} />
-                                </motion.button>
                             )}
                           </div>
                         </td>

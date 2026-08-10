@@ -15,7 +15,8 @@ export const LeaveTable = ({
   currentPage = 1,
   pageSize = 5,
   onPageChange,
-  onSearchChange
+  onSearchChange,
+  onEmployeeClick
 }) => {
   // Filters & Search
   const [searchQuery, setSearchQuery] = useState('');
@@ -135,6 +136,9 @@ export const LeaveTable = ({
     setToDateFilter('');
     setActiveCurrentPage(1);
     setOpenMenuId(null);
+    if (isServerPaginated && onSearchChange) {
+      onSearchChange('');
+    }
   };
 
   // Export functions
@@ -211,15 +215,16 @@ export const LeaveTable = ({
                 }
               }}
               placeholder="Search ID, employee name..."
-              className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-2xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-slate-50/50"
+              className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-2xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-slate-50/50"
+              style={{ color: '#1e293b' }}
             />
           </div>
 
           {/* Quick Filters */}
           <select
             value={statusFilter}
-            onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
-            className="px-3.5 py-2 border border-slate-200 rounded-2xl text-xs font-semibold bg-white cursor-pointer focus:outline-none"
+            onChange={(e) => { setStatusFilter(e.target.value); setActiveCurrentPage(1); }}
+            className="px-3.5 py-2 border border-slate-200 rounded-2xl text-xs font-semibold text-slate-800 bg-white cursor-pointer focus:outline-none"
           >
             <option value="All">All Statuses</option>
             <option value="Pending">Pending</option>
@@ -274,8 +279,8 @@ export const LeaveTable = ({
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Leave Type</label>
                 <select
                   value={typeFilter}
-                  onChange={(e) => { setTypeFilter(e.target.value); setCurrentPage(1); }}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-2xl text-xs font-semibold bg-white focus:outline-none"
+                  onChange={(e) => { setTypeFilter(e.target.value); setActiveCurrentPage(1); }}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-2xl text-xs font-semibold text-slate-800 bg-white focus:outline-none"
                 >
                   <option value="All">All Types</option>
                   {leaveTypes.map(type => (
@@ -290,8 +295,9 @@ export const LeaveTable = ({
                 <input
                   type="date"
                   value={fromDateFilter}
-                  onChange={(e) => { setFromDateFilter(e.target.value); setCurrentPage(1); }}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-2xl text-xs font-semibold bg-white focus:outline-none"
+                  onChange={(e) => { setFromDateFilter(e.target.value); setActiveCurrentPage(1); }}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-2xl text-xs font-semibold text-slate-800 bg-white focus:outline-none"
+                  style={{ color: '#1e293b' }}
                 />
               </div>
 
@@ -300,8 +306,9 @@ export const LeaveTable = ({
                 <input
                   type="date"
                   value={toDateFilter}
-                  onChange={(e) => { setToDateFilter(e.target.value); setCurrentPage(1); }}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-2xl text-xs font-semibold bg-white focus:outline-none"
+                  onChange={(e) => { setToDateFilter(e.target.value); setActiveCurrentPage(1); }}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-2xl text-xs font-semibold text-slate-800 bg-white focus:outline-none"
+                  style={{ color: '#1e293b' }}
                 />
               </div>
 
@@ -367,8 +374,12 @@ export const LeaveTable = ({
                       <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center text-xs font-bold border border-slate-200">
                         {name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase()}
                       </div>
-                      <div>
-                        <p className="text-xs font-extrabold text-slate-800">{name}</p>
+                      <div 
+                        onClick={() => onEmployeeClick && onEmployeeClick(row.emp_id)}
+                        className="cursor-pointer group/name"
+                        title="Click to view employee dashboard"
+                      >
+                        <p className="text-xs font-extrabold text-slate-800 group-hover/name:text-blue-600 group-hover/name:underline transition-colors">{name}</p>
                         <p className="text-[10px] font-bold text-slate-400">ID: {row.emp_id}</p>
                       </div>
                     </div>
@@ -588,8 +599,12 @@ export const LeaveTable = ({
                           <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center text-xs font-bold border border-slate-200">
                             {name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase()}
                           </div>
-                          <div>
-                            <p className="text-xs font-extrabold text-slate-800">{name}</p>
+                          <div 
+                            onClick={() => onEmployeeClick && onEmployeeClick(row.emp_id)}
+                            className="cursor-pointer group/name"
+                            title="Click to view employee dashboard"
+                          >
+                            <p className="text-xs font-extrabold text-slate-800 group-hover/name:text-blue-600 group-hover/name:underline transition-colors">{name}</p>
                             <p className="text-[10px] font-bold text-slate-400">ID: {row.emp_id}</p>
                           </div>
                         </div>

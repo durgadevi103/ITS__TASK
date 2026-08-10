@@ -56,6 +56,18 @@ export const leaveApi = {
   getLeaveAllowance: async (empId) => {
     const response = await api.get(`/leave/leave-allowance/${empId}`);
     return response.data;
+  },
+
+  /**
+   * Search leave history by employee ID and employee name.
+   * @param {number|string} empId - The employee's ID
+   * @param {string} empName - The employee's name (partial)
+   */
+  searchLeaveHistory: async (empId, empName) => {
+    const response = await api.get('/leave/search-leave', {
+      data: { emp_id: empId, emp_name: empName }
+    });
+    return response.data;
   }
 };
 

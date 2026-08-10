@@ -23,7 +23,7 @@ export const SummaryCard = ({ stats }) => {
       }}
     >
       <h4 className="text-xs font-extrabold text-slate-800 mb-2 pb-1.5 border-b border-slate-100 uppercase tracking-wider">
-        Monthly Summary
+        Yearly Summary
       </h4>
       <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-5 md:grid-cols-2 lg:grid-cols-5 gap-2">
         {cards.map((card, idx) => {
