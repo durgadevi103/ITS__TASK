@@ -38,31 +38,30 @@ export const LeavePermission = ({ currentUser, employees = [] }) => {
   }, [currentUser]);
 
   const loadPermissions = useCallback(async () => {
-    if (!empId) return;
     try {
-      const res = await api.get(`/leave/permission/list/${empId}`);
+      const res = await api.get('/leave/permission-viewlist');
       if (res.data && res.data.success) {
-        const seedKey = `permissions_seeded_${empId}`;
+        const seedKey = `permissions_seeded_all`;
         if (res.data.data.length === 0 && !sessionStorage.getItem(seedKey)) {
           sessionStorage.setItem(seedKey, 'true');
           const mockHistory = [
             {
-              emp_id: empId,
-              emp_name: empName,
-              date: '2026-08-04',
-              fromTime: '10:00',
-              toTime: '11:00',
+              emp_id: empId || 1,
+              emp_name: empName || 'Durgadevi',
+              permission_date: '2026-08-04',
+              from_time: '10:00',
+              to_time: '11:00',
               duration: 1.0,
               reason: 'Routine Medical Eye Checkup',
               status: 'Approved',
               manager: 'Srinivasan Raman'
             },
             {
-              emp_id: empId,
-              emp_name: empName,
-              date: '2026-08-05',
-              fromTime: '15:30',
-              toTime: '16:00',
+              emp_id: empId || 1,
+              emp_name: empName || 'Durgadevi',
+              permission_date: '2026-08-05',
+              from_time: '15:30',
+              to_time: '16:00',
               duration: 0.5,
               reason: 'Collect documents from bank',
               status: 'Approved',
@@ -70,12 +69,36 @@ export const LeavePermission = ({ currentUser, employees = [] }) => {
             }
           ];
           await Promise.all(mockHistory.map(item => api.post('/leave/permission/create', item)));
-          const refetched = await api.get(`/leave/permission/list/${empId}`);
+          const refetched = await api.get('/leave/permission-viewlist');
           if (refetched.data && refetched.data.success) {
-            setPermissionList(refetched.data.data);
+            const mapped = refetched.data.data.map(item => ({
+              id: item.permission_id,
+              emp_id: item.emp_id,
+              name: item.emp_name,
+              date: item.permission_date,
+              fromTime: item.from_time,
+              toTime: item.to_time,
+              duration: item.duration,
+              reason: item.reason,
+              status: item.status,
+              applied_date: item.applied_date
+            }));
+            setPermissionList(mapped);
           }
         } else {
-          setPermissionList(res.data.data);
+          const mapped = res.data.data.map(item => ({
+            id: item.permission_id,
+            emp_id: item.emp_id,
+            name: item.emp_name,
+            date: item.permission_date,
+            fromTime: item.from_time,
+            toTime: item.to_time,
+            duration: item.duration,
+            reason: item.reason,
+            status: item.status,
+            applied_date: item.applied_date
+          }));
+          setPermissionList(mapped);
         }
       }
     } catch (err) {
@@ -137,9 +160,9 @@ export const LeavePermission = ({ currentUser, employees = [] }) => {
     const payload = {
       emp_id: empId,
       emp_name: empName,
-      date,
-      fromTime,
-      toTime,
+      permission_date: date,
+      from_time: fromTime,
+      to_time: toTime,
       duration: calculatedDuration,
       reason,
       status: 'Pending',
@@ -167,7 +190,7 @@ export const LeavePermission = ({ currentUser, employees = [] }) => {
   // Cancel/Delete request handler
   const handleDeleteRequest = async (id) => {
     try {
-      const res = await api.delete(`/leave/permission/${id}`);
+      const res = await api.delete(`/leave/permission/${id}`, { data: { permission_id: id } });
       if (res.data && res.data.success) {
         await loadPermissions();
       }
@@ -179,7 +202,7 @@ export const LeavePermission = ({ currentUser, employees = [] }) => {
   // Manager simulation handler
   const handleSimulateApproval = async (id, status) => {
     try {
-      const res = await api.put('/leave/permission/status', { id, status });
+      const res = await api.put('/leave/permission/status', { permission_id: id, status });
       if (res.data && res.data.success) {
         await loadPermissions();
       }
@@ -419,7 +442,7 @@ export const LeavePermission = ({ currentUser, employees = [] }) => {
       {/* Right Side: History registry */}
       <div className="lg:col-span-7 space-y-4">
         
-        <div className="premium-glossy-card rounded-2xl p-4 border-white/40 shadow-sm flex flex-col h-full max-h-[500px] border-beam-card permission-history-card"
+        <div className="premium-glossy-card rounded-2xl p-4 border-white/40 shadow-sm flex flex-col h-full border-beam-card permission-history-card"
           style={{
             '--beam-color': '#4f46e5',
             '--beam-speed': '6s',
@@ -430,7 +453,7 @@ export const LeavePermission = ({ currentUser, employees = [] }) => {
             Permission Request History
           </h4>
 
-          <div className="overflow-auto min-h-0 flex-1 permission-history-scrollable">
+          <div className="overflow-visible permission-history-scrollable">
             <table className="w-full border-collapse text-left text-xs">
               <thead className="sticky top-0 bg-white z-10">
                 <tr className="bg-slate-50 border-b border-slate-200 text-[9px] font-black text-slate-400 uppercase tracking-wider">

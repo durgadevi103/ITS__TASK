@@ -6,7 +6,17 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatDate, exportToCSV, exportToPDF } from '../../utils/leaveUtils';
 
-export const LeaveTable = ({ data = [], onUpdateStatus, isAdmin = false }) => {
+export const LeaveTable = ({ 
+  data = [], 
+  onUpdateStatus, 
+  isAdmin = false,
+  isServerPaginated = false,
+  totalCount = 0,
+  currentPage = 1,
+  pageSize = 5,
+  onPageChange,
+  onSearchChange
+}) => {
   // Filters & Search
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
@@ -20,9 +30,20 @@ export const LeaveTable = ({ data = [], onUpdateStatus, isAdmin = false }) => {
   const [sortField, setSortField] = useState('leave_from');
   const [sortDirection, setSortDirection] = useState('desc');
 
-  // Pagination
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  // Pagination (local state used if not server-paginated)
+  const [localCurrentPage, setLocalCurrentPage] = useState(1);
+  const [localPageSize, setLocalPageSize] = useState(10);
+
+  const activeCurrentPage = isServerPaginated ? currentPage : localCurrentPage;
+  const activePageSize = isServerPaginated ? pageSize : localPageSize;
+
+  const setActiveCurrentPage = (page) => {
+    if (isServerPaginated) {
+      if (onPageChange) onPageChange(page);
+    } else {
+      setLocalCurrentPage(page);
+    }
+  };
 
   // Leave types list
   const leaveTypes = ['Casual Leave (CL)', 'Sick Leave (SL)', 'Privilege Leave (PL)', 'Maternity Leave (ML)'];
@@ -32,12 +53,14 @@ export const LeaveTable = ({ data = [], onUpdateStatus, isAdmin = false }) => {
     const isAsc = sortField === field && sortDirection === 'asc';
     setSortDirection(isAsc ? 'desc' : 'asc');
     setSortField(field);
-    setCurrentPage(1);
+    setActiveCurrentPage(1);
     setOpenMenuId(null);
   };
 
   // Filter & Sort logic
   const processedData = useMemo(() => {
+    if (isServerPaginated) return [...data];
+
     let result = [...data];
 
     // 1. Search Query
@@ -98,10 +121,10 @@ export const LeaveTable = ({ data = [], onUpdateStatus, isAdmin = false }) => {
   }, [data, searchQuery, statusFilter, typeFilter, fromDateFilter, toDateFilter, sortField, sortDirection]);
 
   // Pagination details
-  const totalItems = processedData.length;
-  const totalPages = Math.ceil(totalItems / pageSize) || 1;
-  const startIndex = (currentPage - 1) * pageSize;
-  const paginatedData = processedData.slice(startIndex, startIndex + pageSize);
+  const totalItems = isServerPaginated ? totalCount : processedData.length;
+  const totalPages = Math.ceil(totalItems / activePageSize) || 1;
+  const startIndex = (activeCurrentPage - 1) * activePageSize;
+  const paginatedData = isServerPaginated ? processedData : processedData.slice(startIndex, startIndex + activePageSize);
 
   // Clear filters
   const resetFilters = () => {
@@ -110,7 +133,7 @@ export const LeaveTable = ({ data = [], onUpdateStatus, isAdmin = false }) => {
     setTypeFilter('All');
     setFromDateFilter('');
     setToDateFilter('');
-    setCurrentPage(1);
+    setActiveCurrentPage(1);
     setOpenMenuId(null);
   };
 
@@ -179,7 +202,14 @@ export const LeaveTable = ({ data = [], onUpdateStatus, isAdmin = false }) => {
             <input
               type="text"
               value={searchQuery}
-              onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+              onChange={(e) => {
+                const val = e.target.value;
+                setSearchQuery(val);
+                setActiveCurrentPage(1);
+                if (isServerPaginated && onSearchChange) {
+                  onSearchChange(val);
+                }
+              }}
               placeholder="Search ID, employee name..."
               className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-2xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-slate-50/50"
             />
@@ -702,19 +732,19 @@ export const LeaveTable = ({ data = [], onUpdateStatus, isAdmin = false }) => {
         {totalPages > 1 && (
           <div className="py-3 px-5 border-t border-slate-200 flex items-center justify-between text-xs font-semibold text-slate-500 select-none bg-slate-50/50">
             <span>
-              Showing <span className="text-slate-800 font-bold">{startIndex + 1}</span> to <span className="text-slate-800 font-bold">{Math.min(startIndex + pageSize, totalItems)}</span> of <span className="text-slate-800 font-bold">{totalItems}</span> requests
+              Showing <span className="text-slate-800 font-bold">{startIndex + 1}</span> to <span className="text-slate-800 font-bold">{Math.min(startIndex + activePageSize, totalItems)}</span> of <span className="text-slate-800 font-bold">{totalItems}</span> requests
             </span>
             <div className="flex gap-1.5">
               <button
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage(currentPage - 1)}
+                disabled={activeCurrentPage === 1}
+                onClick={() => setActiveCurrentPage(activeCurrentPage - 1)}
                 className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 disabled:opacity-50 transition cursor-pointer"
               >
                 <ChevronLeft size={14} />
               </button>
               <button
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage(currentPage + 1)}
+                disabled={activeCurrentPage === totalPages}
+                onClick={() => setActiveCurrentPage(activeCurrentPage + 1)}
                 className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 disabled:opacity-50 transition cursor-pointer"
               >
                 <ChevronRight size={14} />

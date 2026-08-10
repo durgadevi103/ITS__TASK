@@ -22,6 +22,16 @@ export const leaveApi = {
   },
 
   /**
+   * Get paginated leave requests.
+   * @param {number} limit
+   * @param {number} offset
+   */
+  getLeaveListPaginated: async (limit, offset) => {
+    const response = await api.get(`/leave/viewlist/${limit}/${offset}`);
+    return response.data;
+  },
+
+  /**
    * Update the status of a leave request (Approve/Reject).
    * @param {number|string} leaveId - ID of the leave request
    * @param {'Approved'|'Rejected'|'Pending'} status - Status to set

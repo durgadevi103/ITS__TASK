@@ -3,6 +3,7 @@ import api from '../../api/axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Phone, Clock, Send, XCircle, Trash2, CheckCircle2, Info, PlusCircle, ArrowRight, ChevronDown } from 'lucide-react';
 import { useLeave } from '../../hooks/useLeave';
+import leaveApi from '../../services/leaveApi';
 import LeaveHeader from './LeaveHeader';
 import LeaveTabs from './LeaveTabs';
 import DashboardStatsGrid from './DashboardStatsGrid';
@@ -87,6 +88,61 @@ export const LeaveManagement = () => {
     fetchDashboardStats
   } = useLeave(currentUser);
 
+  // Pagination and search states for Leave History tab
+  const [historyPage, setHistoryPage] = useState(1);
+  const [historyRequests, setHistoryRequests] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historySearchQuery, setHistorySearchQuery] = useState('');
+  const [historyTotalCount, setHistoryTotalCount] = useState(0);
+
+  const fetchPaginatedHistory = useCallback(async (page, search = '') => {
+    try {
+      setHistoryLoading(true);
+      if (search.trim()) {
+        const res = await leaveApi.getLeaveList();
+        if (res?.success && res.data) {
+          const q = search.toLowerCase().trim();
+          const filtered = res.data.filter(item => 
+            String(item.emp_id).toLowerCase().includes(q) ||
+            (item.emp_name || '').toLowerCase().includes(q)
+          );
+          const limit = 5;
+          const startIndex = (page - 1) * limit;
+          const sliced = filtered.slice(startIndex, startIndex + limit);
+          setHistoryRequests(sliced);
+          setHistoryTotalCount(filtered.length);
+        }
+      } else {
+        const limit = 5;
+        const offset = (page - 1) * limit;
+        const res = await leaveApi.getLeaveListPaginated(limit, offset);
+        if (res?.success && res.data) {
+          setHistoryRequests(res.data);
+          setHistoryTotalCount(dashboardStats?.total_submissions || 0);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch paginated history', err);
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, [dashboardStats?.total_submissions]);
+
+  useEffect(() => {
+    if (!historySearchQuery.trim()) {
+      setHistoryTotalCount(dashboardStats?.total_submissions || 0);
+    }
+  }, [dashboardStats?.total_submissions, historySearchQuery]);
+
+  const handleUpdateStatus = useCallback(async (leaveId, status) => {
+    const result = await updateLeaveStatus(leaveId, status);
+    if (result?.success) {
+      fetchPaginatedHistory(historyPage, historySearchQuery);
+      fetchDashboardStats();
+    }
+    return result;
+  }, [updateLeaveStatus, fetchPaginatedHistory, historyPage, historySearchQuery, fetchDashboardStats]);
+
   const isFirstRender = useRef(true);
 
   useEffect(() => {
@@ -103,13 +159,14 @@ export const LeaveManagement = () => {
         fetchAllowance(currentUser.emp_id || currentUser.employee_id);
       }
     } else if (activeTab === 'history') {
-      fetchLeaveRequests();
+      fetchPaginatedHistory(historyPage, historySearchQuery);
     } else if (activeTab === 'apply') {
       if (currentUser?.emp_id || currentUser?.employee_id) {
         fetchAllowance(currentUser.emp_id || currentUser.employee_id);
       }
     }
-  }, [activeTab, fetchDashboardStats, fetchLeaveRequests, fetchAllowance, currentUser]);
+  }, [activeTab, fetchDashboardStats, fetchLeaveRequests, fetchAllowance, currentUser, historyPage, historySearchQuery, fetchPaginatedHistory]);
+
 
   const renderActiveView = () => {
     switch (activeTab) {
@@ -138,9 +195,16 @@ export const LeaveManagement = () => {
       case 'history':
         return (
           <LeaveHistoryView
-            requests={leaveRequests}
-            onUpdateStatus={updateLeaveStatus}
-            loading={loading}
+            requests={historyRequests}
+            onUpdateStatus={handleUpdateStatus}
+            loading={historyLoading}
+            totalCount={historyTotalCount}
+            currentPage={historyPage}
+            onPageChange={setHistoryPage}
+            onSearchChange={(q) => {
+              setHistorySearchQuery(q);
+              setHistoryPage(1);
+            }}
           />
         );
 
@@ -169,7 +233,7 @@ export const LeaveManagement = () => {
       </div>
 
       <div className={`mt-1.5 flex-1 pr-1 pb-3 ${
-        (activeTab === 'dashboard' || activeTab === 'permission')
+        activeTab === 'dashboard'
           ? 'lg:overflow-hidden overflow-y-auto'
           : 'overflow-y-auto'
       }`}>
@@ -496,7 +560,15 @@ const LeaveSubmitView = ({ currentUser = {}, allowance = [], onSubmitRequest, on
   );
 };
 
-const LeaveHistoryView = ({ requests = [], onUpdateStatus, loading = false }) => (
+const LeaveHistoryView = ({ 
+  requests = [], 
+  onUpdateStatus, 
+  loading = false,
+  totalCount = 0,
+  currentPage = 1,
+  onPageChange,
+  onSearchChange
+}) => (
   <div className="space-y-4">
 
     {loading ? (
@@ -507,7 +579,17 @@ const LeaveHistoryView = ({ requests = [], onUpdateStatus, loading = false }) =>
         <span className="text-xs font-bold text-slate-400 uppercase tracking-widest animate-pulse">Loading leave register...</span>
       </div>
     ) : (
-      <LeaveTable data={requests} onUpdateStatus={onUpdateStatus} isAdmin={true} />
+      <LeaveTable 
+        data={requests} 
+        onUpdateStatus={onUpdateStatus} 
+        isAdmin={true} 
+        isServerPaginated={true}
+        totalCount={totalCount}
+        currentPage={currentPage}
+        pageSize={5}
+        onPageChange={onPageChange}
+        onSearchChange={onSearchChange}
+      />
     )}
   </div>
 );
@@ -545,31 +627,30 @@ const LeavePermissionView = ({ currentUser = {}, employees = [] }) => {
   }, [currentUser]);
 
   const loadPermissions = useCallback(async () => {
-    if (!empId) return;
     try {
-      const res = await api.get(`/leave/permission/list/${empId}`);
+      const res = await api.get('/leave/permission-viewlist');
       if (res.data && res.data.success) {
-        const seedKey = `permissions_seeded_${empId}`;
+        const seedKey = `permissions_seeded_all`;
         if (res.data.data.length === 0 && !sessionStorage.getItem(seedKey)) {
           sessionStorage.setItem(seedKey, 'true');
           const mockHistory = [
             {
-              emp_id: empId,
-              emp_name: empName,
-              date: '2026-08-04',
-              fromTime: '10:00',
-              toTime: '11:00',
+              emp_id: empId || 1,
+              emp_name: empName || 'Durgadevi',
+              permission_date: '2026-08-04',
+              from_time: '10:00',
+              to_time: '11:00',
               duration: 1.0,
               reason: 'Routine Medical Eye Checkup',
               status: 'Approved',
               manager: 'Srinivasan Raman'
             },
             {
-              emp_id: empId,
-              emp_name: empName,
-              date: '2026-08-05',
-              fromTime: '15:30',
-              toTime: '16:00',
+              emp_id: empId || 1,
+              emp_name: empName || 'Durgadevi',
+              permission_date: '2026-08-05',
+              from_time: '15:30',
+              to_time: '16:00',
               duration: 0.5,
               reason: 'Collect documents from bank',
               status: 'Approved',
@@ -577,12 +658,36 @@ const LeavePermissionView = ({ currentUser = {}, employees = [] }) => {
             }
           ];
           await Promise.all(mockHistory.map(item => api.post('/leave/permission/create', item)));
-          const refetched = await api.get(`/leave/permission/list/${empId}`);
+          const refetched = await api.get('/leave/permission-viewlist');
           if (refetched.data && refetched.data.success) {
-            setPermissionList(refetched.data.data);
+            const mapped = refetched.data.data.map(item => ({
+              id: item.permission_id,
+              emp_id: item.emp_id,
+              name: item.emp_name,
+              date: item.permission_date,
+              fromTime: item.from_time,
+              toTime: item.to_time,
+              duration: item.duration,
+              reason: item.reason,
+              status: item.status,
+              applied_date: item.applied_date
+            }));
+            setPermissionList(mapped);
           }
         } else {
-          setPermissionList(res.data.data);
+          const mapped = res.data.data.map(item => ({
+            id: item.permission_id,
+            emp_id: item.emp_id,
+            name: item.emp_name,
+            date: item.permission_date,
+            fromTime: item.from_time,
+            toTime: item.to_time,
+            duration: item.duration,
+            reason: item.reason,
+            status: item.status,
+            applied_date: item.applied_date
+          }));
+          setPermissionList(mapped);
         }
       }
     } catch (err) {
@@ -632,9 +737,9 @@ const LeavePermissionView = ({ currentUser = {}, employees = [] }) => {
     const payload = {
       emp_id: empId,
       emp_name: empName,
-      date,
-      fromTime,
-      toTime,
+      permission_date: date,
+      from_time: fromTime,
+      to_time: toTime,
       duration: calculatedDuration,
       reason,
       status: 'Pending',
@@ -660,7 +765,7 @@ const LeavePermissionView = ({ currentUser = {}, employees = [] }) => {
 
   const handleDeleteRequest = async (id) => {
     try {
-      const res = await api.delete(`/leave/permission/${id}`);
+      const res = await api.delete(`/leave/permission/${id}`, { data: { permission_id: id } });
       if (res.data && res.data.success) {
         await loadPermissions();
       }
@@ -671,7 +776,7 @@ const LeavePermissionView = ({ currentUser = {}, employees = [] }) => {
 
   const handleSimulateApproval = async (id, status) => {
     try {
-      const res = await api.put('/leave/permission/status', { id, status });
+      const res = await api.put('/leave/permission/status', { permission_id: id, status });
       if (res.data && res.data.success) {
         await loadPermissions();
       }
@@ -887,7 +992,7 @@ const LeavePermissionView = ({ currentUser = {}, employees = [] }) => {
       </div>
 
       <div className="lg:col-span-7 space-y-4">
-        <div className="premium-glossy-card rounded-2xl p-4 border-white/40 shadow-sm flex flex-col h-full max-h-[500px] border-beam-card permission-history-card"
+        <div className="premium-glossy-card rounded-2xl p-4 border-white/40 shadow-sm flex flex-col h-full border-beam-card permission-history-card"
           style={{
             '--beam-color': '#4f46e5',
             '--beam-speed': '6s',
@@ -895,7 +1000,7 @@ const LeavePermissionView = ({ currentUser = {}, employees = [] }) => {
           }}
         >
           <h4 className="text-xs font-extrabold text-slate-800 pb-2 border-b border-slate-100 uppercase tracking-wider mb-3">Permission Request History</h4>
-          <div className="overflow-auto min-h-0 flex-1 permission-history-scrollable">
+          <div className="overflow-visible permission-history-scrollable">
             <table className="w-full border-collapse text-left text-xs">
               <thead className="sticky top-0 bg-white z-10">
                 <tr className="bg-slate-50 border-b border-slate-200 text-[9px] font-black text-slate-400 uppercase tracking-wider">
