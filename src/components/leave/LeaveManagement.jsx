@@ -168,7 +168,11 @@ export const LeaveManagement = () => {
         </div>
       </div>
 
-      <div className="mt-1.5 flex-1 pr-1 overflow-y-auto pb-3">
+      <div className={`mt-1.5 flex-1 pr-1 pb-3 ${
+        (activeTab === 'dashboard' || activeTab === 'permission')
+          ? 'lg:overflow-hidden overflow-y-auto'
+          : 'overflow-y-auto'
+      }`}>
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}

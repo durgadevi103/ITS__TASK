@@ -74,7 +74,6 @@ export const RequestShareChart = ({ stats, requests = [] }) => {
   const [activeIndex, setActiveIndex] = useState(-1);
 
   const cancelledCount = requests.filter(r => r.leave_status === 'Cancelled').length;
-  const total = (stats?.total_submissions || 0) + cancelledCount;
 
   // Prepare distribution details
   const data = useMemo(() => {
@@ -85,6 +84,8 @@ export const RequestShareChart = ({ stats, requests = [] }) => {
       { name: 'Cancelled', value: cancelledCount, color: '#64748b' }
     ].filter(item => item.value > 0);
   }, [stats, cancelledCount]);
+
+  const total = useMemo(() => data.reduce((sum, item) => sum + item.value, 0), [data]);
 
   const handleMouseEnter = (_, index) => {
     setActiveIndex(index);
