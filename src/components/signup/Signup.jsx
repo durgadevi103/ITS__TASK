@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { User, Mail, Eye, EyeOff, AlertCircle, CheckCircle2, ArrowLeft, Sparkles, XCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -253,11 +253,16 @@ const Signup = () => {
   const [showOtpPopup, setShowOtpPopup] = useState(false);
   const [otpDigits, setOtpDigits] = useState(["", "", "", "", "", ""]);
   const [isEmailVerified, setIsEmailVerified] = useState(false);
-  const [otpTimer, setOtpTimer] = useState(45);
-  const [generatedOtp, setGeneratedOtp] = useState("");
+  const [otpTimer, setOtpTimer] = useState(300);
   const [otpError, setOtpError] = useState("");
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [maskedEmail, setMaskedEmail] = useState("");
+  const otpInputRefs = useRef([]);
 
-  // OTP Timer countdown effect
+  // OTP Timer countdown effect (5 minutes = 300 seconds)
   useEffect(() => {
     let interval = null;
     if (showOtpPopup && otpTimer > 0) {
@@ -270,6 +275,34 @@ const Signup = () => {
     return () => clearInterval(interval);
   }, [showOtpPopup, otpTimer]);
 
+  // Resend cooldown countdown (matches server-side 30s cooldown)
+  useEffect(() => {
+    let interval = null;
+    if (showOtpPopup && resendCooldown > 0) {
+      interval = setInterval(() => {
+        setResendCooldown((prev) => prev - 1);
+      }, 1000);
+    } else {
+      clearInterval(interval);
+    }
+    return () => clearInterval(interval);
+  }, [showOtpPopup, resendCooldown]);
+
+  // Auto-focus first OTP input when the modal opens
+  useEffect(() => {
+    if (showOtpPopup && otpInputRefs.current[0]) {
+      setTimeout(() => otpInputRefs.current[0].focus(), 150);
+    }
+  }, [showOtpPopup]);
+
+  // Mask email helper (e.g. us**@gmail.com)
+  const maskEmail = (email) => {
+    if (!email) return email;
+    const [local, domain] = email.split("@");
+    if (!domain) return email;
+    return `${local.slice(0, 2)}${"*".repeat(Math.max(0, local.length - 2))}@${domain}`;
+  };
+
   const handleDigitChange = (index, value) => {
     const cleanValue = value.replace(/[^0-9]/g, "").slice(-1);
     const newDigits = [...otpDigits];
@@ -279,26 +312,42 @@ const Signup = () => {
 
     // Auto-focus next input if we entered a digit
     if (cleanValue && index < 5) {
-      const nextInput = document.getElementById(`otp-input-${index + 1}`);
-      if (nextInput) nextInput.focus();
+      otpInputRefs.current[index + 1]?.focus();
     }
   };
 
   const handleDigitKeyDown = (index, e) => {
     if (e.key === "Backspace") {
-      if (!otpDigits[index] && index > 0) {
-        const prevInput = document.getElementById(`otp-input-${index - 1}`);
-        if (prevInput) {
-          prevInput.focus();
-          const newDigits = [...otpDigits];
-          newDigits[index - 1] = "";
-          setOtpDigits(newDigits);
-        }
+      e.preventDefault();
+      const newDigits = [...otpDigits];
+      if (otpDigits[index]) {
+        newDigits[index] = "";
+        setOtpDigits(newDigits);
+      } else if (index > 0) {
+        newDigits[index - 1] = "";
+        setOtpDigits(newDigits);
+        otpInputRefs.current[index - 1]?.focus();
       }
     }
   };
 
-  const handleSendOtp = () => {
+  // Handle pasting a full 6-digit OTP
+  const handleOtpPaste = (e) => {
+    const pasted = e.clipboardData?.getData("text").replace(/[^0-9]/g, "").slice(0, 6);
+    if (!pasted) return;
+    e.preventDefault();
+    const newDigits = [...otpDigits];
+    pasted.split("").forEach((char, i) => {
+      newDigits[i] = char;
+    });
+    setOtpDigits(newDigits);
+    setOtpError("");
+    // Focus the next empty field (or last field)
+    const nextIndex = Math.min(pasted.length, 5);
+    otpInputRefs.current[nextIndex]?.focus();
+  };
+
+  const handleSendOtp = async () => {
     setError("");
     setSuccess("");
     setEmailError("");
@@ -307,43 +356,101 @@ const Signup = () => {
       return;
     }
 
-    const generated = Math.floor(100000 + Math.random() * 900000).toString();
-    setGeneratedOtp(generated);
-    setOtpDigits(["", "", "", "", "", ""]);
-    setOtpTimer(45);
+    const trimmedEmail = email.trim().toLowerCase();
+    setIsSendingOtp(true);
     setOtpError("");
-    setShowOtpPopup(true);
 
-    // For testing/debugging, we can log the generated OTP to the console
-    console.log(`[TESTING] Generated OTP for ${email}: ${generated}`);
+    try {
+      const response = await api.post("/auth/send-otp", { email: trimmedEmail });
+      const data = response.data;
+
+      if (data.success) {
+        setMaskedEmail(data.email || maskEmail(trimmedEmail));
+        setOtpDigits(["", "", "", "", "", ""]);
+        setOtpTimer(300);
+        setResendCooldown(30);
+        setOtpError("");
+        setShowOtpPopup(true);
+      } else {
+        setEmailError(data.message || "Failed to send OTP. Please try again.");
+      }
+    } catch (err) {
+      const message = err.response?.data?.message || "Network error. Ensure backend is running.";
+      if (err.response?.status === 429) {
+        setOtpError(message);
+      } else {
+        setEmailError(message);
+      }
+    } finally {
+      setIsSendingOtp(false);
+    }
   };
 
-  const handleVerifyOtp = () => {
+  const handleVerifyOtp = async () => {
     const enteredCode = otpDigits.join("");
     if (enteredCode.length < 6) {
       setOtpError("Please enter all 6 digits.");
       return;
     }
 
-    if (enteredCode !== generatedOtp) {
-      setOtpError("Invalid verification code. Please check and try again.");
+    if (otpTimer <= 0) {
+      setOtpError("OTP expired. Please request a new OTP.");
       return;
     }
 
-    setIsEmailVerified(true);
-    setShowOtpPopup(false);
-    setSuccess("Email verified successfully!");
+    setIsVerifyingOtp(true);
+    setOtpError("");
+
+    try {
+      const response = await api.post("/auth/verify-otp", {
+        email: email.trim().toLowerCase(),
+        otp: enteredCode,
+      });
+      const data = response.data;
+
+      if (data.success) {
+        setIsEmailVerified(true);
+        setShowOtpPopup(false);
+        setSuccess("Email verified successfully!");
+      } else {
+        setOtpError(data.message || "Invalid OTP");
+      }
+    } catch (err) {
+      const message = err.response?.data?.message || "Network error. Ensure backend is running.";
+      setOtpError(message);
+    } finally {
+      setIsVerifyingOtp(false);
+    }
   };
 
-  const handleResendOtp = () => {
-    const generated = Math.floor(100000 + Math.random() * 900000).toString();
-    setGeneratedOtp(generated);
-    setOtpDigits(["", "", "", "", "", ""]);
-    setOtpTimer(45);
-    setOtpError("");
-    setSuccess("New verification code sent!");
+  const handleResendOtp = async () => {
+    if (resendCooldown > 0) return;
 
-    console.log(`[TESTING] Resent OTP for ${email}: ${generated}`);
+    setIsResending(true);
+    setOtpError("");
+
+    try {
+      const response = await api.post("/auth/send-otp", {
+        email: email.trim().toLowerCase(),
+      });
+      const data = response.data;
+
+      if (data.success) {
+        setOtpDigits(["", "", "", "", "", ""]);
+        setOtpTimer(300);
+        setResendCooldown(30);
+        setOtpError("");
+        const first = otpInputRefs.current[0];
+        if (first) first.focus();
+      } else {
+        setOtpError(data.message || "Failed to resend OTP.");
+      }
+    } catch (err) {
+      const message = err.response?.data?.message || "Network error. Ensure backend is running.";
+      setOtpError(message);
+    } finally {
+      setIsResending(false);
+    }
   };
 
   const validateFullNameField = (val) => {
@@ -729,7 +836,7 @@ const Signup = () => {
                           <input
                             type="email"
                             value={email}
-                            disabled={isEmailVerified}
+                            disabled={isEmailVerified || isSendingOtp}
                             onChange={(e) => {
                               const val = e.target.value;
                               setEmail(val);
@@ -770,9 +877,17 @@ const Signup = () => {
                           <button
                             type="button"
                             onClick={handleSendOtp}
-                            className="bg-[#2b589f] hover:bg-[#20457d] text-white font-bold px-4 py-2.5 rounded-full text-xs transition duration-200 cursor-pointer shadow-md shrink-0 border-none"
+                            disabled={isSendingOtp}
+                            className="bg-[#2b589f] hover:bg-[#20457d] disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold px-4 py-2.5 rounded-full text-xs transition duration-200 cursor-pointer shadow-md shrink-0 border-none flex items-center gap-1.5"
                           >
-                            Verify Email
+                            {isSendingOtp ? (
+                              <>
+                                <span className="inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                                Sending...
+                              </>
+                            ) : (
+                              "Verify Email"
+                            )}
                           </button>
                         )}
                       </div>
@@ -1105,7 +1220,8 @@ const Signup = () => {
                 {/* Title & Desc */}
                 <h2 className="text-lg font-black text-slate-800 tracking-tight">Verify Your Email</h2>
                 <p className="text-[11px] text-slate-500 font-semibold mt-1 max-w-[270px] leading-relaxed">
-                  We've sent a 6-digit verification code to <span className="text-indigo-650 font-bold">{email}</span>
+                  We've sent a 6-digit verification code to{" "}
+                  <span className="text-indigo-650 font-bold">{maskedEmail || maskEmail(email)}</span>
                 </p>
 
                 {/* 6 Digit Input Grid */}
@@ -1113,13 +1229,21 @@ const Signup = () => {
                   {otpDigits.map((digit, idx) => (
                     <input
                       key={idx}
+                      ref={(el) => (otpInputRefs.current[idx] = el)}
                       id={`otp-input-${idx}`}
                       type="text"
+                      inputMode="numeric"
                       maxLength={1}
                       value={digit}
+                      disabled={isVerifyingOtp || otpTimer <= 0}
                       onChange={(e) => handleDigitChange(idx, e.target.value)}
                       onKeyDown={(e) => handleDigitKeyDown(idx, e)}
-                      className="w-10 h-12 border border-slate-200 rounded-xl text-center font-extrabold text-base text-slate-800 bg-white focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 transition-all"
+                      onPaste={handleOtpPaste}
+                      className={`w-10 h-12 border rounded-xl text-center font-extrabold text-base text-slate-800 bg-white focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 transition-all ${
+                        otpTimer <= 0
+                          ? "border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed"
+                          : "border-slate-200"
+                      }`}
                     />
                   ))}
                 </div>
@@ -1132,19 +1256,35 @@ const Signup = () => {
                   </p>
                 )}
 
+                {/* Countdown Timer */}
+                <div className="text-[10px] text-slate-400 font-bold mb-2">
+                  {otpTimer > 0 ? (
+                    <span>
+                      OTP expires in{" "}
+                      <span className="text-indigo-650">
+                        {String(Math.floor(otpTimer / 60)).padStart(2, "0")}:
+                        {String(otpTimer % 60).padStart(2, "0")}
+                      </span>
+                    </span>
+                  ) : (
+                    <span className="text-red-500">OTP expired</span>
+                  )}
+                </div>
+
                 {/* Resend Link / Countdown */}
                 <div className="text-[10px] text-slate-400 font-bold mb-4">
-                  {otpTimer > 0 ? (
-                    <span>Didn't receive the code? Resend OTP (00:{String(otpTimer).padStart(2, '0')})</span>
+                  {resendCooldown > 0 ? (
+                    <span>Resend available in {resendCooldown}s</span>
                   ) : (
                     <span>
                       Didn't receive the code?{" "}
                       <button
                         type="button"
                         onClick={handleResendOtp}
-                        className="text-indigo-600 hover:text-indigo-850 hover:underline cursor-pointer font-bold bg-transparent border-none p-0"
+                        disabled={isResending}
+                        className="text-indigo-600 hover:text-indigo-850 hover:underline cursor-pointer font-bold bg-transparent border-none p-0 disabled:text-slate-300 disabled:cursor-not-allowed"
                       >
-                        Resend OTP
+                        {isResending ? "Resending..." : "Resend OTP"}
                       </button>
                     </span>
                   )}
@@ -1155,16 +1295,25 @@ const Signup = () => {
                   <button
                     type="button"
                     onClick={() => setShowOtpPopup(false)}
-                    className="flex-1 border border-slate-200 text-slate-600 font-bold py-2.5 rounded-xl text-xs hover:bg-slate-50 transition cursor-pointer"
+                    disabled={isVerifyingOtp}
+                    className="flex-1 border border-slate-200 text-slate-600 font-bold py-2.5 rounded-xl text-xs hover:bg-slate-50 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Cancel
                   </button>
                   <button
                     type="button"
                     onClick={handleVerifyOtp}
-                    className="flex-1 bg-indigo-600 hover:bg-indigo-750 text-white font-bold py-2.5 rounded-xl text-xs transition cursor-pointer shadow-md shadow-indigo-100"
+                    disabled={isVerifyingOtp || otpTimer <= 0}
+                    className="flex-1 bg-indigo-600 hover:bg-indigo-750 disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold py-2.5 rounded-xl text-xs transition cursor-pointer shadow-md shadow-indigo-100 flex items-center justify-center gap-1.5"
                   >
-                    Verify & Continue
+                    {isVerifyingOtp ? (
+                      <>
+                        <span className="inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                        Verifying...
+                      </>
+                    ) : (
+                      "Verify & Continue"
+                    )}
                   </button>
                 </div>
               </motion.div>
