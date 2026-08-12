@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { User, Mail, Eye, EyeOff, AlertCircle, CheckCircle2, ArrowLeft, Sparkles } from "lucide-react";
+import { useState, useEffect } from "react";
+import { User, Mail, Eye, EyeOff, AlertCircle, CheckCircle2, ArrowLeft, Sparkles, XCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import api from '../../api/axios.js';
@@ -247,13 +247,104 @@ const Signup = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isHoveredLogo, setIsHoveredLogo] = useState(false);
 
+  const navigate = useNavigate();
+
   // OTP Verification States
-  const [otpSent, setOtpSent] = useState(false);
-  const [otpCode, setOtpCode] = useState("");
+  const [showOtpPopup, setShowOtpPopup] = useState(false);
+  const [otpDigits, setOtpDigits] = useState(["", "", "", "", "", ""]);
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [otpTimer, setOtpTimer] = useState(45);
   const [generatedOtp, setGeneratedOtp] = useState("");
   const [otpError, setOtpError] = useState("");
 
-  const navigate = useNavigate();
+  // OTP Timer countdown effect
+  useEffect(() => {
+    let interval = null;
+    if (showOtpPopup && otpTimer > 0) {
+      interval = setInterval(() => {
+        setOtpTimer((prev) => prev - 1);
+      }, 1000);
+    } else {
+      clearInterval(interval);
+    }
+    return () => clearInterval(interval);
+  }, [showOtpPopup, otpTimer]);
+
+  const handleDigitChange = (index, value) => {
+    const cleanValue = value.replace(/[^0-9]/g, "").slice(-1);
+    const newDigits = [...otpDigits];
+    newDigits[index] = cleanValue;
+    setOtpDigits(newDigits);
+    setOtpError("");
+
+    // Auto-focus next input if we entered a digit
+    if (cleanValue && index < 5) {
+      const nextInput = document.getElementById(`otp-input-${index + 1}`);
+      if (nextInput) nextInput.focus();
+    }
+  };
+
+  const handleDigitKeyDown = (index, e) => {
+    if (e.key === "Backspace") {
+      if (!otpDigits[index] && index > 0) {
+        const prevInput = document.getElementById(`otp-input-${index - 1}`);
+        if (prevInput) {
+          prevInput.focus();
+          const newDigits = [...otpDigits];
+          newDigits[index - 1] = "";
+          setOtpDigits(newDigits);
+        }
+      }
+    }
+  };
+
+  const handleSendOtp = () => {
+    setError("");
+    setSuccess("");
+    setEmailError("");
+
+    if (!validateEmailField(email)) {
+      return;
+    }
+
+    const generated = Math.floor(100000 + Math.random() * 900000).toString();
+    setGeneratedOtp(generated);
+    setOtpDigits(["", "", "", "", "", ""]);
+    setOtpTimer(45);
+    setOtpError("");
+    setShowOtpPopup(true);
+
+    // For testing/debugging, we can log the generated OTP to the console
+    console.log(`[TESTING] Generated OTP for ${email}: ${generated}`);
+  };
+
+  const handleVerifyOtp = () => {
+    const enteredCode = otpDigits.join("");
+    if (enteredCode.length < 6) {
+      setOtpError("Please enter all 6 digits.");
+      return;
+    }
+
+    if (enteredCode !== generatedOtp) {
+      setOtpError("Invalid verification code. Please check and try again.");
+      return;
+    }
+
+    setIsEmailVerified(true);
+    setShowOtpPopup(false);
+    setSuccess("Email verified successfully!");
+  };
+
+  const handleResendOtp = () => {
+    const generated = Math.floor(100000 + Math.random() * 900000).toString();
+    setGeneratedOtp(generated);
+    setOtpDigits(["", "", "", "", "", ""]);
+    setOtpTimer(45);
+    setOtpError("");
+    setSuccess("New verification code sent!");
+
+    console.log(`[TESTING] Resent OTP for ${email}: ${generated}`);
+  };
 
   const validateFullNameField = (val) => {
     const trimmed = (val !== undefined ? val : fullName).trim();
@@ -384,49 +475,33 @@ const Signup = () => {
     if (e) e.preventDefault();
     setError("");
     setSuccess("");
-    setOtpError("");
 
     const trimmedName = fullName.trim();
     const trimmedEmail = email.trim();
 
-    if (!otpSent) {
-      // Step 1: Validate Fields
-      setFullNameError("");
-      setEmailError("");
-      setPasswordError("");
-      setConfirmPasswordError("");
+    // Step 1: Validate Fields
+    setFullNameError("");
+    setEmailError("");
+    setPasswordError("");
+    setConfirmPasswordError("");
 
-      let hasError = false;
-      if (!validateFullNameField(trimmedName)) hasError = true;
-      if (!validateEmailField(trimmedEmail)) hasError = true;
-      if (!validatePasswordField(password)) hasError = true;
-      if (!validateConfirmPasswordField(confirmPassword, password, true)) hasError = true;
+    let hasError = false;
+    if (!validateFullNameField(trimmedName)) hasError = true;
+    if (!validateEmailField(trimmedEmail)) hasError = true;
+    if (!validatePasswordField(password)) hasError = true;
+    if (!validateConfirmPasswordField(confirmPassword, password, true)) hasError = true;
 
-      if (hasError) {
-        setError("Please fix the highlighted errors.");
-        return;
-      }
-
-      // Generate a simulated 6-digit OTP
-      const generated = Math.floor(100000 + Math.random() * 900000).toString();
-      setGeneratedOtp(generated);
-      setOtpSent(true);
-      setSuccess(`Verification code sent to ${trimmedEmail}!`);
+    if (hasError) {
+      setError("Please fix the highlighted errors.");
       return;
     }
 
-    // Step 2: Verify OTP
-    if (!otpCode.trim()) {
-      setOtpError("OTP is required");
+    if (!isEmailVerified) {
+      setError("Please verify your email address first using the verification code.");
       return;
     }
 
-    if (otpCode.trim() !== generatedOtp) {
-      setOtpError("Invalid verification code. Please check and try again.");
-      return;
-    }
-
-    // If OTP is correct, proceed to backend signup call!
+    // Proceed to backend signup call!
     setIsLoading(true);
 
     try {
@@ -438,7 +513,7 @@ const Signup = () => {
       const data = response.data;
 
       if (data.success) {
-        setSuccess("Email verified and account created successfully!");
+        setSuccess("Account created successfully!");
         setTimeout(() => {
           navigate("/login", {
             state: {
@@ -616,15 +691,7 @@ const Signup = () => {
             </AnimatePresence>
 
             <form onSubmit={handleSignup}>
-              <AnimatePresence mode="wait">
-                {!otpSent ? (
-                  <motion.div
-                    key="step-details"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                    transition={{ duration: 0.2 }}
-                  >
+              <div>
                     {/* Full Name */}
                     <div className="mb-2.5">
                       <div className="relative group">
@@ -657,38 +724,57 @@ const Signup = () => {
 
                     {/* Email */}
                     <div className="mb-2.5">
-                      <div className="relative group">
-                        <input
-                          type="email"
-                          value={email}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setEmail(val);
-                            if (error) setError("");
+                      <div className="flex gap-2 items-center">
+                        <div className="relative group flex-1">
+                          <input
+                            type="email"
+                            value={email}
+                            disabled={isEmailVerified}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setEmail(val);
+                              if (error) setError("");
 
-                            const trimmedVal = val.trim();
-                            const firstComIndex = trimmedVal.indexOf('.com');
-                            if (firstComIndex !== -1) {
-                              const afterCom = trimmedVal.substring(firstComIndex + 4);
-                              if (afterCom.length > 0) {
-                                setEmailError("Not valid email");
+                              const trimmedVal = val.trim();
+                              const firstComIndex = trimmedVal.indexOf('.com');
+                              if (firstComIndex !== -1) {
+                                const afterCom = trimmedVal.substring(firstComIndex + 4);
+                                if (afterCom.length > 0) {
+                                  setEmailError("Not valid email");
+                                } else {
+                                  setEmailError("");
+                                }
                               } else {
                                 setEmailError("");
                               }
-                            } else {
-                              setEmailError("");
-                            }
-                          }}
-                          onBlur={() => {
-                            if (email.trim()) validateEmailField(email);
-                          }}
-                          placeholder="Email"
-                          className={`w-full rounded-full py-2.5 pl-5 pr-11 text-xs text-gray-900 outline-none border transition font-bold bg-white ${emailError
-                              ? "border-red-500 focus:ring-2 focus:ring-red-200"
-                              : "border-gray-200 focus:border-[#108985] focus:ring-1 focus:ring-[#108985] group-hover:border-slate-300"
-                            }`}
-                        />
-                        <Mail className={`absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none w-4 h-4 transition-transform duration-200 group-focus-within:scale-110 ${emailError ? "text-red-500" : "text-gray-400 group-focus-within:text-[#2b589f]"}`} />
+                            }}
+                            onBlur={() => {
+                              if (email.trim()) validateEmailField(email);
+                            }}
+                            placeholder="Email Address"
+                            className={`w-full rounded-full py-2.5 pl-5 pr-11 text-xs text-gray-900 outline-none border transition font-bold bg-white ${isEmailVerified
+                                ? "bg-slate-50 border-emerald-300 text-slate-500"
+                                : emailError
+                                  ? "border-red-500 focus:ring-2 focus:ring-red-200"
+                                  : "border-gray-200 focus:border-[#108985] focus:ring-1 focus:ring-[#108985] group-hover:border-slate-300"
+                              }`}
+                          />
+                          <Mail className={`absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none w-4 h-4 transition-transform duration-200 group-focus-within:scale-110 ${isEmailVerified ? "text-emerald-500" : emailError ? "text-red-500" : "text-gray-400 group-focus-within:text-[#2b589f]"}`} />
+                        </div>
+
+                        {isEmailVerified ? (
+                          <span className="bg-emerald-50 border border-emerald-250 text-emerald-700 font-bold px-3 py-2.5 rounded-full text-[10px] uppercase shadow-sm select-none shrink-0">
+                            ✓ Verified
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={handleSendOtp}
+                            className="bg-[#2b589f] hover:bg-[#20457d] text-white font-bold px-4 py-2.5 rounded-full text-xs transition duration-200 cursor-pointer shadow-md shrink-0 border-none"
+                          >
+                            Verify Email
+                          </button>
+                        )}
                       </div>
                       {emailError && (
                         <p className="mt-0.5 pl-3 text-[9px] text-red-500 font-bold flex items-center gap-1">
@@ -795,96 +881,21 @@ const Signup = () => {
                       )}
                     </div>
 
-                    {/* Submit Button Step 1 */}
+                    {/* Submit Button */}
                     <motion.button
                       whileHover={{ scale: 1.015, boxShadow: "0 8px 20px -3px rgba(43, 88, 159, 0.25)" }}
                       whileTap={{ scale: 0.985 }}
                       type="submit"
-                      className="w-full bg-gradient-to-r from-[#2b589f] via-[#108985] to-[#119e73] hover:opacity-90 text-white py-2.5 rounded-full font-black transition duration-200 flex items-center justify-center gap-2 cursor-pointer text-xs mb-3 border-none shadow"
+                      disabled={isLoading}
+                      className="w-full bg-[#2b589f] hover:bg-[#20457d] disabled:opacity-70 text-white py-2.5 rounded-full font-black transition duration-200 flex items-center justify-center gap-2 cursor-pointer text-xs mb-3 border-none shadow-md mt-4"
                     >
-                      <span>Create Account & Verify</span>
-                    </motion.button>
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="step-otp"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.2 }}
-                    className="flex flex-col w-full"
-                  >
-                    {/* OTP Alert Notification Box */}
-                    <div className="mb-4 bg-emerald-50/70 border border-emerald-150 rounded-2xl p-3 text-emerald-800 text-xs font-semibold leading-relaxed flex flex-col gap-1.5 shadow-sm text-left">
-                      <div className="flex items-center gap-2 font-black text-emerald-950">
-                        <CheckCircle2 size={15} className="text-emerald-600" />
-                        <span>Simulated OTP Verification</span>
-                      </div>
-                      <p>For testing convenience, the OTP verification code is:</p>
-                      <div className="mt-1 bg-emerald-600 text-white font-extrabold text-sm tracking-widest py-1 px-3.5 rounded-xl inline-block w-fit shadow-md">
-                        {generatedOtp}
-                      </div>
-                    </div>
-
-                    {/* OTP Input Field */}
-                    <div className="mb-3.5">
-                      <div className="relative group">
-                        <input
-                          type="text"
-                          value={otpCode}
-                          onChange={(e) => {
-                            setOtpCode(e.target.value.replace(/[^0-9]/g, "").slice(0, 6));
-                            if (otpError) setOtpError("");
-                          }}
-                          placeholder="Enter 6-Digit OTP Code"
-                          className={`w-full rounded-full py-2.5 pl-5 pr-11 text-xs text-gray-900 outline-none border text-center tracking-widest font-black bg-white ${otpError
-                              ? "border-red-500 focus:ring-2 focus:ring-red-200"
-                              : "border-gray-200 focus:border-[#108985] focus:ring-1 focus:ring-[#108985]"
-                            }`}
-                        />
-                      </div>
-                      {otpError && (
-                        <p className="mt-1 text-[9.5px] text-red-500 font-bold flex items-center justify-center gap-1">
-                          <AlertCircle className="w-2.5 h-2.5" />
-                          <span>{otpError}</span>
-                        </p>
+                      {isLoading ? (
+                        <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                      ) : (
+                        "Create Account"
                       )}
-                    </div>
-
-                    {/* Actions Row */}
-                    <div className="flex gap-2 mb-3">
-                      {/* Back Button */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setOtpSent(false);
-                          setOtpCode("");
-                          setOtpError("");
-                          setSuccess("");
-                        }}
-                        className="flex-1 border border-gray-200 text-gray-550 font-bold py-2.5 rounded-full text-xs hover:bg-gray-50 transition cursor-pointer"
-                      >
-                        Change Email
-                      </button>
-
-                      {/* Verify Button */}
-                      <motion.button
-                        whileHover={{ scale: 1.015 }}
-                        whileTap={{ scale: 0.985 }}
-                        type="submit"
-                        disabled={isLoading}
-                        className="flex-[2] bg-gradient-to-r from-[#2b589f] via-[#108985] to-[#119e73] hover:opacity-90 disabled:opacity-75 text-white py-2.5 rounded-full font-black transition duration-200 flex items-center justify-center gap-2 cursor-pointer text-xs border-none shadow"
-                      >
-                        {isLoading ? (
-                          <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                        ) : (
-                          "Verify & Register"
-                        )}
-                      </motion.button>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                    </motion.button>
+                  </div>
             </form>
 
             {/* Separator */}
@@ -1056,6 +1067,110 @@ const Signup = () => {
             />
           </div>
         </div>
+        {/* OTP Verification Modal Popup */}
+        <AnimatePresence>
+          {showOtpPopup && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowOtpPopup(false)}
+                className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"
+              />
+              
+              {/* Modal Card */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 15 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 15 }}
+                transition={{ type: "spring", duration: 0.4 }}
+                className="relative w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl flex flex-col items-center text-center z-10 border border-slate-100"
+              >
+                {/* Close Button */}
+                <button
+                  type="button"
+                  onClick={() => setShowOtpPopup(false)}
+                  className="absolute top-4.5 right-4.5 text-slate-400 hover:text-slate-655 transition cursor-pointer bg-transparent border-none"
+                >
+                  <XCircle size={18} />
+                </button>
+
+                {/* Envelope Lock Icon */}
+                <div className="w-14 h-14 bg-indigo-50 border border-indigo-150 rounded-2xl flex items-center justify-center mb-3">
+                  <Mail className="w-6 h-6 text-indigo-600" />
+                </div>
+
+                {/* Title & Desc */}
+                <h2 className="text-lg font-black text-slate-800 tracking-tight">Verify Your Email</h2>
+                <p className="text-[11px] text-slate-500 font-semibold mt-1 max-w-[270px] leading-relaxed">
+                  We've sent a 6-digit verification code to <span className="text-indigo-650 font-bold">{email}</span>
+                </p>
+
+                {/* 6 Digit Input Grid */}
+                <div className="flex gap-2 justify-center my-5 w-full">
+                  {otpDigits.map((digit, idx) => (
+                    <input
+                      key={idx}
+                      id={`otp-input-${idx}`}
+                      type="text"
+                      maxLength={1}
+                      value={digit}
+                      onChange={(e) => handleDigitChange(idx, e.target.value)}
+                      onKeyDown={(e) => handleDigitKeyDown(idx, e)}
+                      className="w-10 h-12 border border-slate-200 rounded-xl text-center font-extrabold text-base text-slate-800 bg-white focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 transition-all"
+                    />
+                  ))}
+                </div>
+
+                {/* OTP Error Message */}
+                {otpError && (
+                  <p className="text-[9.5px] text-red-500 font-bold flex items-center gap-1 mb-2.5">
+                    <AlertCircle className="w-2.5 h-2.5" />
+                    <span>{otpError}</span>
+                  </p>
+                )}
+
+                {/* Resend Link / Countdown */}
+                <div className="text-[10px] text-slate-400 font-bold mb-4">
+                  {otpTimer > 0 ? (
+                    <span>Didn't receive the code? Resend OTP (00:{String(otpTimer).padStart(2, '0')})</span>
+                  ) : (
+                    <span>
+                      Didn't receive the code?{" "}
+                      <button
+                        type="button"
+                        onClick={handleResendOtp}
+                        className="text-indigo-600 hover:text-indigo-850 hover:underline cursor-pointer font-bold bg-transparent border-none p-0"
+                      >
+                        Resend OTP
+                      </button>
+                    </span>
+                  )}
+                </div>
+
+                {/* Actions Row */}
+                <div className="flex gap-2.5 w-full">
+                  <button
+                    type="button"
+                    onClick={() => setShowOtpPopup(false)}
+                    className="flex-1 border border-slate-200 text-slate-600 font-bold py-2.5 rounded-xl text-xs hover:bg-slate-50 transition cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleVerifyOtp}
+                    className="flex-1 bg-indigo-600 hover:bg-indigo-750 text-white font-bold py-2.5 rounded-xl text-xs transition cursor-pointer shadow-md shadow-indigo-100"
+                  >
+                    Verify & Continue
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
       </motion.div>
     </div>
   );
